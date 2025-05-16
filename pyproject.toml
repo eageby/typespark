@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "typespark"
+version = "0.1.0"
+description = ""
+authors = ["Elias Ågeby <elias.ageby@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pyspark = "^3.5.4"
+attrs = "^25.1.0"
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.15.0"
+pytest = "^8.3.4"
+pandas = "^2.2.3"
+pyarrow = "^19.0.0"
+prettyprinter = "^0.18.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
