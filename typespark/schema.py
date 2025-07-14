@@ -4,6 +4,7 @@ from typing import Callable, Iterable, get_args
 import attrs
 from attr import AttrsInstance
 from pyspark.sql.types import DataType, StructField, StructType
+from simple_parsing import docstring
 
 from typespark.metadata import MetaData
 from typespark.typed_dataframe import TypedColumn, TypedDataFrame
@@ -38,7 +39,10 @@ def _kwarg_safe_call(func: Callable, attrs_instance: AttrsInstance):
     return func(**_extract_kwargs(func, attrs_instance))
 
 
-def _construct_struct_field(field: attrs.Attribute):
+def _construct_struct_field(
+    cls: type[TypedDataFrame] | type[TypedColumn], field: attrs.Attribute
+):
+
     if field.alias is None:
         raise ValueError("Field alias missing")
 
@@ -47,6 +51,7 @@ def _construct_struct_field(field: attrs.Attribute):
 
     name = field.alias
 
+    doc = docstring.get_attribute_docstring(cls, field.alias).help_string
     m = MetaData(**field.metadata)
 
     if not get_args(field.type) and issubclass(field.type, TypedColumn):
@@ -56,7 +61,7 @@ def _construct_struct_field(field: attrs.Attribute):
         type_instance = _kwarg_safe_call(field_type, m)
 
     field_kwargs = _extract_kwargs(StructField, m)
-    return StructField(name, type_instance, **field_kwargs)
+    return StructField(name, type_instance, **field_kwargs, metadata={"comment": doc})
 
 
 def _get_type(field: attrs.Attribute):
@@ -72,7 +77,7 @@ def _get_type(field: attrs.Attribute):
 def schema(cls: type[TypedDataFrame] | type[TypedColumn]):
     return StructType(
         [
-            _construct_struct_field(f)
+            _construct_struct_field(cls, f)
             for f in attrs.fields(cls)
             if _get_type(f) == TypedColumn or issubclass(_get_type(f), TypedColumn)
         ]
