@@ -92,12 +92,13 @@ class TypedDataFrame(DataFrame):
         self._alias = alias
 
     @classmethod
-    def __init_subclass__(cls):
+    def __init_subclass__(cls, alias: Optional[str] = None):
         attrs.define(
             slots=False,
             init=False,
             field_transformer=use_descriptor(TypedColumn, Descriptor),
         )(cls)
+        cls.__serialization_alias__ = alias
 
     def alias(self, alias: str) -> Aliased[Self]:
         new = self._dataframe.alias(alias)
