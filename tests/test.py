@@ -1,94 +1,81 @@
-import attrs
-from pyspark.sql import Column, DataFrame
-from pyspark.sql import functions as F
-from pyspark.sql import types
+from pyspark.sql import DataFrame
 
-from typespark.metadata import base, decimal
-from typespark.typed_dataframe import Descriptor, Struct, TypedColumn, TypedDataFrame
+from tests.utils import same_column
+from typespark import Int, String
+from typespark.base import BaseDataFrame
+from typespark.metadata import field
+from typespark.typed_dataframe import Struct
 
 # from pyspark.testing import assertDataFrameEqual
 
 
-def same_column(first: Column, second: Column):
-    return first._jc.equals(second._jc)  # type: ignore # pylint: disable=protected-access
-
-
-class People(TypedDataFrame):
-    name: TypedColumn[types.StringType]
-    age: TypedColumn[types.IntegerType]
+class Person(BaseDataFrame):
+    name: String
+    age: Int
 
 
 def test_wrap_dataframe(dataframe: DataFrame):
 
-    wrapped = People(dataframe)
+    wrapped = Person.from_df(dataframe)
 
     assert same_column(wrapped.name, dataframe["name"])
     assert same_column(wrapped.age, dataframe["age"])
     assert not same_column(wrapped.name, dataframe["age"])
 
 
-def test_access(dataframe):
-    people = People(dataframe)
+def test_aliasing(dataframe):
+    df = Person.from_df(dataframe)
 
-    assert isinstance(people.name, TypedColumn)
-    assert isinstance(People.name, Descriptor)
+    class A(BaseDataFrame):
+        n: String
+        age: Int
 
+    a1 = A(df, n=df.name, age=df.age).alias("a1")
+    a2 = A(df, n=df.name, age=df.age).alias("a2")
 
-# def test_alias_type(dataframe):
-#     p1 = People(dataframe).alias("p1")
-#     assert not isinstance(p1, People)
-#     assert isinstance(p1, Aliased)
-
-
-""" def test_alias_join(dataframe):
-    p1 = People(dataframe).alias("p1")
-    p2 = People(dataframe).alias("p22")
-
-    df = p1.join(p2, p1.name == p2.name).select(p1.name, p2.age)
-
-    assertDataFrameEqual(p2, df)
- """
+    result = a1.join(a2, a1.n == a2.n).select(a1.n, a2.age)
+    # assertDataFrameEqual(df._dataframe, result._dataframe)
 
 
-def test_metadata():
+def test_aliasing_with_column_alias(dataframe):
+    df = Person.from_df(dataframe)
 
-    class DataClass(TypedDataFrame):
-        name: TypedColumn[types.StringType] = attrs.field(
-            metadata={"test": 1},
-        )
-        age: TypedColumn[types.IntegerType]
+    class A(BaseDataFrame):
+        n: String = field(df_alias="n2")
+        age: Int
 
-    assert attrs.fields(DataClass)[0].metadata["test"] == 1
+    a1 = A(df, n=df.name, age=df.age).alias("a1")
+    a2 = A(df, n=df.name, age=df.age).alias("a2")
 
+    result = a1.join(a2, a1.n == a2.n).select(a1.n, a2.age)
 
-def test_alias():
-    class DataClass(TypedDataFrame):
-        name: TypedColumn[types.StringType] = base(alias="other")
-        age: TypedColumn[types.IntegerType]
-
-    assert attrs.fields(DataClass)[0].alias == "other"
-
-
-def test_alias_access(dataframe: DataFrame):
-
-    class DataClass(TypedDataFrame):
-        name: TypedColumn[types.StringType] = base(alias="age")
-        age: TypedColumn[types.IntegerType]
-
-    wrapped = DataClass(dataframe)
-
-    assert same_column(wrapped.name, dataframe["age"])
-    assert not same_column(wrapped.name, dataframe["name"])
+    # assertDataFrameEqual(df._dataframe, result._dataframe)
 
 
 def test_struct_access(struct_dataframe):
+    # need to wrap columns with typedcolumn do avoid accessing alias function through name
     class Nested(Struct):
-        name_: TypedColumn[types.StringType] = base(alias="name")
-        age: TypedColumn[types.IntegerType]
+        name: String
+        age: String
 
-    class DataClass(TypedDataFrame):
+    class DataClass(BaseDataFrame):
         struct: Nested
 
-    df = DataClass(struct_dataframe)
-    assert same_column(df.struct.name_, df["struct"]["name"])
-    assert same_column(df.struct.age, df["struct"]["age"])
+    df = DataClass.from_df(struct_dataframe)
+
+    assert same_column(df.struct.name, df._dataframe["struct"]["name"])
+    assert same_column(df.struct.age, df._dataframe["struct"]["age"])
+
+
+def test_struct_access_with_alias(struct_dataframe):
+    class Nested(Struct):
+        name_: String = field(df_alias="name")
+        age: String
+
+    class DataClass(BaseDataFrame):
+        struct: Nested
+
+    df = DataClass.from_df(struct_dataframe)
+
+    assert same_column(df.struct.name_, df._dataframe["struct"]["name"])
+    assert same_column(df.struct.age, df._dataframe["struct"]["age"])
