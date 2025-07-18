@@ -2,7 +2,7 @@ from typing import Any, Callable, get_origin
 
 import attrs
 
-from typespark.typed_dataframe import TypedColumn
+from typespark.columns import TypedColumn
 from typespark.utils import get_field_name
 
 FieldTransformer = Callable[[type, list[attrs.Attribute]], list[attrs.Attribute]]
@@ -21,7 +21,7 @@ def pipe_tranformers(*transformers: FieldTransformer) -> FieldTransformer:
 def set_alias(field: attrs.Attribute):
     alias = get_field_name(field)
 
-    def alias_converter(x):
+    def alias_converter(x: TypedColumn):
         return x.alias(alias)
 
     return alias_converter

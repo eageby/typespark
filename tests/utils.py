@@ -1,7 +1,7 @@
 from typing import Any
 from pyspark.sql import Column
 
-from typespark.typed_dataframe import TypedColumn
+from typespark.columns import TypedColumn
 
 
 def same_column(first: Column | TypedColumn[Any], second: Column | TypedColumn[Any]):

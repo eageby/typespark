@@ -27,7 +27,7 @@ from pyspark.sql.types import (
     BinaryType,
 )
 
-from .typed_dataframe import TypedColumn
+from .columns import TypedColumn
 
 Bool = TypedColumn[BooleanType]
 String = TypedColumn[StringType]

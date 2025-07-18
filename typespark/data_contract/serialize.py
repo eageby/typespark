@@ -23,7 +23,7 @@ from simple_parsing import docstring
 
 from typespark.base import BaseDataFrame
 from typespark.metadata import MetaData
-from typespark.typed_dataframe import TypedColumn
+from typespark.columns import TypedColumn
 
 
 def pyspark_type_to_contract(pyspark_type: DataType) -> str:
