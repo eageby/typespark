@@ -1,4 +1,14 @@
-from typing import Any, Generator, Self, Union, dataclass_transform, Optional
+from __future__ import annotations
+
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generator,
+    Optional,
+    Self,
+    Union,
+    dataclass_transform,
+)
 
 import attr
 import attrs
@@ -10,6 +20,9 @@ from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.serialization_alias import Aliasable
 from typespark.columns import TypedColumn, is_typed_column_type
 from typespark.utils import get_field_name, unwrap_type
+
+if TYPE_CHECKING:
+    from typespark.field_transforms import FieldTransformer
 
 
 def _dataframe_converter(df: "_Base | DataFrame"):
@@ -50,8 +63,10 @@ class _Base:
         ]
 
     @classmethod
-    def __init_subclass__(cls):
-        define(cls)
+    def __init_subclass__(
+        cls, field_transformers: Optional[list[FieldTransformer]] = None
+    ):
+        define(cls, field_transformers=field_transformers)
 
     def __attrs_post_init__(self):
         object.__setattr__(

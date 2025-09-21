@@ -3,9 +3,7 @@ import attrs
 import attr
 from typing import Generic, TypeVar, dataclass_transform, get_origin
 
-from pyspark.sql import Column, DataFrame
-from pyspark.sql.types import ArrayType, StructType
-
+from typespark.field_transforms import FieldTransformer, pipe_tranformers
 from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.utils import get_field_name, unwrap_type
 
@@ -70,5 +68,8 @@ class Struct(TypedColumn[StructType]):
         return new
 
     @classmethod
-    def __init_subclass__(cls):
-        attrs.define(init=False, slots=False)(cls)
+    def __init_subclass__(
+        cls, field_transformers: Optional[list[FieldTransformer]] = None
+    ):
+        ft = pipe_tranformers(*(field_transformers or []))
+        attrs.define(init=False, slots=False, field_transformer=ft)(cls)
