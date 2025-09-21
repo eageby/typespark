@@ -133,6 +133,8 @@ def generate_class_ast(name: str, model: Model):
 
     fields = [generate_field_ast(n, f) for n, f in model.fields.items()]
     body = [element for innerList in fields for element in innerList]
+    if body == []:
+        body = [ast.Pass()]
 
     class_def = ast.ClassDef(
         name=to_pascal_case(name),
