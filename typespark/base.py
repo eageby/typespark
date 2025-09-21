@@ -110,6 +110,9 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable):
     def groupBy(self, *cols: str | Column) -> SupportsGroupedData:
         return self._dataframe.groupBy(*cols)
 
+    def union(self, other: Self) -> Self:
+        return self.__class__.from_df(self._dataframe.unionByName(other.to_df()))
+
     def join(
         self,
         other: Any,
