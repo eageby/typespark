@@ -1,4 +1,4 @@
-from typing import Any, Optional, Protocol, Union, runtime_checkable
+from typing import Any, Optional, Protocol, Union, runtime_checkable, Self
 
 from pyspark.sql import Column
 
@@ -18,6 +18,7 @@ class SupportsETLFrame(Protocol):
 
     def withColumn(self, colName: str, col: Column) -> "SupportsETLFrame": ...
     def drop(self, *cols: str) -> "SupportsETLFrame": ...
+    def union(self, other: Self) -> Self: ...
     def join(
         self,
         other: Any,
