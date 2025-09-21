@@ -2,6 +2,7 @@ from typing import Any, Callable, Optional, get_origin
 
 import attrs
 
+from typespark import metadata
 from typespark.columns import TypedColumn
 from typespark.utils import get_field_name
 
@@ -26,6 +27,30 @@ def set_alias(field: attrs.Attribute):
 
     return alias_converter
 
+
+def df_alias(func: Callable[[str], str]) -> FieldTransformer:
+
+    def alias_converter(field: attrs.Attribute):
+        m = field.metadata.copy()
+        if metadata.DF_ALIAS in m:
+            return field
+
+        f = field.evolve(metadata={**m, metadata.DF_ALIAS: func(field.name)})
+        return f
+
+    def inner(_: type, fields: list[attrs.Attribute]) -> list[attrs.Attribute]:
+        return [alias_converter(f) for f in fields]
+
+    return inner
+
+
+def converter[T](
+    func: Callable[[T], T],
+) -> Callable[[attrs.Attribute], Callable[[T], T]]:
+    def inner(_: attrs.Attribute):
+        return func
+
+    return inner
 
 
 def to_transformer(
