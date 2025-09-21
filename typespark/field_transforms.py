@@ -1,4 +1,4 @@
-from typing import Any, Callable, get_origin
+from typing import Any, Callable, Optional, get_origin
 
 import attrs
 
@@ -27,13 +27,20 @@ def set_alias(field: attrs.Attribute):
     return alias_converter
 
 
-def add_converter(converter: Callable[[attrs.Attribute], Callable[[Any], Any]]):
+
+def to_transformer(
+    converter: Callable[[attrs.Attribute], Callable[[Any], Any]],
+    predicate: Optional[Callable[[attrs.Attribute], bool]] = None,
+) -> FieldTransformer:
     def field_transformer(
         _: type, fields: list[attrs.Attribute]
     ) -> list[attrs.Attribute]:
         new_fields = []
         for field in fields:
-            if get_origin(field.type) == TypedColumn:
+
+            skip = predicate and not predicate(field)
+
+            if not skip and get_origin(field.type) == TypedColumn:
                 new_converter = converter(field)
                 existing = field.converter
 
