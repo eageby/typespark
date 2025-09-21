@@ -6,7 +6,8 @@ from attr import AttrsInstance
 from pyspark.sql.types import DataType, StructField, StructType
 from simple_parsing import docstring
 
-from typespark import BaseDataFrame, TypedColumn
+from typespark.base import BaseDataFrame
+from typespark.columns import TypedColumn, is_typed_column_type
 from typespark.metadata import MetaData
 
 
@@ -43,7 +44,7 @@ def get_type_instance(field: attrs.Attribute, m: MetaData):
     if field.type is None:
         raise ValueError("Field type missing")
 
-    if not get_args(field.type) and issubclass(field.type, TypedColumn):
+    if not get_args(field.type) and is_typed_column_type(field.type):
         return generate_schema(field.type)
     else:
         field_type: type[DataType] = get_args(field.type)[0]
@@ -59,7 +60,13 @@ def _construct_struct_field(
     type_instance = get_type_instance(field, m)
 
     field_kwargs = _extract_kwargs(StructField, m)
-    return StructField(name, type_instance, **field_kwargs, metadata={"comment": doc})
+
+    return StructField(
+        name,
+        type_instance,
+        **field_kwargs,
+        metadata={"comment": doc},
+    )
 
 
 def _get_type(field: attrs.Attribute):
