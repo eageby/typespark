@@ -61,6 +61,7 @@ def decimal(
     scale: int,
     df_alias: Optional[str] = None,
     nullable: Optional[bool] = None,
+    **kwargs,
 ):
 
     metadata = {
@@ -69,8 +70,7 @@ def decimal(
         DECIMAL_TYPE_METADATA_SCALE: scale,
         NULLABLE_COLUMN: nullable,
     }
-
-    return attrs.field(metadata=metadata)
+    return attrs.field(metadata=metadata, **kwargs)
 
 
 @attrs.define
