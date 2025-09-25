@@ -54,7 +54,9 @@ def get_type_instance(field: attrs.Attribute, m: MetaData):
 def _construct_struct_field(
     cls: type[BaseDataFrame] | type[TypedColumn], field: attrs.Attribute
 ):
-    m = MetaData(**field.metadata)
+    m = MetaData(
+        **{k: v for k, v in field.metadata.items() if k in _extract_arg_names(MetaData)}
+    )
     name = m.df_alias or field.name
     doc = docstring.get_attribute_docstring(cls, field.alias or field.name).help_string
     type_instance = get_type_instance(field, m)
