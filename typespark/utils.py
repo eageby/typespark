@@ -6,7 +6,7 @@ from typespark.metadata import DF_ALIAS
 
 
 def get_field_name(field: attrs.Attribute):
-    return field.metadata.get(DF_ALIAS, field.name)
+    return field.metadata.get(DF_ALIAS, None) or field.name
 
 
 def unwrap_type(tp):
