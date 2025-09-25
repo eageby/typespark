@@ -1,4 +1,5 @@
 from typing import Any
+
 from pyspark.sql import Column
 
 from typespark.columns import TypedColumn
