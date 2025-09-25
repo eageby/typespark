@@ -9,25 +9,26 @@ __all__ = [
     "Float",
     "Double",
     "Int",
-    "TimeStamp",
+    "Timestamp",
     "Date",
 ]
 
+
 from pyspark.sql.types import (
+    BinaryType,
+    BooleanType,
     DateType,
     DecimalType,
-    IntegerType,
     DoubleType,
-    StringType,
     FloatType,
+    IntegerType,
     LongType,
-    TimestampType,
     ShortType,
-    BooleanType,
-    BinaryType,
+    StringType,
+    TimestampType,
 )
 
-from .columns import TypedColumn
+from .columns import TypedArrayType, TypedColumn
 
 Bool = TypedColumn[BooleanType]
 String = TypedColumn[StringType]
@@ -39,5 +40,6 @@ Long = TypedColumn[LongType]
 Float = TypedColumn[FloatType]
 Double = TypedColumn[DoubleType]
 Int = Integer
-TimeStamp = TypedColumn[TimestampType]
+Timestamp = TypedColumn[TimestampType]
 Date = TypedColumn[DateType]
+Array = TypedArrayType

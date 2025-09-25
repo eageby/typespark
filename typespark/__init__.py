@@ -1,4 +1,6 @@
-from typespark.base import BaseDataFrame, TypedColumn
+from typespark.base import BaseDataFrame
+from typespark.columns import TypedArrayType, TypedColumn
 from typespark.metadata import decimal, field, foreign_key, primary_key
+from typespark.struct import Struct
 
 from .type_alias import *

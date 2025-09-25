@@ -1,12 +1,13 @@
 from pyspark.sql import DataFrame
+from pyspark.sql.functions import lit
 
 from tests.utils import same_column
 from typespark import Int, String
 from typespark.base import BaseDataFrame
+from typespark.columns import TypedArrayType
 from typespark.metadata import field
-from typespark.typed_dataframe import Struct
-
-# from pyspark.testing import assertDataFrameEqual
+from typespark.struct import Struct
+from typespark.type_alias import Integer
 
 
 class Person(BaseDataFrame):
@@ -49,21 +50,19 @@ def test_aliasing_with_column_alias(dataframe):
 
     result = a1.join(a2, a1.n == a2.n).select(a1.n, a2.age)
 
-    # assertDataFrameEqual(df._dataframe, result._dataframe)
-
 
 def test_struct_access(struct_dataframe):
     # need to wrap columns with typedcolumn do avoid accessing alias function through name
     class Nested(Struct):
-        name: String
         age: String
+        name_: String = field(df_alias="name")
 
     class DataClass(BaseDataFrame):
         struct: Nested
 
     df = DataClass.from_df(struct_dataframe)
 
-    assert same_column(df.struct.name, df._dataframe["struct"]["name"])
+    assert same_column(df.struct.name_, df._dataframe["struct"]["name"])
     assert same_column(df.struct.age, df._dataframe["struct"]["age"])
 
 
@@ -75,7 +74,101 @@ def test_struct_access_with_alias(struct_dataframe):
     class DataClass(BaseDataFrame):
         struct: Nested
 
-    df = DataClass.from_df(struct_dataframe)
+    df = DataClass.from_df(struct_dataframe).alias("a")
 
     assert same_column(df.struct.name_, df._dataframe["struct"]["name"])
     assert same_column(df.struct.age, df._dataframe["struct"]["age"])
+
+
+def test_struct_select(struct_dataframe):
+    class Nested(Struct):
+        name_: String = field(df_alias="name")
+        age: String
+
+    class DataClass(BaseDataFrame):
+        struct: Nested
+
+    df = DataClass.from_df(struct_dataframe).alias("a")
+
+    df.select(df.struct.age, df.struct.name_).show()
+
+
+def test_struct_select_with_alias(struct_dataframe):
+    class Nested(Struct):
+        name_: String = field(df_alias="name")
+        age: String
+
+    class DataClass(BaseDataFrame):
+        struct: Nested
+
+    df = DataClass.from_df(struct_dataframe)
+
+    df.select(df.struct.age, df.struct.name_).show()
+
+    # assertDataFrameEqual(df._dataframe, result._dataframe)
+
+
+def test_array(array_dataframe):
+
+    class DataClass(BaseDataFrame):
+        elements: TypedArrayType[Integer]
+
+    df = DataClass.from_df(array_dataframe)
+    df.show()
+
+
+def test_array_explode(array_dataframe):
+
+    class DataClass(BaseDataFrame):
+        elements: TypedArrayType[Integer]
+
+    df = DataClass.from_df(array_dataframe)
+    df.select(df.elements.explode()).show()
+
+
+def test_array_struct(array_struct_dataframe):
+    class Nested(Struct):
+        name_: String = field(df_alias="name")
+        age: String
+
+    class DataClass(BaseDataFrame):
+        elements: TypedArrayType[Nested]
+
+    df = DataClass.from_df(array_struct_dataframe)
+
+    structs = df.elements.explode()
+
+    df.select(structs.age).show()
+
+
+def test_array_struct_multiple(array_struct_dataframe):
+    class Nested(Struct):
+        name_: String = field(df_alias="name")
+        age: String
+
+    class DataClass(BaseDataFrame):
+        elements: TypedArrayType[Nested]
+
+    df = DataClass.from_df(array_struct_dataframe)
+
+    nested = df.elements.explode()
+    df.select(nested.age, nested.name_).show()
+
+
+def test_array_struct_multiple_with_normal_column(array_struct_dataframe):
+    class Nested(Struct):
+        name_: String = field(df_alias="name")
+        age: String
+
+    class DataClass(BaseDataFrame):
+        elements: TypedArrayType[Nested]
+
+    class DataClass2(DataClass):
+        test: Integer
+
+    df = DataClass2.from_df(array_struct_dataframe.withColumn("test", lit(1)))
+
+    nested = df.elements.explode()
+    df.select(nested.age, nested.name_, df.test).show()
+
+
