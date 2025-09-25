@@ -2,11 +2,11 @@ from typing import Annotated, Union, get_args, get_origin
 
 import attrs
 
-from typespark.metadata import MetaData
+from typespark.metadata import DF_ALIAS
 
 
 def get_field_name(field: attrs.Attribute):
-    return MetaData(**field.metadata).df_alias or field.name
+    return field.metadata.get(DF_ALIAS, field.name)
 
 
 def unwrap_type(tp):
