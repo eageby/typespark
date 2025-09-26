@@ -19,8 +19,6 @@ pandas = "^2.2.3"
 pyarrow = "^19.0.0"
 prettyprinter = "^0.18.0"
 devtools = "^0.12.2"
-
-[tool.poetry.group.schema.dependencies]
 simple-parsing = "^0.1.7"
 
 [tool.poetry.group.datacontract.dependencies]
