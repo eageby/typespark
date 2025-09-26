@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-pyspark = "^3.5.4"
+pyspark = "^3.5.2"
 attrs = "^25.1.0"
 pyyaml = "^6.0.2"
 simple-parsing = "^0.1.7"
