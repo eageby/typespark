@@ -44,6 +44,9 @@ class TypedColumn[T: DataType](Column):
     def cast[U: DataType](self, dataType: U) -> "TypedColumn[U]":
         return TypedColumn(self._col.cast(dataType))
 
+    def alias[U: DataType](self, alias: str, **kwargs) -> "TypedColumn[U]":
+        return TypedColumn(self._col.alias(alias, **kwargs))._set_name(self._name)
+
 
 def is_typed_column_type(tp) -> bool:
     tp = unwrap_type(tp)

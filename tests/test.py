@@ -1,4 +1,5 @@
 from pyspark.sql import DataFrame
+from pyspark.sql.types import IntegerType
 from pyspark.sql.functions import lit
 
 from tests.utils import same_column
@@ -209,4 +210,23 @@ def test_array_struct_multiple_with_normal_column(array_struct_dataframe):
     nested = df.elements.explode()
     df.select(nested.age, nested.name_, df.test).show()
 
+
+def test_array_struct_to_new_with_aliased_normal_column(array_struct_dataframe):
+    class Nested(Struct):
+        name_: String = field(df_alias="name")
+        age: String
+
+    class DataClass(BaseDataFrame):
+        elements: TypedArrayType[Nested]
+        test: Integer = field(df_alias="test2")
+
+    df = DataClass.from_df(array_struct_dataframe.withColumn("test2", lit(1)))
+
+    class New(BaseDataFrame):
+        n: String
+        a: String
+        t: Integer
+
+    nested = df.elements.explode()
+    New(df, a=nested.age, n=nested.name_, t=df.test).show()
 
