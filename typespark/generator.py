@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Union
+from typing import TYPE_CHECKING, Union
 
 import attrs
 from pyspark.sql import Column
-from pyspark.sql.functions import col, explode, floor
+from pyspark.sql.functions import col, explode
+from pyspark.sql.types import DataType
 
 if TYPE_CHECKING:
-    from typespark.base import BaseDataFrame
     from typespark.columns import TypedColumn
 
 
@@ -19,6 +19,14 @@ LiteralType = Union[str, int, float, bool]
 class DeferredColumn:
     parent: Generator
     col: Column
+
+    def alias(self, alias: str):
+        self.col = self.col.alias(alias)
+        return self
+
+    def cast(self, data_type: DataType):
+        self.col = self.col.cast(data_type)
+        return self
 
 
 class Generator[T: TypedColumn](ABC):
