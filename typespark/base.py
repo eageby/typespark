@@ -14,6 +14,7 @@ import attr
 import attrs
 from pyspark.sql import Column, DataFrame
 from pyspark.sql.types import DataType
+from pyspark.sql import functions as F
 
 from typespark.columns import TypedColumn, is_typed_column_type
 from typespark.define import define
@@ -123,8 +124,12 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
                 c.column_operation() if isinstance(c, Generator) else c
                 for c in projections
             ]
+            # Prevent aliasing normal cols twice
+            original_named_cols = [
+                F.col(n._name) if isinstance(n, TypedColumn) else n for n in normal_cols
+            ]
             # Step 1: materialize generators
-            df = self._dataframe.select(*projected_cols, *normal_cols)
+            df = self._dataframe.select(*projected_cols, *original_named_cols)
 
             # Step 2: select final materialized expressions
             final_cols = [c.col if isinstance(c, DeferredColumn) else c for c in cols]
