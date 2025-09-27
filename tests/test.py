@@ -155,6 +155,44 @@ def test_array_struct_multiple(array_struct_dataframe):
     df.select(nested.age, nested.name_).show()
 
 
+def test_array_struct_to_new(array_struct_dataframe):
+    class Nested(Struct):
+        name_: String = field(df_alias="name")
+        age: String
+
+    class New(BaseDataFrame):
+        n: String = field(df_alias="name")
+        age: String
+
+    class DataClass(BaseDataFrame):
+        elements: TypedArrayType[Nested]
+
+    df = DataClass.from_df(array_struct_dataframe)
+
+    nested = df.elements.explode()
+
+    New(df, n=nested.name_, age=nested.age).show()
+
+
+def test_array_struct_to_new_with_cast(array_struct_dataframe):
+    class Nested(Struct):
+        name_: String = field(df_alias="name")
+        age: String
+
+    class New(BaseDataFrame):
+        n: String = field(df_alias="name")
+        age: Integer
+
+    class DataClass(BaseDataFrame):
+        elements: TypedArrayType[Nested]
+
+    df = DataClass.from_df(array_struct_dataframe)
+
+    nested = df.elements.explode()
+
+    New(df, n=nested.name_, age=nested.age.cast(IntegerType())).show()
+
+
 def test_array_struct_multiple_with_normal_column(array_struct_dataframe):
     class Nested(Struct):
         name_: String = field(df_alias="name")

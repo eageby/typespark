@@ -12,15 +12,15 @@ from typing import (
 
 import attr
 import attrs
-from pyspark.sql import Column, DataFrame, functions
+from pyspark.sql import Column, DataFrame
 from pyspark.sql.types import DataType
 
-from typespark.columns import TypedArrayType, TypedColumn, is_typed_column_type
+from typespark.columns import TypedColumn, is_typed_column_type
 from typespark.define import define
+from typespark.generator import DeferredColumn, Generator
 from typespark.interface import SupportsETLFrame, SupportsGroupedData
 from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.mixins import Aliasable, SchemaDefaults
-from typespark.generator import DeferredColumn, Generator
 from typespark.utils import get_field_name, unwrap_type
 
 if TYPE_CHECKING:
@@ -49,8 +49,8 @@ class _Base:
         return self._dataframe
 
     @property
-    def columns(self) -> Generator[TypedColumn]:
-        yield from [
+    def columns(self) -> list[TypedColumn]:
+        return [
             getattr(self, field.name)
             for field in attrs.fields(self.__class__)
             if is_typed_column_type(field.type)
@@ -75,7 +75,7 @@ class _Base:
 
     def __attrs_post_init__(self):
         object.__setattr__(
-            self, "_dataframe", self._dataframe.select(*self.columns)
+            self, "_dataframe", self.select(*self.columns).to_df()
         )  # Circumventing frozen
 
     @classmethod
