@@ -13,10 +13,10 @@ from typing import (
 import attr
 import attrs
 from pyspark.sql import Column, DataFrame
-from pyspark.sql.types import DataType
 from pyspark.sql import functions as F
+from pyspark.sql.types import DataType
 
-from typespark.columns import TypedColumn, is_typed_column_type
+from typespark.columns import AliasedTypedColumn, TypedColumn, is_typed_column_type
 from typespark.define import define
 from typespark.generator import DeferredColumn, Generator
 from typespark.interface import SupportsETLFrame, SupportsGroupedData
@@ -126,7 +126,8 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
             ]
             # Prevent aliasing normal cols twice
             original_named_cols = [
-                F.col(n._name) if isinstance(n, TypedColumn) else n for n in normal_cols
+                F.col(n.original_name) if isinstance(n, AliasedTypedColumn) else n
+                for n in normal_cols
             ]
             # Step 1: materialize generators
             df = self._dataframe.select(*projected_cols, *original_named_cols)
