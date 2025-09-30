@@ -10,7 +10,8 @@ from typespark.utils import unwrap_type
 
 class TypedColumn[T: DataType](Column):
     _col: Column
-    _name: str | None
+    _name: str
+    _original_name: str | None = None
 
     def __hash__(self) -> int:
         return hash(self._name)
@@ -42,10 +43,19 @@ class TypedColumn[T: DataType](Column):
         return f"{self.__class__.__name__}<'{self._name}'>"
 
     def cast[U: DataType](self, dataType: U) -> "TypedColumn[U]":
-        return TypedColumn(self._col.cast(dataType))
+        return TypedColumn(self._col.cast(dataType))._set_name(self._name)
 
     def alias[U: DataType](self, alias: str, **kwargs) -> "TypedColumn[U]":
-        return TypedColumn(self._col.alias(alias, **kwargs))._set_name(self._name)
+        return AliasedTypedColumn(self._col.alias(alias, **kwargs), alias, self._name)
+
+
+class AliasedTypedColumn(TypedColumn):
+    original_name: str
+
+    def __init__(self, c: Column, name: str, original_name: str):
+        super().__init__(c)
+        self._name = name
+        self.original_name = original_name
 
 
 def is_typed_column_type(tp) -> bool:
