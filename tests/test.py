@@ -230,3 +230,12 @@ def test_array_struct_to_new_with_aliased_normal_column(array_struct_dataframe):
     nested = df.elements.explode()
     New(df, a=nested.age, n=nested.name_, t=df.test).show()
 
+def test_aliasing_array_init(array_dataframe):
+    """Ensure aliasing transform is applied to array columns"""
+
+    class DataClass(BaseDataFrame):
+        array: TypedArrayType[Integer]
+
+    df = DataClass(array_dataframe, array=array_dataframe["elements"])
+
+    assert df.to_df()["array"] is not None
