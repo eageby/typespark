@@ -3,7 +3,7 @@ from typing import Any, Callable, Optional, get_origin
 import attrs
 
 from typespark import metadata
-from typespark.columns import TypedColumn
+from typespark.columns import TypedColumn, is_typed_column_type
 from typespark.utils import get_field_name
 
 FieldTransformer = Callable[[type, list[attrs.Attribute]], list[attrs.Attribute]]
@@ -65,7 +65,7 @@ def to_transformer(
 
             skip = predicate and not predicate(field)
 
-            if not skip and get_origin(field.type) == TypedColumn:
+            if not skip and is_typed_column_type(field.type):
                 new_converter = converter(field)
                 existing = field.converter
 
