@@ -1,5 +1,6 @@
 import inspect
 
+import attrs
 from pyspark.sql import DataFrame
 from pyspark.sql.functions import lit
 from pyspark.sql.types import IntegerType
@@ -247,5 +248,19 @@ def test_struct_init(person: Person):
     class Container(BaseDataFrame):
         person: PersonStruct
 
-    print(inspect.signature(PersonStruct.__init__))
+    # pylint: disable=E1120,E1123 Pylint does not infer the correct signature
     Container(person, person=PersonStruct(name_=person.name, age=person.age)).show()
+
+
+def test_struct_init_alias(person: Person):
+    class PersonStruct(Struct):
+        n: String = field(df_alias="name")
+        a: Integer
+
+    class Container(BaseDataFrame):
+        person: PersonStruct
+
+    # pylint: disable=E1120,E1123 Pylint does not infer the correct signature
+    Container(person, person=PersonStruct(n=person.name, a=person.age)).select(
+        "person.*"
+    ).show()

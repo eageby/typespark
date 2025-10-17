@@ -7,7 +7,10 @@ from pyspark.sql.functions import struct
 from pyspark.sql.types import StructType
 
 from typespark.columns import TypedColumn, is_typed_column_type
-from typespark.field_transforms import FieldTransformer, pipe_tranformers
+from typespark.field_transforms import (
+    FieldTransformer,
+    pipe_tranformers,
+)
 from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.utils import get_field_name, unwrap_type
 
@@ -34,7 +37,15 @@ class Struct(TypedColumn[StructType]):
         return new
 
     def __attrs_post_init__(self):
-        super().__init__(struct(*[i._col for i in self.fields().values()]))
+        metadata = attrs.fields_dict(self.__class__)
+        super().__init__(
+            struct(
+                *[
+                    v._col.alias(get_field_name(metadata[k]))
+                    for k, v in self.fields().items()
+                ]
+            )
+        )
 
     def fields(self) -> dict[str, TypedColumn]:
 
