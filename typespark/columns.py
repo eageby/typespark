@@ -34,7 +34,10 @@ class TypedColumn[T: DataType](Column):
     def set_column(
         cls, col: Column, name: str, tp: Optional[type["TypedColumn"]] = None
     ):
-        return cls(col)._set_name(name)
+        self = object.__new__(cls)
+        self._col = col
+        self._name = name
+        return self
 
     def __getattr__(self, item) -> Column:
         return getattr(self._col, item)
