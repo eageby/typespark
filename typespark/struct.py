@@ -3,6 +3,7 @@ from typing import Optional, dataclass_transform
 import attr
 import attrs
 from pyspark.sql import Column
+from pyspark.sql.functions import struct
 from pyspark.sql.types import StructType
 
 from typespark.columns import TypedColumn, is_typed_column_type
@@ -14,7 +15,7 @@ from typespark.utils import get_field_name, unwrap_type
 @dataclass_transform(
     field_specifiers=(attrs.field, attr.ib, decimal, foreign_key, primary_key, field),
 )
-@attrs.define(init=False, slots=False)
+@attrs.define(init=True, slots=False)
 class Struct(TypedColumn[StructType]):
     @classmethod
     def set_column(cls, col: Column, name: str, tp: Optional[type[TypedColumn]] = None):
@@ -32,7 +33,11 @@ class Struct(TypedColumn[StructType]):
                 )
         return new
 
+    def __attrs_post_init__(self):
+        super().__init__(struct(*[i._col for i in self.fields().values()]))
+
     def fields(self) -> dict[str, TypedColumn]:
+
         return attrs.asdict(self, filter=lambda f, _: is_typed_column_type(f.type))
 
     @classmethod
@@ -40,4 +45,4 @@ class Struct(TypedColumn[StructType]):
         cls, field_transformers: Optional[list[FieldTransformer]] = None
     ):
         ft = pipe_tranformers(*(field_transformers or []))
-        attrs.define(init=False, slots=False, field_transformer=ft)(cls)
+        attrs.define(init=True, slots=False, field_transformer=ft)(cls)

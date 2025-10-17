@@ -1,7 +1,10 @@
-from pyspark.sql import DataFrame
-from pyspark.sql.types import IntegerType
-from pyspark.sql.functions import lit
+import inspect
 
+from pyspark.sql import DataFrame
+from pyspark.sql.functions import lit
+from pyspark.sql.types import IntegerType
+
+from tests.conftest import Person
 from tests.utils import same_column
 from typespark import Int, String
 from typespark.base import BaseDataFrame
@@ -9,11 +12,6 @@ from typespark.columns import TypedArrayType
 from typespark.metadata import field
 from typespark.struct import Struct
 from typespark.type_alias import Integer
-
-
-class Person(BaseDataFrame):
-    name: String
-    age: Int
 
 
 def test_wrap_dataframe(dataframe: DataFrame):
@@ -239,3 +237,15 @@ def test_aliasing_array_init(array_dataframe):
     df = DataClass(array_dataframe, array=array_dataframe["elements"])
 
     assert df.to_df()["array"] is not None
+
+
+def test_struct_init(person: Person):
+    class PersonStruct(Struct):
+        name_: String = field(df_alias="name")
+        age: Integer
+
+    class Container(BaseDataFrame):
+        person: PersonStruct
+
+    print(inspect.signature(PersonStruct.__init__))
+    Container(person, person=PersonStruct(name_=person.name, age=person.age)).show()
