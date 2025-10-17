@@ -1,6 +1,9 @@
 import pytest
 from pyspark.sql import Row, SparkSession, types
 
+from typespark import Int, String
+from typespark.base import BaseDataFrame
+
 
 @pytest.fixture(scope="module")
 def spark():
@@ -74,3 +77,13 @@ def array_struct_dataframe(spark):
             ],
         ),
     )
+
+
+class Person(BaseDataFrame):
+    name: String
+    age: Int
+
+
+@pytest.fixture(scope="function")
+def person(dataframe):
+    yield Person.from_df(dataframe)
