@@ -150,6 +150,9 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
     def drop(self, *cols) -> "BaseDataFrame":
         return BaseDataFrame.from_df(self._dataframe.drop(*cols), disable_select=True)
 
+    def drop_duplicates(self, *cols) -> "Self":
+        return self.__class__.from_df(self._dataframe.drop_duplicates())
+
     def show(self, n: int = 20, truncate: bool = True, vertical: bool = False):
         self._dataframe.show(n, truncate, vertical)
 
