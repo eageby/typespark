@@ -72,7 +72,10 @@ def is_typed_column_type(tp) -> bool:
 
 
 class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
-    _elem_type: type[TypedColumn]
+    _elem_type: type[T]
+
+    def getItem(self, key: int) -> T:
+        return self._elem_type(self._col.getItem(key))
 
     @classmethod
     def set_column(cls, col: Column, name: str, tp: Optional[type[TypedColumn]] = None):
