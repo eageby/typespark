@@ -11,9 +11,9 @@ def _lit(value: LiteralType):
     return TypedColumn(lit(value))
 
 
-def string_literal(value: str) -> String:
+def string_literal(value: str | None) -> String:
     return _lit(value).cast(StringType())
 
 
-def int_literal(value: int) -> Integer:
+def int_literal(value: int | None) -> Integer:
     return _lit(value).cast(IntegerType())
