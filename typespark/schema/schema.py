@@ -1,14 +1,18 @@
+from __future__ import annotations
+
 import inspect
-from typing import Callable, Iterable, get_args
+from typing import TYPE_CHECKING, Callable, Iterable, get_args
 
 import attrs
 from attr import AttrsInstance
 from pyspark.sql.types import DataType, StructField, StructType
 from simple_parsing import docstring
 
-from typespark.base import BaseDataFrame
 from typespark.columns import TypedColumn, is_typed_column_type
 from typespark.metadata import MetaData
+
+if TYPE_CHECKING:
+    from typespark.base import BaseDataFrame, _Base
 
 
 def _extract_items(attrs_instance: AttrsInstance, *extract_keys: Iterable[str]):
@@ -52,7 +56,7 @@ def get_type_instance(field: attrs.Attribute, m: MetaData):
 
 
 def _construct_struct_field(
-    cls: type[BaseDataFrame] | type[TypedColumn], field: attrs.Attribute
+    cls: type[BaseDataFrame] | type[TypedColumn] | type[_Base], field: attrs.Attribute
 ):
     m = MetaData(
         **{k: v for k, v in field.metadata.items() if k in _extract_arg_names(MetaData)}
@@ -81,7 +85,7 @@ def _get_type(field: attrs.Attribute):
     return field.type
 
 
-def generate_schema(cls: type[BaseDataFrame] | type[TypedColumn]):
+def generate_schema(cls: type[BaseDataFrame] | type[TypedColumn] | type[_Base]):
     return StructType(
         [
             _construct_struct_field(cls, f)
