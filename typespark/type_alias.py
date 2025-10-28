@@ -11,6 +11,8 @@ __all__ = [
     "Int",
     "Timestamp",
     "Date",
+    "Column",
+    "DataFrame",
 ]
 
 
@@ -28,6 +30,8 @@ from pyspark.sql.types import (
     TimestampType,
 )
 
+from typespark.base import BaseDataFrame
+
 from .columns import TypedArrayType, TypedColumn
 
 Bool = TypedColumn[BooleanType]
@@ -43,3 +47,6 @@ Int = Integer
 Timestamp = TypedColumn[TimestampType]
 Date = TypedColumn[DateType]
 Array = TypedArrayType
+
+Column = TypedColumn
+DataFrame = BaseDataFrame
