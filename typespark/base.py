@@ -16,6 +16,7 @@ from pyspark.sql import Column, DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.types import DataType
 
+from typespark import schema
 from typespark.columns import AliasedTypedColumn, TypedColumn, is_typed_column_type
 from typespark.define import define
 from typespark.generator import DeferredColumn, Generator
@@ -64,6 +65,10 @@ class _Base:
             for field in attrs.fields(cls)
             if is_typed_column_type(field.type)
         ]
+
+    @classmethod
+    def generate_schema(cls):
+        return schema.generate_schema(cls)
 
     @classmethod
     def __init_subclass__(
