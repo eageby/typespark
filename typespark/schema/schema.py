@@ -86,6 +86,6 @@ def generate_schema(cls: type[BaseDataFrame] | type[TypedColumn]):
         [
             _construct_struct_field(cls, f)
             for f in attrs.fields(cls)
-            if _get_type(f) == TypedColumn  # or issubclass(_get_type(f), TypedColumn)
+            if is_typed_column_type(_get_type(f))
         ]
     )
