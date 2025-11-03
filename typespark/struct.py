@@ -12,6 +12,7 @@ from typespark.field_transforms import (
     pipe_tranformers,
 )
 from typespark.metadata import decimal, field, foreign_key, primary_key
+from typespark.schema import schema
 from typespark.utils import get_field_name, unwrap_type
 
 
@@ -48,7 +49,6 @@ class Struct(TypedColumn[StructType]):
         )
 
     def fields(self) -> dict[str, TypedColumn]:
-
         return attrs.asdict(self, filter=lambda f, _: is_typed_column_type(f.type))
 
     @classmethod
@@ -57,3 +57,7 @@ class Struct(TypedColumn[StructType]):
     ):
         ft = pipe_tranformers(*(field_transformers or []))
         attrs.define(init=True, slots=False, field_transformer=ft)(cls)
+
+    @classmethod
+    def generate_schema(cls):
+        return schema.generate_schema(cls)
