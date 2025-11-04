@@ -48,10 +48,18 @@ def get_type_instance(field: attrs.Attribute, m: MetaData):
     if field.type is None:
         raise ValueError("Field type missing")
 
-    if not get_args(field.type) and is_typed_column_type(field.type):
-        return generate_schema(field.type)
+    if (
+        not get_args(field.type)
+        and is_typed_column_type(field.type)
+        and attrs.has(field.type)
+    ):
+        return generate_schema(field.type)  # type: ignore
     else:
-        field_type: type[DataType] = get_args(field.type)[0]
+        field_type_args = get_args(field.type) or get_args(
+            getattr(field.type, "__orig_bases__", [None])[0]
+        )
+        field_type: type[DataType] = field_type_args[0]
+
         return _kwarg_safe_call(field_type, m)
 
 
