@@ -1,8 +1,10 @@
-from typing import Annotated, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Annotated, Union, get_args, get_origin
 
+if TYPE_CHECKING:
+    from typespark.base import BaseDataFrame
 import attrs
 
-from typespark.metadata import DF_ALIAS
+from typespark.metadata import DF_ALIAS, MetaData
 
 
 def get_field_name(field: attrs.Attribute):
@@ -17,3 +19,19 @@ def unwrap_type(tp):
             if base is not None:
                 return base
     return tp
+
+
+def get_primary_keys(cls: type[BaseDataFrame]):
+    return {
+        fn: f
+        for fn, f in attrs.fields_dict(cls).items()
+        if MetaData(**f.metadata).primary_key
+    }
+
+
+def get_foreign_keys(cls: type[BaseDataFrame]):
+    return {
+        fn: f
+        for fn, f in attrs.fields_dict(cls).items()
+        if MetaData(**f.metadata).foreign_key
+    }
