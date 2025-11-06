@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Annotated, Union, get_args, get_origin
 
 if TYPE_CHECKING:
