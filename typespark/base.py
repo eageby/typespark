@@ -8,6 +8,7 @@ from typing import (
     Self,
     Union,
     dataclass_transform,
+    overload,
 )
 
 import attr
@@ -84,9 +85,24 @@ class _Base:
             self, "_dataframe", self.select(*self.columns).to_df()
         )  # Circumventing frozen
 
+    @overload
     @classmethod
     def from_df(
         cls, df: DataFrame, alias: str | None = None, disable_select: bool = False
+    ): ...
+
+    @overload
+    @classmethod
+    def from_df(
+        cls, df: Self, alias: str | None = None, disable_select: bool = False
+    ): ...
+
+    @classmethod
+    def from_df(
+        cls,
+        df: "DataFrame | Self",
+        alias: str | None = None,
+        disable_select: bool = False,
     ):
         new = cls.__new__(cls)
         object.__setattr__(new, "_alias", alias)
@@ -96,6 +112,9 @@ class _Base:
 
         if alias is not None:
             df = df.alias(alias)
+
+        if isinstance(df, _Base):
+            df = df.to_df()
 
         object.__setattr__(new, "_dataframe", df)
 
