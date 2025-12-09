@@ -21,6 +21,7 @@ from typespark import schema
 from typespark.columns import AliasedTypedColumn, TypedColumn, is_typed_column_type
 from typespark.define import define
 from typespark.generator import DeferredColumn, Generator
+from typespark.groups import _AggregateColumn, _GroupColumn
 from typespark.interface import SupportsETLFrame, SupportsGroupedData
 from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.mixins import Aliasable, SchemaDefaults
@@ -136,35 +137,54 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
     def select(
         self, *cols: Union[str, Column] | TypedColumn[DataType]
     ) -> "BaseDataFrame":
+        aggregates = [c.column for c in cols if isinstance(c, _AggregateColumn)]
+        groups = [c.column for c in cols if isinstance(c, _GroupColumn)]
         projections = set([c.parent for c in cols if isinstance(c, DeferredColumn)])
-        normal_cols = [
-            c
-            for c in cols
-            if not (isinstance(c, DeferredColumn) or isinstance(c, Generator))
-        ]
 
-        if len(projections) > 0:
-            projected_cols = [
-                c.column_operation() if isinstance(c, Generator) else c
-                for c in projections
-            ]
-            # Prevent aliasing normal cols twice
-            original_named_cols = [
-                F.col(n.original_name) if isinstance(n, AliasedTypedColumn) else n
-                for n in normal_cols
-            ]
-            # Step 1: materialize generators
-            df = self._dataframe.select(*projected_cols, *original_named_cols)
+        if (aggregates or groups) and projections:
+            raise NotImplementedError(
+                "Support for groups and projections have not been implemented."
+            )
 
-            # Step 2: select final materialized expressions
-            final_cols = [c.col if isinstance(c, DeferredColumn) else c for c in cols]
+        if aggregates or groups:
+            if not aggregates:
+                raise ValueError("Need to specify aggregates if using groups.")
+
+            df = self._dataframe.groupBy(*groups).agg(*aggregates)
+            return BaseDataFrame.from_df(df, disable_select=True)
 
         else:
-            df = self._dataframe
-            final_cols = [
-                c.column_operation() if isinstance(c, Generator) else c for c in cols
-            ]
-        return BaseDataFrame.from_df(df.select(*final_cols), disable_select=True)
+            if len(projections) > 0:
+                projected_cols = [
+                    c.column_operation() if isinstance(c, Generator) else c
+                    for c in projections
+                ]
+                normal_cols = [
+                    c
+                    for c in cols
+                    if not (isinstance(c, DeferredColumn) or isinstance(c, Generator))
+                ]
+                # Prevent aliasing normal cols twice
+                original_named_cols = [
+                    F.col(n.original_name) if isinstance(n, AliasedTypedColumn) else n
+                    for n in normal_cols
+                ]
+                # Step 1: materialize generators
+                df = self._dataframe.select(*projected_cols, *original_named_cols)
+
+                # Step 2: select final materialized expressions
+                final_cols = [
+                    c.col if isinstance(c, DeferredColumn) else c for c in cols
+                ]
+
+            else:
+                df = self._dataframe
+                final_cols = [
+                    c.column_operation() if isinstance(c, Generator) else c
+                    for c in cols
+                ]
+
+            return BaseDataFrame.from_df(df.select(*final_cols), disable_select=True)
 
     def withColumn(self, colName: str, col: Column) -> "BaseDataFrame":
         return BaseDataFrame.from_df(
