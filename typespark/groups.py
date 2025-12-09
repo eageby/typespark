@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import attrs
+from pyspark.sql.types import DataType
 
 if TYPE_CHECKING:
     from typespark.columns import TypedColumn
 
 
-@attrs.define()
-class _GroupColumn:
+class _GroupBase:
     column: TypedColumn
     _alias: str
 
@@ -20,14 +19,14 @@ class _GroupColumn:
         self.column = self.column.alias(alias)
         return self
 
-
-class _AggregateColumn:
-    column: TypedColumn
-    _alias: str
-
-    def __init__(self, column: TypedColumn) -> None:
-        self.column = column
-
-    def alias(self, alias: str):
-        self.column = self.column.alias(alias)
+    def cast(self, type: DataType):
+        self.column = self.column.cast(type)
         return self
+
+
+class _GroupColumn(_GroupBase):
+    pass
+
+
+class _AggregateColumn(_GroupBase):
+    pass

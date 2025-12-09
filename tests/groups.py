@@ -1,5 +1,5 @@
 import pytest
-from pyspark.sql.functions import avg
+from pyspark.sql.types import DoubleType, StringType
 
 import typespark as ts
 from tests.conftest import Person
@@ -51,3 +51,18 @@ def test_no_agg(person: Person):
 
     with pytest.raises(ValueError):
         Aggregate(df, name=df.name.group())
+
+
+def test_cast(person: Person):
+    class Aggregate(ts.DataFrame):
+        name: ts.String
+        n_rows: ts.Double
+
+    df = person.union(person)
+
+    tf = Aggregate(df, name=df.name.group(), n_rows=count(df.age).cast(DoubleType()))
+
+    fields = tf.to_df().schema.fields
+
+    assert isinstance(fields[0].dataType, StringType)
+    assert isinstance(fields[1].dataType, DoubleType)
