@@ -1,11 +1,13 @@
 import functools
-from typing import Optional, get_args, get_origin
+from typing import Optional, Self, get_args, get_origin
 
 from pyspark.sql import Column
 from pyspark.sql.types import ArrayType, DataType
 
 from typespark.generator import Exploded
 from typespark.utils import unwrap_type
+
+from .groups import _GroupColumn
 
 
 class TypedColumn[T: DataType](Column):
@@ -44,6 +46,9 @@ class TypedColumn[T: DataType](Column):
 
     def __repr__(self):
         return f"{self.__class__.__name__}<'{self._name}'>"
+
+    def group(self) -> Self:
+        return _GroupColumn(self)  # type: ignore
 
     def cast[U: DataType](self, dataType: U) -> "TypedColumn[U]":
         return TypedColumn(self._col.cast(dataType))._set_name(self._name)
@@ -86,6 +91,4 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
         return new
 
     def explode(self) -> T:
-        return Exploded(
-            parent=self, alias=self._name, elem_type=self._elem_type
-        )  # type:ignore
+        return Exploded(parent=self, alias=self._name, elem_type=self._elem_type)  # type:ignore
