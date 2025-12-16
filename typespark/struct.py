@@ -13,7 +13,7 @@ from typespark.field_transforms import (
 )
 from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.schema import schema
-from typespark.utils import get_field_name, unwrap_type
+from typespark.utils import get_field_name, unwrap_origin, unwrap_type
 
 
 @dataclass_transform(
@@ -42,7 +42,9 @@ class Struct(TypedColumn[StructType]):
         super().__init__(
             struct(
                 *[
-                    v._col.alias(get_field_name(metadata[k]))
+                    self.__getattribute__(k)
+                    if issubclass(unwrap_origin(metadata[k].type), Struct)
+                    else v._col.alias(get_field_name(metadata[k]))
                     for k, v in self.fields().items()
                 ]
             )
