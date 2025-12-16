@@ -42,7 +42,7 @@ class Struct(TypedColumn[StructType]):
         super().__init__(
             struct(
                 *[
-                    self.__getattribute__(k)
+                    self.__getattribute__(k).alias(k)
                     if issubclass(unwrap_origin(metadata[k].type), Struct)
                     else v._col.alias(get_field_name(metadata[k]))
                     for k, v in self.fields().items()
