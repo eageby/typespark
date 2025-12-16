@@ -23,6 +23,13 @@ def unwrap_type(tp):
     return tp
 
 
+def unwrap_origin(tp: type) -> type:
+    origin = get_origin(tp)
+    if origin is not None:
+        return unwrap_origin(origin)
+    return tp
+
+
 def get_primary_keys(cls: type[BaseDataFrame]):
     return {
         fn: f
