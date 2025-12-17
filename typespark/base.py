@@ -95,13 +95,13 @@ class _Base:
     @overload
     @classmethod
     def from_df(
-        cls, df: Self, alias: str | None = None, disable_select: bool = False
+        cls, df: _Base, alias: str | None = None, disable_select: bool = False
     ): ...
 
     @classmethod
     def from_df(
         cls,
-        df: "DataFrame | Self",
+        df: "DataFrame | _Base",
         alias: str | None = None,
         disable_select: bool = False,
     ):
@@ -149,6 +149,14 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
         if aggregates or groups:
             if not aggregates:
                 raise ValueError("Need to specify aggregates if using groups.")
+
+            # combined_columns = set(groups + aggregates)
+            # expected_columns = set(cols)
+            # if not expected_columns == combined_columns:
+            #     missing_columns = expected_columns - combined_columns
+            #     raise ValueError(
+            #         f"Missing {missing_columns} as group columns or aggregates."
+            #     )
 
             df = self._dataframe.groupBy(*groups).agg(*aggregates)
             return BaseDataFrame.from_df(df, disable_select=True)
