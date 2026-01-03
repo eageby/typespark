@@ -30,7 +30,7 @@ def struct_dataframe(spark):
     """Creates a default dataframe."""
     data = [
         Row(struct={"name": "Alice", "age": 30}),
-        Row(struct={"name": "Eve", "age": 25}),
+        Row(struct={"name": "Bob", "age": 25}),
     ]
 
     yield spark.createDataFrame(data)
@@ -54,7 +54,7 @@ def array_struct_dataframe(spark):
         Row(
             elements=[
                 {"name": "Alice", "age": 30},
-                {"name": "Eve", "age": 25},
+                {"name": "Bob", "age": 25},
             ]
         )
     ]
