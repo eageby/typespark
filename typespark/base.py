@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import (
     TYPE_CHECKING,
     Any,
-    Generator,
     Optional,
     Self,
     Union,
@@ -90,13 +89,13 @@ class _Base:
     @classmethod
     def from_df(
         cls, df: DataFrame, alias: str | None = None, disable_select: bool = False
-    ): ...
+    ) -> Self: ...
 
     @overload
     @classmethod
     def from_df(
         cls, df: _Base, alias: str | None = None, disable_select: bool = False
-    ): ...
+    ) -> Self: ...
 
     @classmethod
     def from_df(
@@ -104,7 +103,7 @@ class _Base:
         df: "DataFrame | _Base",
         alias: str | None = None,
         disable_select: bool = False,
-    ):
+    ) -> Self:
         new = cls.__new__(cls)
         object.__setattr__(new, "_alias", alias)
 
@@ -178,7 +177,7 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
                     for n in normal_cols
                 ]
                 # Step 1: materialize generators
-                df = self._dataframe.select(*projected_cols, *original_named_cols)
+                df = self._dataframe.select(*projected_cols, *original_named_cols)  # type: ignore
 
                 # Step 2: select final materialized expressions
                 final_cols = [
