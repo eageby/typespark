@@ -12,7 +12,7 @@ from typing import (
 
 import attr
 import attrs
-from pyspark.sql import Column, DataFrame
+import pyspark.sql
 from pyspark.sql import functions as F
 from pyspark.sql.types import DataType
 
@@ -21,7 +21,7 @@ from typespark.columns import AliasedTypedColumn, TypedColumn, is_typed_column_t
 from typespark.define import define
 from typespark.generator import DeferredColumn, Generator
 from typespark.groups import _AggregateColumn, _GroupColumn
-from typespark.interface import SupportsETLFrame, SupportsGroupedData
+from typespark.interface import SupportsETLFrame
 from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.mixins import Aliasable, SchemaDefaults
 from typespark.utils import get_field_name, unwrap_type
@@ -30,8 +30,8 @@ if TYPE_CHECKING:
     from typespark.field_transforms import FieldTransformer
 
 
-def _dataframe_converter(df: "_Base | DataFrame"):
-    if isinstance(df, DataFrame):
+def _dataframe_converter(df: "_Base | pyspark.sql.DataFrame"):
+    if isinstance(df, pyspark.sql.DataFrame):
         return df
     return df.to_df()
 
@@ -42,7 +42,9 @@ def _dataframe_converter(df: "_Base | DataFrame"):
 )
 @attrs.define(frozen=True)
 class _Base:
-    _dataframe: DataFrame = attrs.field(converter=_dataframe_converter, alias="df")
+    _dataframe: pyspark.sql.DataFrame = attrs.field(
+        converter=_dataframe_converter, alias="df"
+    )
     _alias: Optional[str] = attrs.field(init=False, default=None)
 
     def __getattr__(self, name: str):
@@ -88,7 +90,10 @@ class _Base:
     @overload
     @classmethod
     def from_df(
-        cls, df: DataFrame, alias: str | None = None, disable_select: bool = False
+        cls,
+        df: pyspark.sql.DataFrame,
+        alias: str | None = None,
+        disable_select: bool = False,
     ) -> Self: ...
 
     @overload
@@ -100,7 +105,7 @@ class _Base:
     @classmethod
     def from_df(
         cls,
-        df: "DataFrame | _Base",
+        df: "pyspark.sql.DataFrame | _Base",
         alias: str | None = None,
         disable_select: bool = False,
     ) -> Self:
@@ -134,7 +139,7 @@ class _Base:
 
 class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
     def select(
-        self, *cols: Union[str, Column] | TypedColumn[DataType]
+        self, *cols: Union[str, pyspark.sql.Column] | TypedColumn[DataType]
     ) -> "BaseDataFrame":
         aggregates = [c.column for c in cols if isinstance(c, _AggregateColumn)]
         groups = [c.column for c in cols if isinstance(c, _GroupColumn)]
@@ -193,7 +198,7 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
 
             return BaseDataFrame.from_df(df.select(*final_cols), disable_select=True)
 
-    def withColumn(self, colName: str, col: Column) -> "BaseDataFrame":
+    def withColumn(self, colName: str, col: pyspark.sql.Column) -> "BaseDataFrame":
         return BaseDataFrame.from_df(
             self._dataframe.withColumn(colName, col), disable_select=True
         )
@@ -216,16 +221,13 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
     def alias(self, alias: str) -> Self:
         return self.from_df(self._dataframe, alias)
 
-    def groupBy(self, *cols: str | Column) -> SupportsGroupedData:
-        return self._dataframe.groupBy(*cols)
-
     def union(self, other: Self) -> Self:
         return self.__class__.from_df(self._dataframe.unionByName(other.to_df()))
 
     def join(
         self,
         other: Any,
-        on: str | list[str] | Column | None = None,
+        on: str | list[str] | pyspark.sql.Column | None = None,
         how: str | None = None,
     ) -> "BaseDataFrame":
         return BaseDataFrame.from_df(
