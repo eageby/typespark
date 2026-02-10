@@ -1,5 +1,5 @@
 import pytest
-from pyspark.sql import Row, SparkSession, types
+from pyspark.sql import DataFrame, Row, SparkSession, types
 
 from typespark import Int, String
 from typespark.base import BaseDataFrame
@@ -85,5 +85,24 @@ class Person(BaseDataFrame):
 
 
 @pytest.fixture(scope="function")
-def person(dataframe):
+def person(dataframe: DataFrame):
     yield Person.from_df(dataframe)
+
+
+class Id(BaseDataFrame):
+    value: Int
+
+
+class Range(BaseDataFrame):
+    id: Int
+
+
+@pytest.fixture(scope="function")
+def id(spark: SparkSession):
+    yield Id.from_df(spark.createDataFrame([1, 2, 3, 3, 4], "int"))
+
+
+@pytest.fixture(scope="function")
+def small_range(spark: SparkSession):
+    rf = spark.range(3)
+    yield Range.from_df(rf.withColumn("id", rf["id"].cast(types.IntegerType())))
