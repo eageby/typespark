@@ -2,8 +2,8 @@ from tests.conftest import Person
 from tests.utils import collect_values
 from typespark import String
 from typespark.base import BaseDataFrame
+from typespark.columns.struct import Struct
 from typespark.metadata import field
-from typespark.struct import Struct
 from typespark.type_alias import Integer
 
 
