@@ -3,7 +3,7 @@ from pyspark.sql.types import DoubleType, StringType
 
 import typespark as ts
 from tests.conftest import Person
-from typespark.aggregates import count, sum
+from typespark.functions.aggregates import count, sum
 
 
 def test_total(person: Person):
