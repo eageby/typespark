@@ -1,5 +1,7 @@
 __all__ = [
     "Bool",
+    "Array",
+    "Byte",
     "String",
     "Short",
     "Decimal",
@@ -19,6 +21,7 @@ __all__ = [
 from pyspark.sql.types import (
     BinaryType,
     BooleanType,
+    ByteType,
     DateType,
     DecimalType,
     DoubleType,
@@ -32,9 +35,11 @@ from pyspark.sql.types import (
 
 from typespark.base import BaseDataFrame
 
-from .columns import TypedArrayType, TypedColumn
+from .columns import TypedColumn
+from .columns.array import TypedArrayType
 
 Bool = TypedColumn[BooleanType]
+Byte = TypedColumn[ByteType]
 String = TypedColumn[StringType]
 Short = TypedColumn[ShortType]
 Decimal = TypedColumn[DecimalType]
