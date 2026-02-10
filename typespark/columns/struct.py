@@ -6,7 +6,8 @@ from pyspark.sql import Column
 from pyspark.sql.functions import struct
 from pyspark.sql.types import StructType
 
-from typespark.columns import TypedColumn, is_typed_column_type
+from typespark.columns import TypedColumn
+from typespark.columns.utils import is_typed_column_type
 from typespark.field_transforms import (
     FieldTransformer,
     pipe_tranformers,
@@ -42,7 +43,7 @@ class Struct(TypedColumn[StructType]):
         super().__init__(
             struct(
                 *[
-                    self.__getattribute__(k).alias(k)
+                    self.__getattribute__(k)._col.alias(k)
                     if issubclass(unwrap_origin(metadata[k].type), Struct)
                     else v._col.alias(get_field_name(metadata[k]))
                     for k, v in self.fields().items()

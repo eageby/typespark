@@ -46,7 +46,7 @@ class Generator[T: TypedColumn](ABC):
     def __hash__(self) -> int:
         return hash(self._alias)
 
-    def _materialize(self) -> Column:
+    def _materialize(self) -> T:
         if self._col is not None:
             c = self._col
         c = col(self._alias)
@@ -70,6 +70,6 @@ class Generator[T: TypedColumn](ABC):
     def column_operation(self) -> Column: ...
 
 
-class Exploded[T: TypedColumn](Generator):
+class Exploded[T: TypedColumn](Generator[T]):
     def column_operation(self):
-        return explode(self._parent).alias(self._alias)
+        return explode(self._parent._col).alias(self._alias)
