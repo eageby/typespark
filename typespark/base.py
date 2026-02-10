@@ -18,6 +18,8 @@ from pyspark.sql.types import DataType
 
 from typespark import schema
 from typespark.columns import AliasedTypedColumn, TypedColumn, is_typed_column_type
+from typespark.columns.generator import DeferredColumn, Generator
+from typespark.columns.groups import _AggregateColumn, _GroupColumn
 from typespark.define import define
 from typespark.generator import DeferredColumn, Generator
 from typespark.groups import _AggregateColumn, _GroupColumn
@@ -162,7 +164,9 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
             #         f"Missing {missing_columns} as group columns or aggregates."
             #     )
 
-            df = self._dataframe.groupBy(*groups).agg(*aggregates)
+            df = self._dataframe.groupBy(*[g._col for g in groups]).agg(
+                *[a._col for a in aggregates]
+            )
             return BaseDataFrame.from_df(df, disable_select=True)
 
         else:
@@ -196,7 +200,15 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
                     for c in cols
                 ]
 
-            return BaseDataFrame.from_df(df.select(*final_cols), disable_select=True)
+            return BaseDataFrame.from_df(
+                df.select(
+                    *[
+                        f.to_spark() if isinstance(f, TypedColumn) else f
+                        for f in final_cols
+                    ]
+                ),
+                disable_select=True,
+            )
 
     def withColumn(self, colName: str, col: pyspark.sql.Column) -> "BaseDataFrame":
         return BaseDataFrame.from_df(
@@ -227,9 +239,12 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
     def join(
         self,
         other: Any,
-        on: str | list[str] | pyspark.sql.Column | None = None,
+        on: TypedColumn | str | list[str] | pyspark.sql.Column | None = None,
         how: str | None = None,
     ) -> "BaseDataFrame":
         return BaseDataFrame.from_df(
-            self._dataframe.join(other, on, how), disable_select=True
+            self._dataframe.join(
+                other, on._col if isinstance(on, TypedColumn) else on, how
+            ),
+            disable_select=True,
         )
