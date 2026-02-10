@@ -59,3 +59,16 @@ def test_aliasing_with_column_alias(dataframe):
     assert result_values[0]["age"] == 30
     assert result_values[1]["n2"] == "Bob"
     assert result_values[1]["age"] == 25
+
+
+def test_broadcast(id: Id, small_range: Range):
+    sm = small_range.broadcast()
+
+    df = id.join(sm, id.value == sm.id)
+
+    result = collect_values(df)
+
+    assert result[0]["value"] == 1
+    assert result[1]["value"] == 2
+    assert result[0]["id"] == 1
+    assert result[1]["id"] == 2

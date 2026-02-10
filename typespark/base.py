@@ -248,3 +248,6 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
             ),
             disable_select=True,
         )
+
+    def broadcast(self):
+        return self.from_df(F.broadcast(self.to_spark()))
