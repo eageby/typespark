@@ -21,8 +21,6 @@ from typespark.columns import AliasedTypedColumn, TypedColumn, is_typed_column_t
 from typespark.columns.generator import DeferredColumn, Generator
 from typespark.columns.groups import _AggregateColumn, _GroupColumn
 from typespark.define import define
-from typespark.generator import DeferredColumn, Generator
-from typespark.groups import _AggregateColumn, _GroupColumn
 from typespark.interface import SupportsETLFrame
 from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.mixins import Aliasable, SchemaDefaults
@@ -51,6 +49,9 @@ class _Base:
 
     def __getattr__(self, name: str):
         return getattr(self._dataframe, name)
+
+    def to_spark(self):
+        return self.to_df()
 
     def to_df(self):
         return self._dataframe
