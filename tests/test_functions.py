@@ -1,0 +1,365 @@
+import datetime
+import math
+
+import pytest
+from pyspark.sql import Row, SparkSession
+from pyspark.sql.types import (
+    ArrayType,
+    BooleanType,
+    DateType,
+    DoubleType,
+    IntegerType,
+    StringType,
+    StructField,
+    StructType,
+)
+
+from tests.conftest import Id, Range
+from tests.utils import collect_column, collect_values
+from typespark import Binary, DataFrame, Date, Double, Float, Int, String, int_literal
+from typespark import functions as tsf
+from typespark.columns.array import TypedArrayType
+
+
+def test_add_months_with_literal(spark: SparkSession):
+
+    class DateTestData(DataFrame):
+        d: Date
+
+    data = [
+        (datetime.date(2020, 1, 31),),
+        (datetime.date(2020, 2, 29),),
+    ]
+    dates = DateTestData.from_df(
+        spark.createDataFrame(data, schema=DateTestData.generate_schema())
+    )
+
+    result = dates.select(tsf.add_months(dates.d, 1).alias("added"))
+
+    values = collect_column(result, "added")
+
+    assert values == [
+        datetime.date(2020, 2, 29),
+        datetime.date(2020, 3, 29),
+    ]
+
+    assert isinstance(result.to_spark().schema["added"].dataType, DateType)
+
+
+def test_add_months_with_col(spark: SparkSession):
+
+    class DateTestData(DataFrame):
+        d: Date
+
+    data = [
+        (datetime.date(2020, 1, 31),),
+        (datetime.date(2020, 2, 29),),
+    ]
+    dates = DateTestData.from_df(
+        spark.createDataFrame(data, schema=DateTestData.generate_schema())
+    )
+
+    result = dates.select(tsf.add_months(dates.d, int_literal(1)).alias("added"))
+
+    values = collect_column(result, "added")
+
+    assert values == [
+        datetime.date(2020, 2, 29),
+        datetime.date(2020, 3, 29),
+    ]
+
+    assert isinstance(result.to_spark().schema["added"].dataType, DateType)
+
+
+def test_array(spark: SparkSession):
+    class IntTestData(DataFrame):
+        a: Int
+        b: Int
+
+    data = [
+        (1, 2),
+        (1, 3),
+        (3, 4),
+    ]
+    integers = IntTestData.from_df(
+        spark.createDataFrame(data, schema=IntTestData.generate_schema())
+    )
+
+    result = integers.select(tsf.array(integers.a, integers.b).alias("array"))
+
+    values = collect_column(result, "array")
+
+    assert values == [[1, 2], [1, 3], [3, 4]]
+
+    assert result.to_spark().schema["array"].dataType == ArrayType(IntegerType(), False)
+
+
+class ArrayTestData(DataFrame):
+    a: TypedArrayType[Int]
+
+
+@pytest.fixture
+def arrays(spark):
+    data = [Row(a=[1, 2]), Row(a=[3, 4])]
+    schema = StructType(
+        [
+            StructField("a", ArrayType(IntegerType()), nullable=False),
+        ]
+    )
+    return ArrayTestData.from_df(spark.createDataFrame(data, schema=schema))
+
+
+def test_array_append(arrays: ArrayTestData):
+    result = arrays.select(tsf.array_append(arrays.a, int_literal(10)).alias("array"))
+
+    values = collect_column(result, "array")
+
+    assert values == [[1, 2, 10], [3, 4, 10]]
+
+    assert result.to_spark().schema["array"].dataType == ArrayType(IntegerType(), True)
+
+
+def test_array_contains(arrays: ArrayTestData):
+    result = arrays.select(
+        tsf.array_contains(arrays.a, int_literal(2)).alias("2"),
+        tsf.array_contains(arrays.a, int_literal(10)).alias("10"),
+    )
+
+    values = collect_values(result)
+
+    assert values[0]["2"]
+    assert not values[0]["10"]
+    assert not values[1]["2"]
+    assert not values[1]["10"]
+
+    assert result.to_spark().schema["2"].dataType == BooleanType()
+    assert result.to_spark().schema["10"].dataType == BooleanType()
+
+
+def test_atan2_float(spark: SparkSession):
+    class TrigTestData(DataFrame):
+        y: Float
+        x: Float
+
+    data = [
+        (1.0, 1.0),  # atan2(1, 1) = pi/4
+        (0.0, 1.0),  # atan2(0, 1) = 0
+        (-1.0, 1.0),  # atan2(-1, 1) = -pi/4
+    ]
+
+    trig = TrigTestData.from_df(
+        spark.createDataFrame(data, schema=TrigTestData.generate_schema())
+    )
+
+    result = trig.select(tsf.atan2(trig.y, trig.x).alias("angle"))
+
+    values = collect_column(result, "angle")
+
+    assert values == [
+        pytest.approx(math.pi / 4),
+        pytest.approx(0.0),
+        pytest.approx(-math.pi / 4),
+    ]
+
+    assert isinstance(
+        result.to_spark().schema["angle"].dataType,
+        DoubleType,
+    )
+
+
+def test_atan2_double(spark: SparkSession):
+    class TrigTestData(DataFrame):
+        y: Double
+        x: Double
+
+    data = [
+        (1.0, 1.0),  # atan2(1, 1) = pi/4
+        (0.0, 1.0),  # atan2(0, 1) = 0
+        (-1.0, 1.0),  # atan2(-1, 1) = -pi/4
+    ]
+
+    trig = TrigTestData.from_df(
+        spark.createDataFrame(data, schema=TrigTestData.generate_schema())
+    )
+
+    result = trig.select(tsf.atan2(trig.y, trig.x).alias("angle"))
+
+    values = collect_column(result, "angle")
+
+    assert values == [
+        pytest.approx(math.pi / 4),
+        pytest.approx(0.0),
+        pytest.approx(-math.pi / 4),
+    ]
+
+    assert isinstance(
+        result.to_spark().schema["angle"].dataType,
+        DoubleType,
+    )
+
+
+def test_broadcast(id: Id, small_range: Range):
+    sm = tsf.broadcast(small_range)
+
+    df = id.join(sm, id.value == sm.id)
+
+    result = collect_values(df)
+
+    assert result[0]["value"] == 1
+    assert result[1]["value"] == 2
+    assert result[0]["id"] == 1
+    assert result[1]["id"] == 2
+
+
+def test_coalesce_prefers_left(id: Id, small_range: Range):
+    df = id.join(small_range, id.value == small_range.id, "fullouter").select(
+        tsf.coalesce(id.value, small_range.id).alias("coalesced"),
+        id.value.alias("value"),
+        small_range.id.alias("rid"),
+    )
+
+    rows = collect_values(df)
+
+    assert rows[0]["coalesced"] == rows[0]["rid"] == 0
+    assert rows[1]["coalesced"] == rows[1]["value"] == 1
+    assert rows[2]["coalesced"] == rows[2]["value"] == 2
+    assert rows[3]["coalesced"] == rows[3]["value"] == 3
+    assert rows[4]["coalesced"] == rows[4]["value"] == 3
+    assert rows[5]["coalesced"] == rows[5]["value"] == 4
+
+    from pyspark.sql.types import IntegerType
+
+    assert isinstance(df.to_spark().schema["coalesced"].dataType, IntegerType)
+
+
+def test_collect_list(spark: SparkSession):
+    """collect_list over column `a` should collect values into a single-row array."""
+
+    class IntTestData(DataFrame):
+        a: Int
+        b: Int
+
+    data = [
+        (1, 2),
+        (1, 3),
+        (3, 4),
+    ]
+    integers = IntTestData.from_df(
+        spark.createDataFrame(data, schema=IntTestData.generate_schema())
+    )
+    result = integers.select(tsf.collect_list(integers.a).alias("collected"))
+
+    values = collect_column(result, "collected")
+
+    assert values == [[1, 1, 3]]
+
+    dtype = result.to_spark().schema["collected"].dataType
+    assert isinstance(dtype, ArrayType)
+    assert isinstance(dtype.elementType, IntegerType)
+
+
+def test_collect_set(spark: SparkSession):
+    """collect_set over column should collect values into a single-row array and remove duplicates."""
+
+    class IntTestData(DataFrame):
+        a: Int
+        b: Int
+
+    data = [
+        (1, 2),
+        (1, 3),
+        (3, 4),
+    ]
+    integers = IntTestData.from_df(
+        spark.createDataFrame(data, schema=IntTestData.generate_schema())
+    )
+    result = integers.select(
+        tsf.collect_set(integers.a).alias("collected_duplicates"),
+        tsf.collect_set(integers.b).alias("collected_unique"),
+    )
+
+    duplicate_values = collect_column(result, "collected_duplicates")
+    unique_values = collect_column(result, "collected_unique")
+
+    assert duplicate_values == [[1, 3]]
+    assert unique_values == [[2, 3, 4]]
+
+    dtype = result.to_spark().schema["collected_duplicates"].dataType
+    assert isinstance(dtype, ArrayType)
+    assert isinstance(dtype.elementType, IntegerType)
+
+    dtype = result.to_spark().schema["collected_unique"].dataType
+    assert isinstance(dtype, ArrayType)
+    assert isinstance(dtype.elementType, IntegerType)
+
+
+def test_concat(spark: SparkSession):
+    class Data(DataFrame):
+        s: String
+        t: String
+
+    data = [
+        ("hello", "lo"),
+        ("world", "zz"),
+    ]
+    strings = Data.from_df(spark.createDataFrame(data, schema=Data.generate_schema()))
+
+    result = strings.select(
+        tsf.concat(strings.s).alias("no-op"),
+        tsf.concat(strings.s, strings.t).alias("concat"),
+    )
+
+    values = collect_column(result, "no-op")
+    concated_values = collect_column(result, "concat")
+    assert values == ["hello", "world"]
+    assert concated_values == ["hellolo", "worldzz"]
+
+    assert isinstance(result.to_spark().schema["concat"].dataType, StringType)
+    assert isinstance(result.to_spark().schema["no-op"].dataType, StringType)
+
+
+def test_contains_string_column(spark: SparkSession):
+    class Data(DataFrame):
+        s: String
+        t: String
+
+    data = [
+        ("hello", "lo"),
+        ("world", "zz"),
+    ]
+
+    strings = Data.from_df(spark.createDataFrame(data, schema=Data.generate_schema()))
+
+    result = strings.select(
+        tsf.contains(strings.s, strings.t).alias("has"),
+        strings.s.alias("s"),
+        strings.t.alias("t"),
+    )
+
+    rows = collect_values(result)
+    assert rows[0]["has"] is True
+    assert rows[1]["has"] is False
+
+    assert isinstance(result.to_spark().schema["has"].dataType, BooleanType)
+
+
+def test_contains_binary_column(spark: SparkSession):
+    class BinaryTestData(DataFrame):
+        b: Binary
+        needle: Binary
+
+    data = [
+        (bytearray(b"abcdef"), bytearray(b"bc")),
+        (bytearray(b"1234"), bytearray(b"zz")),
+    ]
+
+    binaries = BinaryTestData.from_df(
+        spark.createDataFrame(data, schema=BinaryTestData.generate_schema())
+    )
+
+    result = binaries.select(tsf.contains(binaries.b, binaries.needle).alias("has"))
+
+    values = collect_column(result, "has")
+    assert values == [True, False]
+
+    assert isinstance(result.to_spark().schema["has"].dataType, BooleanType)
