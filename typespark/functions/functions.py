@@ -19,6 +19,7 @@ from typespark import (
     Long,
     Short,
     String,
+    Timestamp,
 )
 
 Numeric: TypeAlias = Byte | Short | Int | Long | Float | Double | Decimal
@@ -88,19 +89,26 @@ def concat_ws(sep: str, *cols: String) -> String:
 
 
 @overload
-def contains(left: String, col: String) -> Bool: ...
+def contains(left: String, right: String) -> Bool: ...
 
 
 @overload
-def contains(left: Binary, col: Binary) -> Bool: ...
+def contains(left: Binary, right: Binary) -> Bool: ...
 
 
-def contains(left: String | Binary, col: String | Binary) -> Bool:
-    return Bool(F.contains(left.to_spark(), col.to_spark()))
+def contains(left: String | Binary, right: String | Binary) -> Bool:
+    return Bool(F.contains(left.to_spark(), right.to_spark()))
+
+
+def to_date(col: String, format: str | None = None) -> Date:
+    return Date(F.to_date(col.to_spark(), format))
+
+
+def year(col: Date | Timestamp) -> Int:
+    return Int(F.year(col.to_spark()))
 
 
 # TODO
-# F.to_date
 # F.when
 # F.least
 # F.lit
@@ -167,4 +175,3 @@ def contains(left: String | Binary, col: String | Binary) -> Bool:
 # F.unix_timestamp
 # F.upper
 # F.window
-# F.year

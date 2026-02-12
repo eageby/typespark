@@ -379,3 +379,74 @@ def test_contains_binary_column(spark: SparkSession):
     assert values == [True, False]
 
     assert isinstance(result.to_spark().schema["has"].dataType, BooleanType)
+
+
+def test_to_date(spark: SparkSession):
+    class DateString(DataFrame):
+        date_str: String
+
+    data = [
+        ("2025-01-01",),
+        ("2025:01:01",),
+    ]
+
+    df = DateString.from_df(
+        spark.createDataFrame(data, schema=DateString.generate_schema())
+    )
+
+    result = df.select(
+        tsf.to_date(df.date_str).alias("no_format"),
+        tsf.to_date(df.date_str, "yyyy:MM:dd").alias("format"),
+    )
+
+    formatted = collect_column(result, "format")
+    assert formatted == [None, datetime.date(2025, 1, 1)]
+    not_formatted = collect_column(result, "no_format")
+    assert not_formatted == [datetime.date(2025, 1, 1), None]
+
+    assert isinstance(result.to_spark().schema["format"].dataType, DateType)
+    assert isinstance(result.to_spark().schema["no_format"].dataType, DateType)
+
+
+def test_year_dates(spark: SparkSession):
+    class Dates(DataFrame):
+        date: Date
+
+    data = [
+        (datetime.date(2025, 1, 1),),
+        (datetime.date(2026, 4, 3),),
+        (datetime.date(2028, 4, 3),),
+    ]
+
+    df = Dates.from_df(spark.createDataFrame(data, schema=Dates.generate_schema()))
+
+    result = df.select(
+        tsf.year(df.date).alias("year"),
+    )
+
+    values = collect_column(result, "year")
+    assert values == [2025, 2026, 2028]
+
+    assert isinstance(result.to_spark().schema["year"].dataType, IntegerType)
+
+
+def test_year_timestamps(spark: SparkSession):
+    class Dates(DataFrame):
+        date: Timestamp
+
+    data = [
+        (datetime.datetime(2025, 1, 1),),
+        (datetime.datetime(2026, 4, 3),),
+        (datetime.datetime(2028, 4, 3),),
+    ]
+
+    df = Dates.from_df(spark.createDataFrame(data, schema=Dates.generate_schema()))
+
+    result = df.select(
+        tsf.year(df.date).alias("year"),
+    )
+
+    values = collect_column(result, "year")
+    assert values == [2025, 2026, 2028]
+
+    assert isinstance(result.to_spark().schema["year"].dataType, IntegerType)
