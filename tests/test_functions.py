@@ -459,16 +459,21 @@ def test_year_timestamps(spark: SparkSession):
     assert isinstance(result.to_spark().schema["year"].dataType, IntegerType)
 
 
-def test_least(spark: SparkSession):
-    class Dates(DataFrame):
-        date: Timestamp
+def test_least_dates(spark: SparkSession):
+    class Numbers(DataFrame):
+        a: Int
+        b: Int
 
     data = [
-        (datetime.datetime(2025, 1, 1),),
-        (datetime.datetime(2026, 4, 3),),
-        (datetime.datetime(2028, 4, 3),),
+        (1, 2),
+        (4, 2),
+        (4, 100),
     ]
 
-    df = Dates.from_df(spark.createDataFrame(data, schema=Dates.generate_schema()))
+    df = Numbers.from_df(spark.createDataFrame(data, schema=Numbers.generate_schema()))
 
-    c = tsf.least(Dates.date)
+    results = df.select(tsf.least(df.a, df.b).alias("least"))
+    values = collect_column(results, "least")
+
+    assert values == [1, 2, 4]
+    assert isinstance(results.to_spark().schema["least"].dataType, IntegerType)
