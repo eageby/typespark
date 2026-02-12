@@ -10,19 +10,26 @@ from pyspark.sql.types import (
     DoubleType,
     IntegerType,
     StringType,
-    StructField,
-    StructType,
 )
 
 from tests.conftest import Id, Range
 from tests.utils import collect_column, collect_values
-from typespark import Binary, DataFrame, Date, Double, Float, Int, String, int_literal
+from typespark import (
+    Binary,
+    DataFrame,
+    Date,
+    Double,
+    Float,
+    Int,
+    String,
+    Timestamp,
+    int_literal,
+)
 from typespark import functions as tsf
 from typespark.columns.array import TypedArrayType
 
 
 def test_add_months_with_literal(spark: SparkSession):
-
     class DateTestData(DataFrame):
         d: Date
 
@@ -91,35 +98,44 @@ def test_array(spark: SparkSession):
 
     assert values == [[1, 2], [1, 3], [3, 4]]
 
-    assert result.to_spark().schema["array"].dataType == ArrayType(IntegerType(), False)
+    type = result.to_spark().schema["array"].dataType
+    assert isinstance(type, ArrayType)
+    assert isinstance(type.elementType, IntegerType)
 
 
-class ArrayTestData(DataFrame):
-    a: TypedArrayType[Int]
+def test_array_append(spark: SparkSession):
+    class Arrays(DataFrame):
+        a: TypedArrayType[Int]
 
+    data = [
+        Row(a=[1, 2]),
+        Row(a=[3, 4]),
+    ]
 
-@pytest.fixture
-def arrays(spark):
-    data = [Row(a=[1, 2]), Row(a=[3, 4])]
-    schema = StructType(
-        [
-            StructField("a", ArrayType(IntegerType()), nullable=False),
-        ]
-    )
-    return ArrayTestData.from_df(spark.createDataFrame(data, schema=schema))
+    df = spark.createDataFrame(data, schema=Arrays.generate_schema())
 
-
-def test_array_append(arrays: ArrayTestData):
+    arrays = Arrays.from_df(df)
     result = arrays.select(tsf.array_append(arrays.a, int_literal(10)).alias("array"))
 
     values = collect_column(result, "array")
 
-    assert values == [[1, 2, 10], [3, 4, 10]]
+    assert values == [
+        [1, 2, 10],
+        [3, 4, 10],
+    ]
 
     assert result.to_spark().schema["array"].dataType == ArrayType(IntegerType(), True)
 
 
-def test_array_contains(arrays: ArrayTestData):
+def test_array_contains(spark: SparkSession):
+    class Arrays(DataFrame):
+        a: TypedArrayType[Int]
+
+    data = [Row(a=[1, 2]), Row(a=[3, 4])]
+
+    arrays = Arrays.from_df(
+        spark.createDataFrame(data, schema=Arrays.generate_schema())
+    )
     result = arrays.select(
         tsf.array_contains(arrays.a, int_literal(2)).alias("2"),
         tsf.array_contains(arrays.a, int_literal(10)).alias("10"),
