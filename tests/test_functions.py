@@ -1,5 +1,6 @@
 import datetime
 import math
+from typing import reveal_type
 
 import pytest
 from pyspark.sql import Row, SparkSession
@@ -41,10 +42,10 @@ def test_add_months_with_literal(spark: SparkSession):
     dates = DateTestData.from_df(
         spark.createDataFrame(data, schema=DateTestData.generate_schema())
     )
+
     col: Date = tsf.add_months(dates.d, 1)
 
     result = dates.select(col.alias("added"))
-    result = dates.select(tsf.add_months(dates.d, 1).alias("added"))
 
     values = collect_column(result, "added")
 
@@ -456,3 +457,18 @@ def test_year_timestamps(spark: SparkSession):
     assert values == [2025, 2026, 2028]
 
     assert isinstance(result.to_spark().schema["year"].dataType, IntegerType)
+
+
+def test_least(spark: SparkSession):
+    class Dates(DataFrame):
+        date: Timestamp
+
+    data = [
+        (datetime.datetime(2025, 1, 1),),
+        (datetime.datetime(2026, 4, 3),),
+        (datetime.datetime(2028, 4, 3),),
+    ]
+
+    df = Dates.from_df(spark.createDataFrame(data, schema=Dates.generate_schema()))
+
+    c = tsf.least(Dates.date)

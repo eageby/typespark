@@ -108,6 +108,10 @@ def year(col: Date | Timestamp) -> Int:
     return Int(F.year(col.to_spark()))
 
 
+def least[T: Column](*cols: T) -> T:
+    return Column(F.least(*[c.to_spark() for c in cols]))  # type: ignore
+
+
 # TODO
 # F.when
 # F.least
