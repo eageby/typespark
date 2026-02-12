@@ -15,6 +15,7 @@ from pyspark.sql.types import (
 from tests.conftest import Id, Range
 from tests.utils import collect_column, collect_values
 from typespark import (
+    Array,
     Binary,
     DataFrame,
     Date,
@@ -40,7 +41,9 @@ def test_add_months_with_literal(spark: SparkSession):
     dates = DateTestData.from_df(
         spark.createDataFrame(data, schema=DateTestData.generate_schema())
     )
+    col: Date = tsf.add_months(dates.d, 1)
 
+    result = dates.select(col.alias("added"))
     result = dates.select(tsf.add_months(dates.d, 1).alias("added"))
 
     values = collect_column(result, "added")
@@ -66,7 +69,8 @@ def test_add_months_with_col(spark: SparkSession):
         spark.createDataFrame(data, schema=DateTestData.generate_schema())
     )
 
-    result = dates.select(tsf.add_months(dates.d, int_literal(1)).alias("added"))
+    col: Date = tsf.add_months(dates.d, int_literal(1))
+    result = dates.select(col.alias("added"))
 
     values = collect_column(result, "added")
 
@@ -92,7 +96,9 @@ def test_array(spark: SparkSession):
         spark.createDataFrame(data, schema=IntTestData.generate_schema())
     )
 
-    result = integers.select(tsf.array(integers.a, integers.b).alias("array"))
+    col: Array[Int] = tsf.array(integers.a, integers.b)
+
+    result = integers.select(col.alias("array"))
 
     values = collect_column(result, "array")
 
