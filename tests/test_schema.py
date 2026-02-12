@@ -23,7 +23,7 @@ def test_schema_with_struct():
         info: Info
 
     schema = Data.generate_schema()
-    struct = schema.fields[0].dataType 
+    struct = schema.fields[0].dataType
 
     assert schema.fields[0].name == "info"
     assert isinstance(struct, types.StructType)
@@ -33,3 +33,17 @@ def test_schema_with_struct():
 
     assert struct[1].dataType == types.IntegerType()
     assert struct[1].name == "b"
+
+
+def test_array_schema():
+    class Data(ts.DataFrame):
+        a: ts.Array[ts.String]
+        b: ts.Array[ts.Integer]
+
+    schema = Data.generate_schema()
+
+    assert isinstance(schema.fields[0].dataType, types.ArrayType)
+    assert isinstance(schema.fields[1].dataType, types.ArrayType)
+
+    assert isinstance(schema.fields[0].dataType.elementType, types.StringType)
+    assert isinstance(schema.fields[1].dataType.elementType, types.IntegerType)

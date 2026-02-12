@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Callable, Iterable, get_args
+from typing import TYPE_CHECKING, Callable, Iterable, get_args, get_origin
 
 import attrs
 from attr import AttrsInstance
@@ -44,23 +44,41 @@ def _kwarg_safe_call(func: Callable, attrs_instance: AttrsInstance):
     return func(**_extract_kwargs(func, attrs_instance))
 
 
+def _get_type_args(type: type):
+    return get_args(type) or get_args(getattr(type, "__orig_bases__", [None])[0])
+
+
+def _construct_type(type: type, m: MetaData):
+    field_type_args = _get_type_args(type)
+    field_type: type[DataType] = field_type_args[0]
+
+    return _kwarg_safe_call(field_type, m)
+
+
 def get_type_instance(field: attrs.Attribute, m: MetaData):
     if field.type is None:
         raise ValueError("Field type missing")
 
+    origin = get_origin(field.type)
     if (
         not get_args(field.type)
         and is_typed_column_type(field.type)
         and attrs.has(field.type)
     ):
         return generate_schema(field.type)  # type: ignore
-    else:
-        field_type_args = get_args(field.type) or get_args(
-            getattr(field.type, "__orig_bases__", [None])[0]
-        )
-        field_type: type[DataType] = field_type_args[0]
 
-        return _kwarg_safe_call(field_type, m)
+    elif (
+        origin
+        and get_args(field.type)
+        and is_typed_column_type(field.type)
+        and is_typed_column_type(_get_type_args(field.type)[0])
+    ):
+        main_type = _get_type_args(origin)[0]
+        sub_type = _construct_type(get_args(field.type)[0], m)
+
+        return main_type(sub_type)
+    else:
+        return _construct_type(field.type, m)
 
 
 def _construct_struct_field(
