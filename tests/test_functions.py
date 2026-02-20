@@ -30,6 +30,7 @@ from typespark import (
     String,
     Timestamp,
     int_literal,
+    string_literal,
 )
 from typespark import functions as tsf
 from typespark.columns.array import TypedArrayType
@@ -645,3 +646,32 @@ def test_floor_numeric_no_scale(spark: SparkSession):
     vals = collect_column(res, "f_noscale")
     assert vals == [3, -4, 2, -3]
     assert isinstance(res.to_spark().schema["f_noscale"].dataType, LongType)
+
+
+def test_when(spark: SparkSession):
+    class IntTestData(DataFrame):
+        a: Int
+        b: Int
+
+    data = [
+        (1, 2),
+        (1, 3),
+        (1, 1),
+        (5, 4),
+    ]
+    integers = IntTestData.from_df(
+        spark.createDataFrame(data, schema=IntTestData.generate_schema())
+    )
+
+    a = tsf.when(integers.a > integers.b, string_literal("A"))
+    b = a.when(integers.a == integers.b, string_literal("eq"))
+    c = b.otherwise(string_literal("B"))
+
+    result = integers.select(c.alias("when"))
+
+    values = collect_column(result, "when")
+
+    assert values == ["B", "B", "eq", "A"]
+
+    type = result.to_spark().schema["when"].dataType
+    assert isinstance(type, StringType)
