@@ -155,9 +155,18 @@ def floor(col: Numeric, scale: Optional[Int | int] = None) -> Column:
     )
 
 
-# No tests
-def when[T: DataType](condition: Bool, value: Column[T]) -> Column[T]:
-    return Column(F.when(condition.to_spark(), value.to_spark()))
+class WhenStatement[T: DataType](Column[T]):
+    def when(self, condition: Bool, value: Column[T]):
+        return WhenStatement[T](
+            self.to_spark().when(condition.to_spark(), value.to_spark())
+        )
+
+    def otherwise(self, value: Column[T]) -> Column[T]:
+        return Column[T](self.to_spark().otherwise(value.to_spark()))
+
+
+def when[T: DataType](condition: Bool, value: Column[T]) -> WhenStatement[T]:
+    return WhenStatement[T](F.when(condition.to_spark(), value.to_spark()))
 
 
 def from_json[T: Struct](
@@ -170,3 +179,8 @@ def from_json[T: Struct](
 
 def lit(value: LiteralType) -> Column:
     return Column(F.lit(value))
+
+    # (lower,)
+    # (lpad,)
+    # (trim,)
+    # (upper,)
