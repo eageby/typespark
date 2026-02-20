@@ -63,7 +63,7 @@ class TypedColumn[T: DataType]:
     def like(self, pattern: str):
         return TypedColumn[BooleanType](self._col.like(pattern))
 
-    def _get_operand_column(self, other):
+    def _get_operand_column(self, other: "TypedColumn"):
         # Utility function to decide if 'other' is a ColumnWrapper or a raw value.
         if isinstance(other, TypedColumn):
             return other._col
@@ -73,66 +73,66 @@ class TypedColumn[T: DataType]:
             return other
 
     # Arithmetic operators
-    def __add__(self, other):
+    def __add__(self, other: "TypedColumn"):
         return TypedColumn(self._col.__add__(self._get_operand_column(other)))
 
-    def __sub__(self, other):
+    def __sub__(self, other: "TypedColumn"):
         return TypedColumn(self._col.__sub__(self._get_operand_column(other)))
 
-    def __mul__(self, other):
+    def __mul__(self, other: "TypedColumn"):
         return TypedColumn(self._col.__mul__(self._get_operand_column(other)))
 
-    def __truediv__(self, other):
+    def __truediv__(self, other: "TypedColumn"):
         return TypedColumn(self._col.__truediv__(self._get_operand_column(other)))
 
-    def __mod__(self, other):
+    def __mod__(self, other: "TypedColumn"):
         return TypedColumn(self._col.__mod__(self._get_operand_column(other)))
 
-    def __pow__(self, other):
+    def __pow__(self, other: "TypedColumn"):
         return TypedColumn(self._col.__pow__(self._get_operand_column(other)))
 
     # Comparison operators
     def __eq__(  # type: ignore[override]
-        self, other
+        self, other: "TypedColumn"
     ) -> "TypedColumn[BooleanType]":
         return TypedColumn[BooleanType](
             self._col.__eq__(self._get_operand_column(other))
         )
 
     def __ne__(  # type: ignore[override]
-        self, other
+        self, other: "TypedColumn"
     ) -> "TypedColumn":
         return TypedColumn[BooleanType](
             self._col.__ne__(self._get_operand_column(other))
         )
 
-    def __lt__(self, other):
+    def __lt__(self, other: "TypedColumn"):
         return TypedColumn[BooleanType](
             self._col.__lt__(self._get_operand_column(other))
         )
 
-    def __le__(self, other):
+    def __le__(self, other: "TypedColumn"):
         return TypedColumn[BooleanType](
             self._col.__le__(self._get_operand_column(other))
         )
 
-    def __gt__(self, other):
+    def __gt__(self, other: "TypedColumn"):
         return TypedColumn[BooleanType](
             self._col.__gt__(self._get_operand_column(other))
         )
 
-    def __ge__(self, other):
+    def __ge__(self, other: "TypedColumn"):
         return TypedColumn[BooleanType](
             self._col.__ge__(self._get_operand_column(other))
         )
 
     # Logical operators
-    def __and__(self, other):
+    def __and__(self, other: "TypedColumn"):
         return TypedColumn[BooleanType](
             self._col.__and__(self._get_operand_column(other))
         )
 
-    def __or__(self, other):
+    def __or__(self, other: "TypedColumn"):
         return TypedColumn[BooleanType](
             self._col.__or__(self._get_operand_column(other))
         )
