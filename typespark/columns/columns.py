@@ -1,5 +1,5 @@
 import functools
-from typing import Optional, Self
+from typing import Any, Optional, Self
 
 import pyspark.sql
 from pyspark.sql.types import BooleanType, DataType
@@ -152,6 +152,9 @@ class TypedColumn[T: DataType]:
 
     def isin(self, *cols: Any):
         return TypedColumn[BooleanType](self.to_spark().isin(*cols))
+
+    def rlike(self, item: str) -> "TypedColumn[BooleanType]":
+        return TypedColumn[BooleanType](self.to_spark().rlike(item))
 
 
 class AliasedTypedColumn(TypedColumn):
