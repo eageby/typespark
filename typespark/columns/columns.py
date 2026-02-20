@@ -150,6 +150,9 @@ class TypedColumn[T: DataType]:
     def asc(self):
         return TypedColumn[T](self.column.asc())
 
+    def isin(self, *cols: Any):
+        return TypedColumn[BooleanType](self.to_spark().isin(*cols))
+
 
 class AliasedTypedColumn(TypedColumn):
     """When creating projected query plans we need to keep track of what has been aliased."""
