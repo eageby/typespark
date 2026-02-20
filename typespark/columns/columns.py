@@ -17,9 +17,8 @@ class TypedColumn[T: DataType]:
     @functools.wraps(pyspark.sql.Column.alias)
     def name(self, alias: str, **kwargs): ...
 
-    def __init__(self, c: pyspark.sql.Column):  # pylint: disable=super-init-not-called
-        """Only initializes from existing Column."""
-        self._col = c
+    def __init__(self, c: pyspark.sql.Column | Self):  # pylint: disable=super-init-not-called
+        self._col = c.to_spark() if isinstance(c, TypedColumn) else c
 
     def _set_name(self, name: str):
         self._name = name
