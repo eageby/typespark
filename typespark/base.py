@@ -228,8 +228,16 @@ class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
     def distinct(self) -> Self:
         return self.from_df(self._dataframe.distinct())
 
-    def filter(self, condition) -> Self:
-        return self.from_df(self._dataframe.filter(condition))
+    def filter(
+        self, condition: str | pyspark.sql.Column | TypedColumn[BooleanType]
+    ) -> Self:
+        return self.from_df(
+            self._dataframe.filter(
+                condition.to_spark()
+                if isinstance(condition, TypedColumn)
+                else condition
+            )
+        )
 
     def alias(self, alias: str) -> Self:
         return self.from_df(self._dataframe, alias)
