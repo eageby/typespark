@@ -675,3 +675,70 @@ def test_when(spark: SparkSession):
 
     type = result.to_spark().schema["when"].dataType
     assert isinstance(type, StringType)
+
+
+def test_lower(spark: SparkSession):
+    class Data(DataFrame):
+        s: String
+
+    data = [
+        ("hello",),
+        ("WORLD",),
+        ("MiXeD CaSe",),
+    ]
+
+    strings = Data.from_df(spark.createDataFrame(data, schema=Data.generate_schema()))
+
+    result = strings.select(tsf.lower(strings.s).alias("lowered"))
+
+    values = collect_column(result, "lowered")
+
+    assert values == ["hello", "world", "mixed case"]
+
+    assert isinstance(result.to_spark().schema["lowered"].dataType, StringType)
+
+
+def test_ltrim(spark: SparkSession):
+    class Data(DataFrame):
+        s: String
+        trim: String
+
+    data = [
+        ("xxhello", "x"),
+        ("xyxworld  ", "xy"),
+        ("   both  ", " "),
+        ("nochange", "x"),
+    ]
+
+    df = Data.from_df(spark.createDataFrame(data, schema=Data.generate_schema()))
+
+    result = df.select(
+        tsf.ltrim(df.s).alias("default_trimmed"),
+        tsf.ltrim(df.s, df.trim).alias("trimmed"),
+    )
+
+    default = collect_column(result, "default_trimmed")
+    trimmed = collect_column(result, "trimmed")
+
+    assert default == [
+        "xxhello",
+        "xyxworld  ",
+        "both  ",
+        "nochange",
+    ]
+
+    assert trimmed == [
+        "hello",
+        "world  ",
+        "both  ",
+        "nochange",
+    ]
+
+    assert isinstance(
+        result.to_spark().schema["default_trimmed"].dataType,
+        StringType,
+    )
+    assert isinstance(
+        result.to_spark().schema["trimmed"].dataType,
+        StringType,
+    )
