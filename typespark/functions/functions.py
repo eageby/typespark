@@ -123,6 +123,14 @@ def least[T: Column](*cols: T) -> T:
     return Column(F.least(*[c.to_spark() for c in cols]))  # type: ignore
 
 
+def lower(col: String) -> String:
+    return String(F.lower(col.to_spark()))
+
+
+def ltrim(col: String, trim: String | None = None) -> String:
+    return String(F.ltrim(col.to_spark(), trim.to_spark() if trim else None))
+
+
 def greatest[T: Column](*cols: T) -> T:
     return Column(F.greatest(*[c.to_spark() for c in cols]))  # type: ignore
 
