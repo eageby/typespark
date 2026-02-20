@@ -1,7 +1,7 @@
-from typing import TypeAlias, overload
+from typing import Optional, TypeAlias, overload
 
 import pyspark.sql.functions as F
-from pyspark.sql.types import BooleanType, DataType
+from pyspark.sql.types import BooleanType, DataType, StructType
 
 from typespark import (
     Array,
@@ -21,6 +21,8 @@ from typespark import (
     String,
     Timestamp,
 )
+from typespark.columns.struct import Struct
+from typespark.literals import LiteralType
 
 Numeric: TypeAlias = Byte | Short | Int | Long | Float | Double | Decimal
 
@@ -62,6 +64,10 @@ def atan2(col1: Numeric, col2: Numeric) -> Double:
 
 def cos(col: Numeric) -> Double:
     return Double(F.cos(col.to_spark()))
+
+
+def sin(col: Numeric) -> Double:
+    return Double(F.sin(col.to_spark()))
 
 
 def broadcast[T: DataFrame](df: T) -> T:
@@ -108,74 +114,59 @@ def year(col: Date | Timestamp) -> Int:
     return Int(F.year(col.to_spark()))
 
 
+def month(col: Date | Timestamp) -> Int:
+    return Int(F.month(col.to_spark()))
+
+
 def least[T: Column](*cols: T) -> T:
     return Column(F.least(*[c.to_spark() for c in cols]))  # type: ignore
 
 
-# TODO
-# F.when
-# F.least
-# F.lit
-# F.arrays_zip
-# F.create_map
-# F.current_date
-# F.current_timestamp
-# F.date_add
-# F.date_diff
-# F.date_format
-# F.date_sub
-# F.date_trunc
-# F.dayofweek
-# F.dense_rank
-# F.desc
-# F.explode
-# F.explode_outer
-# F.expr
-# F.first
-# F.floor
-# F.from_json
-# F.from_unixtime
-# F.from_utc_timestamp
-# F.greatest
-# F.hash
-# F.hour
-# F.initcap
-# F.lag
-# F.last_day
-# F.lead
-# F.length
-# F.lower
-# F.lpad
-# F.ltrim
-# F.max
-# F.max_by
-# F.md5
-# F.min
-# F.monotonically_increasing_id
-# F.month
-# F.months_between
-# F.posexplode
-# F.pow
-# F.radians
-# F.rank
-# F.regexp_extract
-# F.regexp_replace
-# F.replace
-# F.row_number
-# F.sin
-# F.split
-# F.split_part
-# F.sqrt
-# F.startswith
-# F.struct
-# F.substring
-# F.sum
-# F.to_json
-# F.to_timestamp
-# F.to_utc_timestamp
-# F.trim
-# F.udf
-# F.unbase64
-# F.unix_timestamp
-# F.upper
-# F.window
+def greatest[T: Column](*cols: T) -> T:
+    return Column(F.greatest(*[c.to_spark() for c in cols]))  # type: ignore
+
+
+def current_date() -> Date:
+    return Date(F.current_date())
+
+
+def current_timestamp() -> Timestamp:
+    return Timestamp(F.current_timestamp())
+
+
+def explode[T: DataType](col: Array[Column[T]]) -> Column[T]:
+    return Column[T](F.explode(col.to_spark()))
+
+
+def hash(col: Column) -> Int:
+    return Int(F.hash(col.to_spark()))
+
+
+def date_add(start: Date, days: Int) -> Date:
+    return Date(F.date_add(start.to_spark(), days.to_spark()))
+
+
+# needs better typing
+def floor(col: Numeric, scale: Optional[Int | int] = None) -> Column:
+    return Column(
+        F.floor(
+            col.to_spark(), scale.to_spark() if isinstance(scale, Column) else scale
+        )
+    )
+
+
+# No tests
+def when[T: DataType](condition: Bool, value: Column[T]) -> Column[T]:
+    return Column(F.when(condition.to_spark(), value.to_spark()))
+
+
+def from_json[T: Struct](
+    col: Column,
+    schema: StructType,
+    options: Optional[dict[str, str]] = None,
+) -> Column:
+    return Column(F.from_json(col.to_spark(), schema, options))
+
+
+def lit(value: LiteralType) -> Column:
+    return Column(F.lit(value))
