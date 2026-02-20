@@ -1,4 +1,4 @@
-from typing import Optional, TypeAlias, overload
+from typing import Optional, TypeAlias, Union, overload
 
 import pyspark.sql.functions as F
 from pyspark.sql.types import BooleanType, DataType, StructType
@@ -21,6 +21,7 @@ from typespark import (
     String,
     Timestamp,
 )
+from typespark.columns.columns import TypedColumn
 from typespark.columns.struct import Struct
 from typespark.literals import LiteralType
 
@@ -180,7 +181,42 @@ def from_json[T: Struct](
 def lit(value: LiteralType) -> Column:
     return Column(F.lit(value))
 
-    # (lower,)
-    # (lpad,)
-    # (trim,)
-    # (upper,)
+
+def upper(col: String) -> String:
+    return String(F.upper(col.to_spark()))
+
+
+def lower(col: String) -> String:
+    return String(F.lower(col.to_spark()))
+
+
+def lpad(
+    col: String,
+    len: Union[Integer, int],
+    pad: Union[String, str],
+) -> String:
+    return String(
+        F.lpad(
+            col.to_spark(),
+            len.to_spark() if isinstance(len, TypedColumn) else len,
+            pad.to_spark() if isinstance(pad, TypedColumn) else pad,
+        )
+    )
+
+
+def trim(col: String, trim: Optional[String] = None):
+    return String(F.trim(col.to_spark(), trim.to_spark() if trim else None))
+
+
+def substring(
+    str: String,
+    pos: Union[Int, int],
+    len: Union[Int, int],
+) -> String:
+    return String(
+        F.substring(
+            str.to_spark(),
+            pos.to_spark() if isinstance(pos, TypedColumn) else pos,
+            len.to_spark() if isinstance(len, TypedColumn) else len,
+        )
+    )
