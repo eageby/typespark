@@ -5,6 +5,8 @@ from typespark.utils import unwrap_type
 
 
 def is_typed_column_type(tp) -> bool:
+    if isinstance(tp, TypedColumn):
+        return True
     tp = unwrap_type(tp)
     origin = get_origin(tp)
     if origin and (origin is TypedColumn or issubclass(origin, TypedColumn)):
