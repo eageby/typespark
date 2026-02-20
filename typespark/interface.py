@@ -1,6 +1,8 @@
 from typing import Any, Optional, Protocol, Self, Union, runtime_checkable
 
-from pyspark.sql import Column
+from pyspark.sql import Column, types
+
+from typespark.columns.columns import TypedColumn
 
 
 @runtime_checkable
@@ -17,7 +19,9 @@ class SupportsETLFrame(Protocol):
         how: Optional[str] = None,
     ) -> "SupportsETLFrame": ...
 
-    def filter(self, condition: Union[str, Column]) -> "SupportsETLFrame": ...
+    def filter(
+        self, condition: Union[str, Column, TypedColumn[types.BooleanType]]
+    ) -> "SupportsETLFrame": ...
     def distinct(self) -> "SupportsETLFrame": ...
     def show(
         self, n: int = 20, truncate: bool = True, vertical: bool = False
