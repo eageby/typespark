@@ -1,6 +1,6 @@
 import datetime
 import math
-from typing import reveal_type
+from decimal import Decimal as PyDecimal
 
 import pytest
 from pyspark.sql import Row, SparkSession
@@ -8,9 +8,12 @@ from pyspark.sql.types import (
     ArrayType,
     BooleanType,
     DateType,
+    DecimalType,
     DoubleType,
     IntegerType,
+    LongType,
     StringType,
+    TimestampType,
 )
 
 from tests.conftest import Id, Range
@@ -20,6 +23,7 @@ from typespark import (
     Binary,
     DataFrame,
     Date,
+    Decimal,
     Double,
     Float,
     Int,
@@ -459,7 +463,7 @@ def test_year_timestamps(spark: SparkSession):
     assert isinstance(result.to_spark().schema["year"].dataType, IntegerType)
 
 
-def test_least_dates(spark: SparkSession):
+def test_least_int(spark: SparkSession):
     class Numbers(DataFrame):
         a: Int
         b: Int
@@ -477,3 +481,167 @@ def test_least_dates(spark: SparkSession):
 
     assert values == [1, 2, 4]
     assert isinstance(results.to_spark().schema["least"].dataType, IntegerType)
+
+
+def test_greatest_int(spark: SparkSession):
+    class Numbers(DataFrame):
+        a: Int
+        b: Int
+
+    data = [
+        (1, 2),
+        (4, 2),
+        (4, 100),
+    ]
+
+    df = Numbers.from_df(spark.createDataFrame(data, schema=Numbers.generate_schema()))
+
+    results = df.select(tsf.greatest(df.a, df.b).alias("least"))
+    values = collect_column(results, "least")
+
+    assert values == [2, 4, 100]
+    assert isinstance(results.to_spark().schema["least"].dataType, IntegerType)
+
+
+def test_current_date(spark: SparkSession):
+    class Dummy(DataFrame):
+        _a: Int
+
+    data = [(1,)]
+
+    df = Dummy.from_df(spark.createDataFrame(data, schema=Dummy.generate_schema()))
+
+    results = df.select(tsf.current_date().alias("date"))
+    values = collect_column(results, "date")
+
+    assert values[0] == datetime.date.today()
+
+    assert isinstance(results.to_spark().schema["date"].dataType, DateType)
+
+
+def test_current_timestamp(spark: SparkSession):
+    class Dummy(DataFrame):
+        _a: Int
+
+    data = [(1,)]
+
+    timestamp_before = datetime.datetime.now()
+
+    df = Dummy.from_df(spark.createDataFrame(data, schema=Dummy.generate_schema()))
+
+    results = df.select(tsf.current_timestamp().alias("date"))
+    values = collect_column(results, "date")
+
+    timestamp_after = datetime.datetime.now()
+
+    assert timestamp_before <= values[0] <= timestamp_after
+
+    assert isinstance(results.to_spark().schema["date"].dataType, TimestampType)
+
+
+def test_explode(spark: SparkSession):
+    class ArrayData(DataFrame):
+        elements: Array[Int]
+
+    data = [([1, 2, 3],)]
+
+    df = ArrayData.from_df(
+        spark.createDataFrame(data, schema=ArrayData.generate_schema())
+    )
+
+    results = df.select(tsf.explode(df.elements).alias("elems"))
+    values = collect_column(results, "elems")
+    assert values == [1, 2, 3]
+
+    assert isinstance(results.to_spark().schema["elems"].dataType, IntegerType)
+
+
+def test_month_dates(spark: SparkSession):
+    class Dates(DataFrame):
+        date: Date
+
+    data = [
+        (datetime.date(2025, 1, 1),),
+        (datetime.date(2026, 4, 3),),
+        (datetime.date(2028, 4, 3),),
+    ]
+
+    df = Dates.from_df(spark.createDataFrame(data, schema=Dates.generate_schema()))
+
+    result = df.select(
+        tsf.month(df.date).alias("month"),
+    )
+
+    values = collect_column(result, "month")
+    assert values == [1, 4, 4]
+
+    assert isinstance(result.to_spark().schema["month"].dataType, IntegerType)
+
+
+def test_month_timestamps(spark: SparkSession):
+    class Dates(DataFrame):
+        date: Timestamp
+
+    data = [
+        (datetime.datetime(2025, 1, 1),),
+        (datetime.datetime(2026, 4, 3),),
+        (datetime.datetime(2028, 4, 3),),
+    ]
+
+    df = Dates.from_df(spark.createDataFrame(data, schema=Dates.generate_schema()))
+
+    result = df.select(
+        tsf.month(df.date).alias("month"),
+    )
+
+    values = collect_column(result, "month")
+    assert values == [1, 4, 4]
+
+    assert isinstance(result.to_spark().schema["month"].dataType, IntegerType)
+
+
+def test_date_add(spark: SparkSession):
+    class Dates(DataFrame):
+        date: Date
+
+    data = [
+        (datetime.datetime(2025, 1, 1),),
+        (datetime.datetime(2026, 4, 3),),
+        (datetime.datetime(2028, 4, 3),),
+    ]
+
+    df = Dates.from_df(spark.createDataFrame(data, schema=Dates.generate_schema()))
+
+    result = df.select(
+        tsf.date_add(df.date, int_literal(1)).alias("added"),
+    )
+
+    values = collect_column(result, "added")
+    assert values == [
+        datetime.date(2025, 1, 2),
+        datetime.date(2026, 4, 4),
+        datetime.date(2028, 4, 4),
+    ]
+
+    assert isinstance(result.to_spark().schema["added"].dataType, DateType)
+
+
+def test_floor_numeric_no_scale(spark: SparkSession):
+    class Nums(DataFrame):
+        # choose a floating annotation accepted by your helpers (Double/Float)
+        x: Double
+
+    floats = [
+        (3.7,),
+        (-3.7,),
+        (2.1267,),
+        (-2.1267,),
+    ]
+
+    df_f = Nums.from_df(spark.createDataFrame(floats, schema=Nums.generate_schema()))
+
+    # without scale: numeric -> integer-like results (LongType)
+    res = df_f.select(tsf.floor(df_f.x).alias("f_noscale"))
+    vals = collect_column(res, "f_noscale")
+    assert vals == [3, -4, 2, -3]
+    assert isinstance(res.to_spark().schema["f_noscale"].dataType, LongType)
