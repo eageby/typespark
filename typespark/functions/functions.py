@@ -220,3 +220,7 @@ def substring(
             len.to_spark() if isinstance(len, TypedColumn) else len,
         )
     )
+
+
+def startswith(str: String, prefix: String) -> Bool:
+    return Bool(F.startswith(str.to_spark(), prefix.to_spark()))
