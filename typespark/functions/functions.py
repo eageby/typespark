@@ -1,7 +1,7 @@
 from typing import Literal, Optional, TypeAlias, Union, overload
 
 import pyspark.sql.functions as F
-from pyspark.sql.types import BooleanType, DataType, StructType
+from pyspark.sql.types import BooleanType, DataType, StringType, StructType
 
 from typespark import (
     Array,
@@ -214,6 +214,20 @@ def lpad(
 
 def trim(col: String, trim: Optional[String] = None):
     return String(F.trim(col.to_spark(), trim.to_spark() if trim else None))
+
+
+def split(
+    col: String,
+    pattern: Union[Column, str],
+    limit: Union[Int, int] = -1,
+):
+    return Array[String](
+        F.split(
+            col.to_spark(),
+            pattern.to_spark() if isinstance(pattern, Column) else pattern,
+            limit.to_spark() if isinstance(limit, Column) else limit,
+        )
+    )
 
 
 def substring(
