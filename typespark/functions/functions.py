@@ -87,7 +87,17 @@ def collect_set[T: DataType](col: Column[T]) -> Array[Column[T]]:
     return Array(F.collect_set(col.to_spark()))
 
 
-def concat(*cols: String) -> String:
+@overload
+def concat(*cols: String) -> String: ...
+@overload
+def concat[T: Column](*cols: Array[T]) -> Array[T]: ...
+
+
+def concat(*cols: String | Array) -> String | Array:
+    if isinstance(cols[0], Array):
+        elem_type = cols[0]._elem_type
+        return Array(F.concat(*[c.to_spark() for c in cols]), elem_type)
+
     return String(F.concat(*[c.to_spark() for c in cols]))
 
 
