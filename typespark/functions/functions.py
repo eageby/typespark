@@ -221,12 +221,13 @@ def split(
     pattern: Union[Column, str],
     limit: Union[Int, int] = -1,
 ):
-    return Array[String](
+    return Array(
         F.split(
             col.to_spark(),
             pattern.to_spark() if isinstance(pattern, Column) else pattern,
             limit.to_spark() if isinstance(limit, Column) else limit,
-        )
+        ),
+        String,
     )
 
 
