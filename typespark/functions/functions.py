@@ -248,6 +248,18 @@ def startswith(str: String, prefix: String) -> Bool:
     return Bool(F.startswith(str.to_spark(), prefix.to_spark()))
 
 
+def regexp_replace(
+    string: String, pattern: Union[str, String], replacement: Union[str, String]
+) -> String:
+    return String(
+        F.regexp_replace(
+            string.to_spark(),
+            pattern.to_spark() if isinstance(pattern, Column) else pattern,
+            replacement.to_spark() if isinstance(replacement, Column) else replacement,
+        )
+    )
+
+
 def timestamp_diff(
     unit: Literal[
         "YEAR",
