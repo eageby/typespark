@@ -1,4 +1,4 @@
-from typing import Optional, TypeAlias, Union, overload
+from typing import Literal, Optional, TypeAlias, Union, overload
 
 import pyspark.sql.functions as F
 from pyspark.sql.types import BooleanType, DataType, StructType
@@ -151,6 +151,10 @@ def hash(col: Column) -> Int:
     return Int(F.hash(col.to_spark()))
 
 
+def md5(col: Column) -> String:
+    return String(F.md5(col.to_spark()))
+
+
 def date_add(start: Date, days: Int) -> Date:
     return Date(F.date_add(start.to_spark(), days.to_spark()))
 
@@ -194,10 +198,6 @@ def upper(col: String) -> String:
     return String(F.upper(col.to_spark()))
 
 
-def lower(col: String) -> String:
-    return String(F.lower(col.to_spark()))
-
-
 def lpad(
     col: String,
     len: Union[Integer, int],
@@ -232,3 +232,22 @@ def substring(
 
 def startswith(str: String, prefix: String) -> Bool:
     return Bool(F.startswith(str.to_spark(), prefix.to_spark()))
+
+
+def timestamp_diff(
+    unit: Literal[
+        "YEAR",
+        "QUARTER",
+        "MONTH",
+        "WEEK",
+        "DAY",
+        "HOUR",
+        "MINUTE",
+        "SECOND",
+        "MILLISECOND",
+        "MICROSECOND",
+    ],
+    start: Timestamp,
+    end: Timestamp,
+) -> Int:
+    return Int(F.timestamp_diff(unit, start.to_spark(), end.to_spark()))
