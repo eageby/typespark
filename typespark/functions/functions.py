@@ -259,6 +259,18 @@ def startswith(str: String, prefix: String) -> Bool:
     return Bool(F.startswith(str.to_spark(), prefix.to_spark()))
 
 
+def replace(src: String, search: String, replace: Optional[String] = None) -> String:
+    return String(
+        F.replace(
+            src.to_spark(), search.to_spark(), replace.to_spark() if replace else None
+        )
+    )
+
+
+def initcap(col: String) -> String:
+    return String(F.initcap(col.to_spark()))
+
+
 def regexp_replace(
     string: String, pattern: Union[str, String], replacement: Union[str, String]
 ) -> String:
