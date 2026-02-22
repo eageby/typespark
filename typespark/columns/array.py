@@ -16,7 +16,10 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
             self._elem_type = type
 
     def getItem(self, key: int) -> T:
-        return self._elem_type(self._col.getItem(key))
+        item = self._col.getItem(key)
+        if self._elem_type is not None:
+            return self._elem_type(item)
+        return TypedColumn(item)  # type:ignore
 
     @classmethod
     def set_column(cls, col: Column, name: str, tp: Optional[type[TypedColumn]] = None):
