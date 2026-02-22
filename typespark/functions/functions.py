@@ -241,6 +241,12 @@ def split(
     )
 
 
+def split_part(src: String, delimiter: String, partNum: Int) -> String:
+    return String(
+        F.split_part(src.to_spark(), delimiter.to_spark(), partNum.to_spark())
+    )
+
+
 def substring(
     str: String,
     pos: Union[Int, int],
