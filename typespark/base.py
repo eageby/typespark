@@ -129,11 +129,16 @@ class _Base:
         for field_name, f in attrs.fields_dict(cls).items():
             field_alias = get_field_name(f)
             if is_typed_column_type(f.type):
+                if alias is not None:
+                    column_reference = F.col(f"{alias}.{field_alias}")
+                else:
+                    column_reference = df[field_alias]
+
                 object.__setattr__(
                     new,
                     field_name,
                     unwrap_type(f.type).set_column(
-                        df[field_alias], field_alias, unwrap_type(f.type)
+                        column_reference, field_alias, unwrap_type(f.type)
                     ),
                 )
 
