@@ -1,6 +1,10 @@
+import json
+
+from pyspark.sql import SparkSession
+
 from tests.conftest import Person
 from tests.utils import collect_values
-from typespark import String
+from typespark import Int, String
 from typespark.base import BaseDataFrame
 from typespark.columns.struct import Struct
 from typespark.metadata import field
@@ -122,3 +126,27 @@ def test_struct_init_alias(person: Person):
     assert result_values[0]["person"]["a"] == 30
     assert result_values[1]["person"]["name"] == "Bob"
     assert result_values[1]["person"]["a"] == 25
+
+
+def test_struct_from_json(spark: SparkSession):
+    class Raw(BaseDataFrame):
+        data: String
+
+    class Data(Struct):
+        id: Int
+        name_: String = field(df_alias="name")
+
+    class Normalized(BaseDataFrame):
+        id: Int
+        n: String
+
+    data = [{"data": json.dumps({"id": 1, "name": 2})}]
+
+    df = Raw.from_df(spark.createDataFrame(data))
+
+    parsed = Data.from_json(df.data)
+    tf = Normalized(df, id=parsed.id, n=parsed.name_)
+
+    result_values = collect_values(tf)
+    assert result_values[0]["id"] == 1
+    assert result_values[0]["n"] == "2"
