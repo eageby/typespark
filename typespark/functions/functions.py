@@ -277,6 +277,16 @@ def initcap(col: String) -> String:
     return String(F.initcap(col.to_spark()))
 
 
+def regexp_extract(string: String, pattern: str, idx: int) -> String:
+    return String(
+        F.regexp_extract(
+            string.to_spark(),
+            pattern,
+            idx,
+        )
+    )
+
+
 def regexp_replace(
     string: String, pattern: Union[str, String], replacement: Union[str, String]
 ) -> String:
