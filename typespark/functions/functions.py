@@ -316,3 +316,11 @@ def timestamp_diff(
     end: Timestamp,
 ) -> Int:
     return Int(F.timestamp_diff(unit, start.to_spark(), end.to_spark()))
+
+
+def unbase64(col: String) -> Binary:
+    return Binary(F.unbase64(col.to_spark()))
+
+
+def base64(col: Binary) -> String:
+    return String(F.base64(col.to_spark()))
