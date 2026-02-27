@@ -1,10 +1,10 @@
-from typing import Optional, dataclass_transform
+from typing import Optional, Self, dataclass_transform
 
 import attr
 import attrs
 from pyspark.sql import Column
-from pyspark.sql.functions import struct
-from pyspark.sql.types import StructType
+from pyspark.sql.functions import from_json, struct
+from pyspark.sql.types import StringType, StructType
 
 from typespark.columns import TypedColumn
 from typespark.columns.utils import is_typed_column_type
@@ -53,6 +53,12 @@ class Struct(TypedColumn[StructType]):
 
     def fields(self) -> dict[str, TypedColumn]:
         return attrs.asdict(self, filter=lambda f, _: is_typed_column_type(f.type))
+
+    @classmethod
+    def from_json(cls, json: TypedColumn[StringType]) -> Self:
+        return cls.set_column(
+            from_json(json.to_spark(), cls.generate_schema()), json._name, None
+        )
 
     @classmethod
     def __init_subclass__(
