@@ -83,7 +83,12 @@ class _Base:
         define(cls, field_transformers=field_transformers)
 
     def columndict(self) -> dict[str, TypedColumn]:
-        return attrs.asdict(self, filter=lambda f, _: is_typed_column_type(f.type))
+        return {
+            k: getattr(self, k)
+            for k, v in attrs.asdict(
+                self, filter=lambda f, _: is_typed_column_type(f.type)
+            ).items()
+        }
 
     def __attrs_post_init__(self):
         object.__setattr__(
