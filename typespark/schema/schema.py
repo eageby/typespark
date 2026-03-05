@@ -97,7 +97,7 @@ def _construct_struct_field(
         name,
         type_instance,
         **field_kwargs,
-        metadata={"comment": doc},
+        metadata={"comment": doc} if doc or len(doc) > 0 else {},
     )
 
 
