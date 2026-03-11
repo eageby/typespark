@@ -17,42 +17,43 @@ def field(
     df_alias: Optional[str] = None,
     nullable: Optional[bool] = None,
     is_primary_key: Optional[bool] = None,
-    # foreign_key: Optional[type[TypedDataFrame]] = None,
     is_foreign_key: Optional[type] = None,
+    metadata: dict[str, str] = {},
     **kwargs,
 ):
-    metadata = {
+    md = {
         DF_ALIAS: df_alias,
         NULLABLE_COLUMN: nullable,
         PRIMARY_KEY: is_primary_key,
         FOREIGN_KEY: is_foreign_key,
-    }
+    } | metadata
 
-    return attrs.field(metadata=metadata, **kwargs)
+    return attrs.field(metadata=md, **kwargs)
 
 
 def primary_key(
     df_alias: Optional[str] = None,
+    metadata: dict[str, str] = {},
 ):
-    metadata = {
+    md = {
         DF_ALIAS: df_alias,
         PRIMARY_KEY: True,
-    }
+    } | metadata
 
-    return attrs.field(metadata=metadata)
+    return attrs.field(metadata=md)
 
 
 def foreign_key(
-    # reference: type[BaseDataFrame],
     reference: type,
     df_alias: Optional[str] = None,
+    metadata: dict[str, str] = {},
 ):
-    metadata = {
+    md = {
         DF_ALIAS: df_alias,
         FOREIGN_KEY: reference,
-    }
+    } | metadata
 
-    return attrs.field(metadata=metadata)
+    return attrs.field(metadata=md)
 
 
 def decimal(
@@ -60,15 +61,16 @@ def decimal(
     scale: int,
     df_alias: Optional[str] = None,
     nullable: Optional[bool] = None,
+    metadata: dict[str, str] = {},
     **kwargs,
 ):
-    metadata = {
+    md = {
         DF_ALIAS: df_alias,
         DECIMAL_TYPE_METADATA_PRECISION: precision,
         DECIMAL_TYPE_METADATA_SCALE: scale,
         NULLABLE_COLUMN: nullable,
-    }
-    return attrs.field(metadata=metadata, **kwargs)
+    } | metadata
+    return attrs.field(metadata=md, **kwargs)
 
 
 @attrs.define(init=False)
