@@ -23,7 +23,7 @@ from typespark.utils import get_field_name, unwrap_origin, unwrap_type
 @attrs.define(init=True, slots=False)
 class Struct(TypedColumn[StructType]):
     @classmethod
-    def set_column(cls, col: Column, name: str, tp: Optional[type[TypedColumn]] = None):
+    def set_column(cls, col: Column, name: str, tp: type[TypedColumn] | None = None):
         new = super().set_column(col, name, tp)
 
         for field_name, f in attrs.fields_dict(cls).items():
@@ -32,9 +32,7 @@ class Struct(TypedColumn[StructType]):
                 object.__setattr__(
                     new,
                     field_name,
-                    unwrap_type(f.type).set_column(
-                        col[field_alias], field_alias, unwrap_type(f.type)
-                    ),
+                    unwrap_type(f.type).set_column(col[field_alias], field_alias, unwrap_type(f.type)),
                 )
         return new
 
@@ -55,15 +53,11 @@ class Struct(TypedColumn[StructType]):
         return attrs.asdict(self, filter=lambda f, _: is_typed_column_type(f.type))
 
     @classmethod
-    def from_json(cls, json: TypedColumn[StringType]) -> Self:
-        return cls.set_column(
-            from_json(json.to_spark(), cls.generate_schema()), json._name, None
-        )
+    def from_json(cls, json: TypedColumn[StringType], options: dict[str, str] | None = None) -> Self:
+        return cls.set_column(from_json(json.to_spark(), cls.generate_schema(), options), json._name, None)
 
     @classmethod
-    def __init_subclass__(
-        cls, field_transformers: Optional[list[FieldTransformer]] = None
-    ):
+    def __init_subclass__(cls, field_transformers: list[FieldTransformer] | None = None):
         ft = pipe_tranformers(*(field_transformers or []))
         attrs.define(init=True, slots=False, field_transformer=ft)(cls)
 
