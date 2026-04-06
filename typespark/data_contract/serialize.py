@@ -1,6 +1,6 @@
 import inspect
 from types import ModuleType
-from typing import List, Optional, Type, get_args, get_origin
+from typing import get_args, get_origin
 
 import attr
 from datacontract_specification.model import DataContractSpecification, Field, Model
@@ -21,7 +21,8 @@ from pyspark.sql.types import (
 )
 from simple_parsing import docstring
 
-from typespark.base import BaseDataFrame
+from typespark.columns import TypedColumn, is_typed_column_type
+from typespark.dataframe import BaseDataFrame
 from typespark.metadata import MetaData
 from typespark.columns import TypedColumn
 
