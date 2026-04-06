@@ -2,7 +2,7 @@ from pyspark.sql.types import StringType
 
 from tests.utils import collect_values
 from typespark import String
-from typespark.base import BaseDataFrame
+from typespark.dataframe import BaseDataFrame
 from typespark.columns.array import TypedArrayType
 from typespark.columns.struct import Struct
 from typespark.metadata import field

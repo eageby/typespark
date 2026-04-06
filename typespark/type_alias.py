@@ -33,7 +33,7 @@ from pyspark.sql.types import (
     TimestampType,
 )
 
-from typespark.base import BaseDataFrame
+from typespark.dataframe import BaseDataFrame
 
 from .columns import TypedColumn
 from .columns.array import TypedArrayType

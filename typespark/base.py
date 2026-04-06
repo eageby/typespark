@@ -1,11 +1,16 @@
+"""
+Attrs-based schema machinery for TypeSpark DataFrames.
+
+_Base is a frozen attrs class that wraps a pyspark.sql.DataFrame and manages
+typed column fields. It is inherited by user-defined schema classes (via
+BaseDataFrame) to provide field introspection and schema generation.
+"""
 from __future__ import annotations
 
 from typing import (
     TYPE_CHECKING,
-    Any,
     Optional,
     Self,
-    Union,
     dataclass_transform,
     overload,
 )
@@ -14,16 +19,11 @@ import attr
 import attrs
 import pyspark.sql
 from pyspark.sql import functions as F
-from pyspark.sql.types import DataType
 
 from typespark import schema
-from typespark.columns import AliasedTypedColumn, TypedColumn, is_typed_column_type
-from typespark.columns.generator import DeferredColumn, Generator
-from typespark.columns.groups import _AggregateColumn, _GroupColumn
+from typespark.columns import TypedColumn, is_typed_column_type
 from typespark.define import define
-from typespark.interface import SupportsETLFrame
 from typespark.metadata import decimal, field, foreign_key, primary_key
-from typespark.mixins import Aliasable, SchemaDefaults
 from typespark.utils import get_field_name, unwrap_type
 
 if TYPE_CHECKING:
@@ -46,9 +46,6 @@ class _Base:
         converter=_dataframe_converter, alias="df"
     )
     _alias: Optional[str] = attrs.field(init=False, default=None)
-
-    def __getattr__(self, name: str):
-        return getattr(self._dataframe, name)
 
     def to_spark(self):
         return self.to_df()
@@ -120,14 +117,14 @@ class _Base:
         new = cls.__new__(cls)
         object.__setattr__(new, "_alias", alias)
 
+        if isinstance(df, _Base):
+            df = df.to_df()
+
         if not disable_select:
             df = df.select(*cls._column_aliases())
 
         if alias is not None:
             df = df.alias(alias)
-
-        if isinstance(df, _Base):
-            df = df.to_df()
 
         object.__setattr__(new, "_dataframe", df)
 
@@ -148,125 +145,3 @@ class _Base:
                 )
 
         return new
-
-
-class BaseDataFrame(_Base, SupportsETLFrame, Aliasable, SchemaDefaults):
-    def select(
-        self, *cols: Union[str, pyspark.sql.Column] | TypedColumn[DataType]
-    ) -> "BaseDataFrame":
-        aggregates = [c.column for c in cols if isinstance(c, _AggregateColumn)]
-        groups = [c.column for c in cols if isinstance(c, _GroupColumn)]
-        projections = set([c.parent for c in cols if isinstance(c, DeferredColumn)])
-
-        if (aggregates or groups) and projections:
-            raise NotImplementedError(
-                "Support for groups and projections have not been implemented."
-            )
-
-        if aggregates or groups:
-            if not aggregates:
-                raise ValueError("Need to specify aggregates if using groups.")
-
-            # combined_columns = set(groups + aggregates)
-            # expected_columns = set(cols)
-            # if not expected_columns == combined_columns:
-            #     missing_columns = expected_columns - combined_columns
-            #     raise ValueError(
-            #         f"Missing {missing_columns} as group columns or aggregates."
-            #     )
-
-            df = self._dataframe.groupBy(*[g._col for g in groups]).agg(
-                *[a._col for a in aggregates]
-            )
-            return BaseDataFrame.from_df(df, disable_select=True)
-
-        else:
-            if len(projections) > 0:
-                projected_cols = [
-                    c.column_operation() if isinstance(c, Generator) else c
-                    for c in projections
-                ]
-                normal_cols = [
-                    c
-                    for c in cols
-                    if not (isinstance(c, DeferredColumn) or isinstance(c, Generator))
-                ]
-                # Prevent aliasing normal cols twice
-                original_named_cols = [
-                    F.col(n.original_name) if isinstance(n, AliasedTypedColumn) else n
-                    for n in normal_cols
-                ]
-                # Step 1: materialize generators
-                df = self._dataframe.select(*projected_cols, *original_named_cols)  # type: ignore
-
-                # Step 2: select final materialized expressions
-                final_cols = [
-                    c.col if isinstance(c, DeferredColumn) else c for c in cols
-                ]
-
-            else:
-                df = self._dataframe
-                final_cols = [
-                    c.column_operation() if isinstance(c, Generator) else c
-                    for c in cols
-                ]
-
-            return BaseDataFrame.from_df(
-                df.select(
-                    *[
-                        f.to_spark() if isinstance(f, TypedColumn) else f
-                        for f in final_cols
-                    ]
-                ),
-                disable_select=True,
-            )
-
-    def withColumn(self, colName: str, col: pyspark.sql.Column) -> "BaseDataFrame":
-        return BaseDataFrame.from_df(
-            self._dataframe.withColumn(colName, col), disable_select=True
-        )
-
-    def drop(self, *cols) -> "BaseDataFrame":
-        return BaseDataFrame.from_df(self._dataframe.drop(*cols), disable_select=True)
-
-    def drop_duplicates(self, *cols) -> "Self":
-        return self.__class__.from_df(self._dataframe.drop_duplicates())
-
-    def show(self, n: int = 20, truncate: bool = True, vertical: bool = False):
-        self._dataframe.show(n, truncate, vertical)
-
-    def distinct(self) -> Self:
-        return self.from_df(self._dataframe.distinct())
-
-    def filter(
-        self, condition: str | pyspark.sql.Column | TypedColumn[BooleanType]
-    ) -> Self:
-        return self.from_df(
-            self._dataframe.filter(
-                condition.to_spark()
-                if isinstance(condition, TypedColumn)
-                else condition
-            )
-        )
-
-    def alias(self, alias: str) -> Self:
-        return self.from_df(self._dataframe, alias)
-
-    def union(self, other: Self) -> Self:
-        return self.__class__.from_df(self._dataframe.unionByName(other.to_df()))
-
-    def join(
-        self,
-        other: Any,
-        on: TypedColumn | str | list[str] | pyspark.sql.Column | None = None,
-        how: str | None = None,
-    ) -> "BaseDataFrame":
-        return BaseDataFrame.from_df(
-            self._dataframe.join(
-                other, on._col if isinstance(on, TypedColumn) else on, how
-            ),
-            disable_select=True,
-        )
-
-    def broadcast(self):
-        return self.from_df(F.broadcast(self.to_spark()))

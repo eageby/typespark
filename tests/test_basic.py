@@ -1,7 +1,11 @@
+import datetime
+
+from pyspark.sql import SparkSession
+
 from tests.conftest import Id, Person, Range
-from tests.utils import collect_values
-from typespark import Int, String
-from typespark.base import BaseDataFrame
+from tests.utils import collect_column, collect_values
+from typespark import DataFrame, Int, String, Timestamp
+from typespark.dataframe import BaseDataFrame
 from typespark.metadata import field
 
 
@@ -79,3 +83,91 @@ def test_broadcast(id: Id, small_range: Range):
     assert result[1]["value"] == 2
     assert result[0]["id"] == 1
     assert result[1]["id"] == 2
+
+
+def test_leftsemi_filters_rows(id: Id, small_range: Range):
+    # id has [1, 2, 3, 3, 4], small_range has [0, 1, 2]
+    result = id.leftsemi(small_range, id.value == small_range.id)
+
+    assert isinstance(result, Id)
+    assert sorted(collect_column(result, "value")) == [1, 2]
+
+
+def test_leftsemi_preserves_schema(person: Person):
+    result = person.leftsemi(person, person.name == person.name)
+
+    assert isinstance(result, Person)
+    assert result.to_df().columns == ["name", "age"]
+
+
+def test_leftsemi_no_match_returns_empty(id: Id, small_range: Range):
+    empty_range = Range.from_df(small_range.to_df().filter("id > 100"))
+    result = id.leftsemi(empty_range, id.value == empty_range.id)
+
+    assert isinstance(result, Id)
+    assert result.count() == 0
+
+
+def test_leftanti_filters_rows(id: Id, small_range: Range):
+    # id has [1, 2, 3, 3, 4], small_range has [0, 1, 2]
+    result = id.leftanti(small_range, id.value == small_range.id)
+
+    assert isinstance(result, Id)
+    assert sorted(collect_column(result, "value")) == [3, 3, 4]
+
+
+def test_leftanti_preserves_schema(person: Person):
+    result = person.leftanti(person, person.name == person.name)
+
+    assert isinstance(result, Person)
+    assert result.to_df().columns == ["name", "age"]
+
+
+def test_leftanti_no_match_returns_all(id: Id, small_range: Range):
+    empty_range = Range.from_df(small_range.to_df().filter("id > 100"))
+    result = id.leftanti(empty_range, id.value == empty_range.id)
+
+    assert isinstance(result, Id)
+    assert result.count() == 5
+
+
+def test_with_watermark(spark: SparkSession):
+    class Dates(DataFrame):
+        date: Timestamp
+
+    data = [
+        (datetime.datetime(2025, 1, 1),),
+        (datetime.datetime(2026, 4, 3),),
+        (datetime.datetime(2028, 4, 3),),
+    ]
+
+    df = Dates.from_df(spark.createDataFrame(data, schema=Dates.generate_schema()))
+
+    values = collect_column(df.withWatermark(df.date, "10 minutes"), "date")
+
+    assert values == [
+        datetime.datetime(2025, 1, 1),
+        datetime.datetime(2026, 4, 3),
+        datetime.datetime(2028, 4, 3),
+    ]
+
+
+def test_with_watermark_alias(spark: SparkSession):
+    class Dates(DataFrame):
+        date: Timestamp = field(df_alias="dt")
+
+    data = [
+        (datetime.datetime(2025, 1, 1),),
+        (datetime.datetime(2026, 4, 3),),
+        (datetime.datetime(2028, 4, 3),),
+    ]
+
+    df = Dates.from_df(spark.createDataFrame(data, schema=Dates.generate_schema()))
+
+    values = collect_column(df.withWatermark(df.date, "10 minutes"), "dt")
+
+    assert values == [
+        datetime.datetime(2025, 1, 1),
+        datetime.datetime(2026, 4, 3),
+        datetime.datetime(2028, 4, 3),
+    ]
