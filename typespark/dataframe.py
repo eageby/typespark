@@ -114,11 +114,13 @@ class BaseDataFrame(_Base):
     def where(self, condition: str | pyspark.sql.Column | TypedColumn[BooleanType]) -> Self:
         return self.filter(condition)
 
-    def orderBy(self, *cols: Any, **kwargs: Any) -> Self:
-        return self.from_df(self._dataframe.orderBy(*cols, **kwargs))
+    def orderBy(self, *cols: TypedColumn[DataType] | pyspark.sql.Column, **kwargs: Any) -> Self:
+        spark_cols = [c.to_spark() if isinstance(c, TypedColumn) else c for c in cols]
+        return self.from_df(self._dataframe.orderBy(*spark_cols, **kwargs))
 
-    def sort(self, *cols: Any, **kwargs: Any) -> Self:
-        return self.from_df(self._dataframe.sort(*cols, **kwargs))
+    def sort(self, *cols: TypedColumn[DataType] | pyspark.sql.Column, **kwargs: Any) -> Self:
+        spark_cols = [c.to_spark() if isinstance(c, TypedColumn) else c for c in cols]
+        return self.from_df(self._dataframe.sort(*spark_cols, **kwargs))
 
     def limit(self, num: int) -> Self:
         return self.from_df(self._dataframe.limit(num))
@@ -126,8 +128,9 @@ class BaseDataFrame(_Base):
     def coalesce(self, numPartitions: int) -> Self:
         return self.from_df(self._dataframe.coalesce(numPartitions))
 
-    def repartition(self, numPartitions: int, *cols: Any) -> Self:
-        return self.from_df(self._dataframe.repartition(numPartitions, *cols))
+    def repartition(self, numPartitions: int, *cols: TypedColumn[DataType] | pyspark.sql.Column) -> Self:
+        spark_cols = [c.to_spark() if isinstance(c, TypedColumn) else c for c in cols]
+        return self.from_df(self._dataframe.repartition(numPartitions, *spark_cols))
 
     def cache(self) -> Self:
         return self.from_df(self._dataframe.cache(), disable_select=True)
@@ -192,7 +195,7 @@ class BaseDataFrame(_Base):
 
     def join(
         self,
-        other: Any,
+        other: BaseDataFrame | pyspark.sql.DataFrame,
         on: TypedColumn | str | list[str] | pyspark.sql.Column | None = None,
         how: str | None = None,
     ) -> BaseDataFrame:
@@ -212,7 +215,7 @@ class BaseDataFrame(_Base):
 
     def leftsemi(
         self,
-        other: Any,
+        other: BaseDataFrame | pyspark.sql.DataFrame,
         on: TypedColumn | str | list[str] | pyspark.sql.Column | None = None,
     ) -> Self:
         """Filter rows using a left semi join, preserving this DataFrame's typed schema.
@@ -232,7 +235,7 @@ class BaseDataFrame(_Base):
 
     def leftanti(
         self,
-        other: Any,
+        other: BaseDataFrame | pyspark.sql.DataFrame,
         on: TypedColumn | str | list[str] | pyspark.sql.Column | None = None,
     ) -> Self:
         """Filter rows using a left anti join, preserving this DataFrame's typed schema.
