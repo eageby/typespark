@@ -5,8 +5,8 @@ from pyspark.sql import SparkSession
 from tests.conftest import Person
 from tests.utils import collect_values
 from typespark import Int, String
-from typespark.dataframe import BaseDataFrame
 from typespark.columns.struct import Struct
+from typespark.dataframe import BaseDataFrame
 from typespark.metadata import field
 from typespark.type_alias import Integer
 

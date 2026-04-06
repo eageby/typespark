@@ -1,11 +1,14 @@
 import datetime
 
+import pytest
 from pyspark.sql import SparkSession
 
 from tests.conftest import Id, Person, Range
 from tests.utils import collect_column, collect_values
 from typespark import DataFrame, Int, String, Timestamp
 from typespark.dataframe import BaseDataFrame
+from typespark.exceptions import MissingColumnError
+from typespark.literals import string_literal
 from typespark.metadata import field
 
 
@@ -171,3 +174,64 @@ def test_with_watermark_alias(spark: SparkSession):
         datetime.datetime(2026, 4, 3),
         datetime.datetime(2028, 4, 3),
     ]
+
+
+# ── from_df: column validation and defaults ──────────────────────
+
+
+def test_disable_select_keeps_extra_columns(dataframe):
+    class MinimalPerson(BaseDataFrame):
+        name: String
+
+    df = MinimalPerson.from_df(dataframe, disable_select=True)
+
+    assert df.to_df().columns == ["name", "age"]
+
+
+def test_select_typed_subset(dataframe):
+    class MinimalPerson(BaseDataFrame):
+        name: String
+
+    df = MinimalPerson.from_df(dataframe)
+
+    assert df.to_df().columns == ["name"]
+
+
+def test_from_df_missing_col(dataframe):
+    class ExtendedPerson(BaseDataFrame):
+        name: String
+        age: Int
+        surname: String
+
+    with pytest.raises(MissingColumnError) as exc_info:
+        ExtendedPerson.from_df(dataframe)
+
+    assert exc_info.value.expected_column == "surname"
+    assert exc_info.value.available_columns == ["name", "age"]
+
+
+def test_from_df_missing_col_with_default(dataframe):
+    class ExtendedPerson(BaseDataFrame):
+        name: String
+        age: Int
+        surname: String = field(default=string_literal("Doe"))
+
+    df = ExtendedPerson.from_df(dataframe)
+
+    assert df.to_df().columns == ["name", "age", "surname"]
+    assert collect_column(df, "surname") == ["Doe", "Doe"]
+
+
+def test_from_df_default_any_order(dataframe):
+    """Default field before non-default field — ordering is free with kw_only."""
+
+    class Reordered(BaseDataFrame):
+        name: String
+        surname: String = field(default=string_literal("Doe"))
+        age: Int
+
+    df = Reordered.from_df(dataframe)
+
+    assert set(df.to_df().columns) == {"name", "surname", "age"}
+    assert collect_column(df, "surname") == ["Doe", "Doe"]
+    assert collect_column(df, "age") == [30, 25]
