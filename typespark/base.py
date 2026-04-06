@@ -1,58 +1,37 @@
 """
-Attrs-based schema machinery for TypeSpark DataFrames.
+Schema base for TypeSpark.
 
-_Base is a frozen attrs class that wraps a pyspark.sql.DataFrame and manages
-typed column fields. It is inherited by user-defined schema classes (via
-BaseDataFrame) to provide field introspection and schema generation.
+_Base is a plain class (not attrs-decorated) that provides typed column field
+introspection, schema generation, and the central _build() factory method.
+It knows about attrs fields and TypedColumns but NOT about DataFrames.
 """
+
 from __future__ import annotations
 
 from typing import (
     TYPE_CHECKING,
-    Optional,
     Self,
     dataclass_transform,
-    overload,
 )
 
-import attr
 import attrs
-import pyspark.sql
-from pyspark.sql import functions as F
 
 from typespark import schema
 from typespark.columns import TypedColumn, is_typed_column_type
-from typespark.define import define
-from typespark.metadata import decimal, field, foreign_key, primary_key
+from typespark.exceptions import InvalidDefaultColumnError, MissingColumnError
 from typespark.utils import get_field_name, unwrap_type
 
+from .define import define
+from .field_transforms import FieldTransformer
+
 if TYPE_CHECKING:
-    from typespark.field_transforms import FieldTransformer
-
-
-def _dataframe_converter(df: "_Base | pyspark.sql.DataFrame"):
-    if isinstance(df, pyspark.sql.DataFrame):
-        return df
-    return df.to_df()
+    pass
 
 
 @dataclass_transform(
     frozen_default=True,
-    field_specifiers=(attrs.field, attr.ib, decimal, foreign_key, primary_key, field),
 )
-@attrs.define(frozen=True)
 class _Base:
-    _dataframe: pyspark.sql.DataFrame = attrs.field(
-        converter=_dataframe_converter, alias="df"
-    )
-    _alias: Optional[str] = attrs.field(init=False, default=None)
-
-    def to_spark(self):
-        return self.to_df()
-
-    def to_df(self):
-        return self._dataframe
-
     @property
     def columns(self) -> list[TypedColumn]:
         return [
@@ -60,6 +39,12 @@ class _Base:
             for field in attrs.fields(self.__class__)
             if is_typed_column_type(field.type)
         ]
+
+    @classmethod
+    def __init_subclass__(
+        cls, field_transformers: list[FieldTransformer] | None = None
+    ):
+        define(cls, field_transformers=field_transformers)
 
     @classmethod
     def _column_aliases(cls):
@@ -73,75 +58,66 @@ class _Base:
     def generate_schema(cls):
         return schema.generate_schema(cls)
 
-    @classmethod
-    def __init_subclass__(
-        cls, field_transformers: Optional[list[FieldTransformer]] = None
-    ):
-        define(cls, field_transformers=field_transformers)
-
     def columndict(self) -> dict[str, TypedColumn]:
         return {
-            k: getattr(self, k)
-            for k, v in attrs.asdict(
-                self, filter=lambda f, _: is_typed_column_type(f.type)
-            ).items()
+            f.name: getattr(self, f.name)
+            for f in attrs.fields(self.__class__)
+            if is_typed_column_type(f.type)
         }
 
-    def __attrs_post_init__(self):
-        object.__setattr__(
-            self, "_dataframe", self.select(*self.columns).to_df()
-        )  # Circumventing frozen
-
-    @overload
     @classmethod
-    def from_df(
-        cls,
-        df: pyspark.sql.DataFrame,
-        alias: str | None = None,
-        disable_select: bool = False,
-    ) -> Self: ...
+    def _build(cls, source, *, col_ref=None) -> Self:
+        """Construct instance from a data source.
 
-    @overload
-    @classmethod
-    def from_df(
-        cls, df: _Base, alias: str | None = None, disable_select: bool = False
-    ) -> Self: ...
-
-    @classmethod
-    def from_df(
-        cls,
-        df: "pyspark.sql.DataFrame | _Base",
-        alias: str | None = None,
-        disable_select: bool = False,
-    ) -> Self:
+        source: data container supporting __getitem__ (DataFrame or Column).
+                Columns are extracted via source[field_alias].
+                Not stored by _Base — callers store it as _dataframe, _col, etc.
+        col_ref: optional callable (field_alias: str) -> Column.
+                 When provided, overrides source[field_alias] for column
+                 reference creation. Used by from_df for aliased access.
+        """
         new = cls.__new__(cls)
-        object.__setattr__(new, "_alias", alias)
-
-        if isinstance(df, _Base):
-            df = df.to_df()
-
-        if not disable_select:
-            df = df.select(*cls._column_aliases())
-
-        if alias is not None:
-            df = df.alias(alias)
-
-        object.__setattr__(new, "_dataframe", df)
+        # DataFrame.columns returns list[str]; Column does not
+        raw_columns = getattr(source, "columns", None)
+        available = set(raw_columns) if isinstance(raw_columns, list) else None
 
         for field_name, f in attrs.fields_dict(cls).items():
+            if not is_typed_column_type(f.type):
+                continue
             field_alias = get_field_name(f)
-            if is_typed_column_type(f.type):
-                if alias is not None:
-                    column_reference = F.col(f"{alias}.{field_alias}")
-                else:
-                    column_reference = df[field_alias]
+            missing = available is not None and field_alias not in available
 
+            if not missing:
+                column = col_ref(field_alias) if col_ref else source[field_alias]
                 object.__setattr__(
                     new,
                     field_name,
                     unwrap_type(f.type).set_column(
-                        column_reference, field_alias, unwrap_type(f.type)
+                        column, field_alias, unwrap_type(f.type)
                     ),
                 )
-
+            elif f.default is not attrs.NOTHING:
+                default = f.default
+                if not isinstance(default, TypedColumn):
+                    raise InvalidDefaultColumnError(
+                        model=cls,
+                        field_name=field_name,
+                        field_alias=field_alias,
+                        default_value=default,
+                    )
+                object.__setattr__(
+                    new,
+                    field_name,
+                    unwrap_type(f.type).set_column(
+                        default.to_spark().alias(field_alias),
+                        field_alias,
+                        unwrap_type(f.type),
+                    ),
+                )
+            else:
+                raise MissingColumnError(
+                    model=cls,
+                    field_name=field_name,
+                    expected_column=field_alias,
+                )
         return new

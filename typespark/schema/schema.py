@@ -12,7 +12,8 @@ from typespark.columns import TypedColumn, is_typed_column_type
 from typespark.metadata import MetaData
 
 if TYPE_CHECKING:
-    from typespark.base import BaseDataFrame, _Base
+    from typespark.base import _Base
+    from typespark.dataframe import BaseDataFrame
 
 
 def _extract_items(attrs_instance: AttrsInstance, *extract_keys: Iterable[str]):
