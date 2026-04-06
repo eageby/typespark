@@ -1,6 +1,6 @@
 import inspect
 from types import ModuleType
-from typing import get_args, get_origin
+from typing import List, Optional, Type, get_args, get_origin
 
 import attr
 from datacontract_specification.model import DataContractSpecification, Field, Model
@@ -24,7 +24,6 @@ from simple_parsing import docstring
 from typespark.columns import TypedColumn, is_typed_column_type
 from typespark.dataframe import BaseDataFrame
 from typespark.metadata import MetaData
-from typespark.columns import TypedColumn
 
 
 def pyspark_type_to_contract(pyspark_type: DataType) -> str:
@@ -65,14 +64,13 @@ def pyspark_type_to_contract(pyspark_type: DataType) -> str:
 
 
 def resolve_pk(t: type[BaseDataFrame]):
-
     pks = [i for i in attr.fields(t) if MetaData(**i.metadata).primary_key is not None]
 
     if len(pks) == 1:
         return pks[0]
     else:
         raise ValueError(
-            f"Cant reference composite primary keys of {t.__name__ or t.__serialization_alias__}"
+            f"Cant reference composite primary keys of {getattr(t, '__serialization_alias__', None), t.__name__}"
         )
 
 
@@ -80,7 +78,7 @@ def foreign_key(t: Optional[type[BaseDataFrame]]):
     if t is None:
         return None
     pk = resolve_pk(t)
-    return f"{t.__serialization_alias__ or to_snake(t.__name__)}.{pk.alias or pk.name}"
+    return f"{getattr(t, '__serialization_alias__', None) or to_snake(t.__name__)}.{pk.alias or pk.name}"
 
 
 def resolve_type(t: type | None):
@@ -90,7 +88,6 @@ def resolve_type(t: type | None):
 
 
 def field(cls: type[BaseDataFrame], f: attr.Attribute):
-
     if f.alias is None:
         raise ValueError("Field alias missing")
 
@@ -105,12 +102,13 @@ def field(cls: type[BaseDataFrame], f: attr.Attribute):
 
 
 def serialize_class_metadata(cls: type[BaseDataFrame]):
-
     fields = {
-        v.alias or v.name or k: field(cls, v) for k, v in attr.fields_dict(cls).items()
+        v.alias or v.name or k: field(cls, v)
+        for k, v in attr.fields_dict(cls).items()
+        if is_typed_column_type(v.type)
     }
 
-    name = cls.__serialization_alias__ or to_snake(cls.__name__)
+    name = getattr(cls, "__serialization_alias__", None) or to_snake(cls.__name__)
 
     return name, Model(description=cls.__doc__, fields=fields, type="table")
 
