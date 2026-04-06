@@ -3,7 +3,7 @@ from typing import Any
 import pyspark.sql
 from pyspark.sql import Row
 
-from typespark.base import BaseDataFrame
+from typespark.dataframe import BaseDataFrame
 
 
 def collect_values(df: pyspark.sql.DataFrame | BaseDataFrame):

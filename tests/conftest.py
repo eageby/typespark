@@ -2,7 +2,7 @@ import pytest
 from pyspark.sql import DataFrame, Row, SparkSession, types
 
 from typespark import Int, String
-from typespark.base import BaseDataFrame
+from typespark.dataframe import BaseDataFrame
 
 
 @pytest.fixture(scope="module")

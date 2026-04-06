@@ -3,14 +3,13 @@ import io
 import tokenize
 from collections import defaultdict
 from types import ModuleType
-from typing import Dict, Set
 
 import black
 from datacontract_specification.model import DataContractSpecification, Field, Model
 
 import typespark
 from typespark import metadata
-from typespark.base import BaseDataFrame
+from typespark.dataframe import BaseDataFrame
 
 
 def to_pascal_case(value: str):
@@ -50,16 +49,13 @@ def _contract_type_to_pyspark(contract_type: str) -> str:
 
 
 def _reference(ref: str):
-
     parts = ref.split(".")
 
     return ast.Name(to_pascal_case(parts[-2]))
 
 
 def _field_metadata_ast(field: Field):
-    if field.primaryKey and (
-        field.type == "decimal" and field.precision and field.scale
-    ):
+    if field.primaryKey and (field.type == "decimal" and field.precision and field.scale):
         return ast.Call(
             func=ast.Name(metadata.field.__name__),
             args=[],
@@ -69,9 +65,7 @@ def _field_metadata_ast(field: Field):
                 ast.keyword(arg="scale", value=ast.Constant(field.scale)),
             ],
         )
-    if field.references and (
-        field.type == "decimal" and field.precision and field.scale
-    ):
+    if field.references and (field.type == "decimal" and field.precision and field.scale):
         return ast.Call(
             func=ast.Name(metadata.field.__name__),
             args=[],
@@ -92,9 +86,7 @@ def _field_metadata_ast(field: Field):
         )
 
     if field.primaryKey:
-        return ast.Call(
-            func=ast.Name(metadata.primary_key.__name__), args=[], keywords=[]
-        )
+        return ast.Call(func=ast.Name(metadata.primary_key.__name__), args=[], keywords=[])
 
     if field.references:
         return ast.Call(
@@ -179,7 +171,7 @@ def _module_imports(tree: ast.Module, import_module: ModuleType):
     tracker.visit(tree)
 
     # Track symbols to import per module
-    pending: Dict[str, Set[str]] = {}
+    pending: dict[str, set[str]] = {}
 
     for name in dir(import_module):
         if name in tracker.used_names and name not in tracker.imported_names:
@@ -187,9 +179,7 @@ def _module_imports(tree: ast.Module, import_module: ModuleType):
 
     # Insert one import line per module
     for module, symbols in pending.items():
-        import_node = ast.ImportFrom(
-            module=module, names=[ast.alias(name=s) for s in sorted(symbols)], level=0
-        )
+        import_node = ast.ImportFrom(module=module, names=[ast.alias(name=s) for s in sorted(symbols)], level=0)
         tree.body.insert(0, import_node)
 
 
@@ -198,11 +188,7 @@ def _get_class_dependencies(class_node: ast.ClassDef) -> set[str]:
 
     for stmt in class_node.body:
         if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.value, ast.Call):
-            if (
-                isinstance(stmt.value.func, ast.Name)
-                and stmt.value.func.id == "foreign_key"
-                and stmt.value.args
-            ):
+            if isinstance(stmt.value.func, ast.Name) and stmt.value.func.id == "foreign_key" and stmt.value.args:
                 arg = stmt.value.args[0]
                 if isinstance(arg, ast.Name):
                     deps.add(arg.id)
@@ -255,12 +241,7 @@ def replace_single_with_triple_quotes(code: str) -> str:
             paren_level -= 1
 
         # If it's a single-quoted string outside parentheses
-        if (
-            toknum == tokenize.STRING
-            and paren_level == 0
-            and tokval.startswith("'")
-            and not tokval.startswith("'''")
-        ):
+        if toknum == tokenize.STRING and paren_level == 0 and tokval.startswith("'") and not tokval.startswith("'''"):
             # Replace '... with '''...'''
             unquoted = tokval[1:-1]  # strip outer quotes
             new_token = f"'''{unquoted}'''"
@@ -272,17 +253,12 @@ def replace_single_with_triple_quotes(code: str) -> str:
 
 
 def generate_types(contract: DataContractSpecification):
-
     module = ast.Module(
-        body=[
-            generate_class_ast(name, model) for name, model in contract.models.items()
-        ],
+        body=[generate_class_ast(name, model) for name, model in contract.models.items()],
         type_ignores=[],
     )
     _module_imports(module, metadata)
     _module_imports(module, typespark)
     _reorder_classes_in_module(module)
 
-    return black.format_str(
-        replace_single_with_triple_quotes(ast.unparse(module)), mode=black.FileMode()
-    )
+    return black.format_str(replace_single_with_triple_quotes(ast.unparse(module)), mode=black.FileMode())

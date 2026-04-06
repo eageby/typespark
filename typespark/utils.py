@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Annotated, Union, get_args, get_origin
 
 if TYPE_CHECKING:
-    from typespark.base import BaseDataFrame
+    from typespark.dataframe import BaseDataFrame
 import attrs
 
 from typespark.metadata import DF_ALIAS, MetaData
