@@ -21,6 +21,7 @@ from typing import (
 import attr
 import attrs
 import pyspark.sql
+import pyspark.sql.streaming.readwriter
 from pyspark.sql import Row
 from pyspark.sql import functions as F
 from pyspark.sql.types import BooleanType, DataType, StructType, TimestampType
@@ -463,3 +464,11 @@ class BaseDataFrame(_DataFrameFields, _Base):
 
     def createTempView(self, name: str) -> None:
         self._dataframe.createTempView(name)
+
+    @property
+    def write(self) -> pyspark.sql.DataFrameWriter:
+        return self._dataframe.write
+
+    @property
+    def writeStream(self) -> pyspark.sql.streaming.readwriter.DataStreamWriter:
+        return self._dataframe.writeStream
