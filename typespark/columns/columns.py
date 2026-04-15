@@ -161,6 +161,11 @@ class Bool(TypedColumn[BooleanType]):
     _data_type = BooleanType
     __hash__ = TypedColumn.__hash__
 
+    def __init__(self, col: "pyspark.sql.Column | TypedColumn[Any] | bool | None"):
+        if not isinstance(col, (TypedColumn, pyspark.sql.Column)):
+            col = pyspark.sql.functions.lit(col)
+        super().__init__(col)
+
     def __eq__(self, other: "Bool | bool") -> "Bool":  # type: ignore[override]
         return Bool.wrap(self._col.__eq__(_unwrap(other)))
 

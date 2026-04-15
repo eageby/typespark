@@ -1,7 +1,9 @@
 import datetime
 import decimal as _decimal
-from typing import Any, Self
+from typing import Any, Self, overload
 
+import pyspark.sql
+from pyspark.sql.functions import lit
 from pyspark.sql.types import (
     BinaryType,
     DateType,
@@ -34,6 +36,11 @@ def _unwrap(other: object) -> Any:
 class _StringOpsMixin(TypedColumn):
     __hash__ = TypedColumn.__hash__
 
+    def __init__(self, col: "pyspark.sql.Column | TypedColumn[Any] | str | None"):
+        if not isinstance(col, (TypedColumn, pyspark.sql.Column)):
+            col = lit(col)
+        super().__init__(col)
+
     def __eq__(self, other: "Self | str") -> Bool:  # type: ignore[override]
         return Bool.wrap(self._col.__eq__(_unwrap(other)))
 
@@ -55,6 +62,13 @@ class _StringOpsMixin(TypedColumn):
 
 class _DateOpsMixin(TypedColumn):
     __hash__ = TypedColumn.__hash__
+
+    def __init__(
+        self, col: "pyspark.sql.Column | TypedColumn[Any] | datetime.date | None"
+    ):
+        if not isinstance(col, (TypedColumn, pyspark.sql.Column)):
+            col = lit(col)
+        super().__init__(col)
 
     def __eq__(self, other: "Self | datetime.date") -> Bool:  # type: ignore[override]
         return Bool.wrap(self._col.__eq__(_unwrap(other)))
@@ -78,6 +92,13 @@ class _DateOpsMixin(TypedColumn):
 class _TimestampOpsMixin(TypedColumn):
     __hash__ = TypedColumn.__hash__
 
+    def __init__(
+        self, col: "pyspark.sql.Column | TypedColumn[Any] | datetime.datetime | None"
+    ):
+        if not isinstance(col, (TypedColumn, pyspark.sql.Column)):
+            col = lit(col)
+        super().__init__(col)
+
     def __eq__(self, other: "Self | datetime.datetime") -> Bool:  # type: ignore[override]
         return Bool.wrap(self._col.__eq__(_unwrap(other)))
 
@@ -100,6 +121,11 @@ class _TimestampOpsMixin(TypedColumn):
 class _BinaryOpsMixin(TypedColumn):
     __hash__ = TypedColumn.__hash__
 
+    def __init__(self, col: "pyspark.sql.Column | TypedColumn[Any] | bytes | None"):
+        if not isinstance(col, (TypedColumn, pyspark.sql.Column)):
+            col = lit(col)
+        super().__init__(col)
+
     def __eq__(self, other: "Self | bytes") -> Bool:  # type: ignore[override]
         return Bool.wrap(self._col.__eq__(_unwrap(other)))
 
@@ -114,6 +140,11 @@ class _BinaryOpsMixin(TypedColumn):
 
 class _IntOpsMixin(TypedColumn):
     __hash__ = TypedColumn.__hash__
+
+    def __init__(self, col: "pyspark.sql.Column | TypedColumn[Any] | int | None"):
+        if not isinstance(col, (TypedColumn, pyspark.sql.Column)):
+            col = lit(col)
+        super().__init__(col)
 
     # -- comparison --
     def __eq__(self, other: "Self | int") -> Bool:  # type: ignore[override]
@@ -160,6 +191,13 @@ class _IntOpsMixin(TypedColumn):
 class _FloatOpsMixin(TypedColumn):
     __hash__ = TypedColumn.__hash__
 
+    def __init__(
+        self, col: "pyspark.sql.Column | TypedColumn[Any] | int | float | None"
+    ):
+        if not isinstance(col, (TypedColumn, pyspark.sql.Column)):
+            col = lit(col)
+        super().__init__(col)
+
     # -- comparison --
     def __eq__(self, other: "Self | int | float") -> Bool:  # type: ignore[override]
         return Bool.wrap(self._col.__eq__(_unwrap(other)))
@@ -204,6 +242,14 @@ class _FloatOpsMixin(TypedColumn):
 
 class _DecimalOpsMixin(TypedColumn):
     __hash__ = TypedColumn.__hash__
+
+    def __init__(
+        self,
+        col: "pyspark.sql.Column | TypedColumn[Any] | int | float | _decimal.Decimal | None",
+    ):
+        if not isinstance(col, (TypedColumn, pyspark.sql.Column)):
+            col = lit(col)
+        super().__init__(col)
 
     # -- comparison --
     def __eq__(self, other: "Self | int | float | _decimal.Decimal") -> Bool:  # type: ignore[override]
@@ -258,6 +304,32 @@ class String(_StringOpsMixin, TypedColumn[StringType]):
 
 class Decimal(_DecimalOpsMixin, TypedColumn[DecimalType]):
     _data_type = DecimalType
+
+    @overload
+    def __init__(self, c: "Decimal") -> None:
+        """Wrap an existing Decimal column without casting."""
+        ...
+
+    @overload
+    def __init__(
+        self,
+        c: "pyspark.sql.Column | TypedColumn[Any] | int | float | _decimal.Decimal | None",
+        precision: int = 10,
+        scale: int = 0,
+    ) -> None:
+        """Cast to DecimalType(precision, scale). Accepts columns or Python literals."""
+        ...
+
+    def __init__(self, c, precision=None, scale=None):  # type: ignore[misc]
+        if isinstance(c, (int, float, _decimal.Decimal)) or c is None:
+            p, s = 10 if precision is None else precision, 0 if scale is None else scale
+            self._col = lit(c).cast(DecimalType(p, s))
+        elif precision is not None or scale is not None:
+            p, s = 10 if precision is None else precision, 0 if scale is None else scale
+            raw = c.to_spark() if isinstance(c, TypedColumn) else c
+            self._col = raw.cast(DecimalType(p, s))
+        else:
+            self._col = c.to_spark() if isinstance(c, TypedColumn) else c
 
 
 class Binary(_BinaryOpsMixin, TypedColumn[BinaryType]):
