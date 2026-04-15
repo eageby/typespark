@@ -1,9 +1,8 @@
 __all__ = [
     "Bool",
     "Array",
-    "Byte",
+    "ArrayOf",
     "String",
-    "Short",
     "Decimal",
     "Binary",
     "Integer",
@@ -17,41 +16,24 @@ __all__ = [
     "DataFrame",
 ]
 
-
-from pyspark.sql.types import (
-    BinaryType,
-    BooleanType,
-    ByteType,
-    DateType,
-    DecimalType,
-    DoubleType,
-    FloatType,
-    IntegerType,
-    LongType,
-    ShortType,
-    StringType,
-    TimestampType,
+from typespark.columns.primitives import (
+    Binary,
+    Bool,
+    Date,
+    Decimal,
+    Double,
+    Float,
+    Integer,
+    Long,
+    String,
+    Timestamp,
 )
-
 from typespark.dataframe import BaseDataFrame
 
 from .columns import TypedColumn
-from .columns.array import TypedArrayType
+from .columns.array import ArrayOf, TypedArrayType
 
-Bool = TypedColumn[BooleanType]
-Byte = TypedColumn[ByteType]
-String = TypedColumn[StringType]
-Short = TypedColumn[ShortType]
-Decimal = TypedColumn[DecimalType]
-Binary = TypedColumn[BinaryType]
-Integer = TypedColumn[IntegerType]
-Long = TypedColumn[LongType]
-Float = TypedColumn[FloatType]
-Double = TypedColumn[DoubleType]
-Int = Integer
-Timestamp = TypedColumn[TimestampType]
-Date = TypedColumn[DateType]
 Array = TypedArrayType
-
 Column = TypedColumn
 DataFrame = BaseDataFrame
+Int = Integer
