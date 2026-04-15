@@ -1,7 +1,8 @@
 import functools
-from typing import Any, Optional, Self
+from typing import Any, ClassVar, Never, Self
 
 import pyspark.sql
+import pyspark.sql.functions
 from pyspark.sql.types import BooleanType, DataType
 
 from .groups import _GroupColumn
@@ -9,18 +10,30 @@ from .groups import _GroupColumn
 
 class TypedColumn[T: DataType]:
     _col: pyspark.sql.Column
-    _name: str
+    _name: str | None = None
+    _data_type: ClassVar[type[DataType] | None] = None
+
+    @classmethod
+    def _cast_schema(cls) -> DataType | None:
+        return cls._data_type() if cls._data_type is not None else None
 
     def __hash__(self) -> int:
         return hash(self._name)
 
-    @functools.wraps(pyspark.sql.Column.alias)
-    def name(self, alias: str, **kwargs): ...
+    def __init__(self, c: "pyspark.sql.Column | TypedColumn | Self"):  # pylint: disable=super-init-not-called
+        col = c.to_spark() if isinstance(c, TypedColumn) else c
+        schema = self.__class__._cast_schema()
+        self._col = col.cast(schema) if schema is not None else col
 
-    def __init__(self, c: pyspark.sql.Column | Self):  # pylint: disable=super-init-not-called
-        self._col = c.to_spark() if isinstance(c, TypedColumn) else c
+    @classmethod
+    def wrap(cls, c: pyspark.sql.Column) -> "Self":
+        """Wrap a column without casting."""
+        self = object.__new__(cls)
+        self._col = c
+        self._set_name(None)
+        return self
 
-    def _set_name(self, name: str):
+    def _set_name(self, name: str | None):
         self._name = name
         return self
 
@@ -28,22 +41,28 @@ class TypedColumn[T: DataType]:
         return self._col
 
     @classmethod
-    def set_column(
-        cls,
-        col: pyspark.sql.Column,
-        name: str,
-        tp: Optional[type["TypedColumn"]] = None,
-    ):
+    def _set_column(cls, col: pyspark.sql.Column, name: str) -> "Self":
         self = object.__new__(cls)
         self._col = col
         self._name = name
         return self
 
-    def __getattr__(self, item) -> pyspark.sql.Column:
-        return getattr(self._col, item)
+    def __getattr__(self, item: str) -> Never:
+        if hasattr(pyspark.sql.Column, item):
+            raise AttributeError(
+                f"'{item}' is not yet wrapped by TypedColumn. "
+                f"Use .to_spark().{item} to access the underlying PySpark Column."
+            )
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute '{item}'"
+        )
 
     def __repr__(self):
-        return f"{self.__class__.__name__}<'{self._name}'>"
+        return (
+            f"{self.__class__.__name__}<'{self._name}'>"
+            if self._name is not None
+            else f"{self.__class__.__name__}<>"
+        )
 
     def group(self) -> Self:
         return _GroupColumn(self)  # type: ignore
@@ -54,107 +73,77 @@ class TypedColumn[T: DataType]:
     def alias(self, alias: str, **kwargs) -> "Self":
         return AliasedTypedColumn(self._col.alias(alias, **kwargs), alias, self._name)  # type: ignore
 
-    def isNull(self):
-        return TypedColumn[BooleanType](self._col.isNull())
+    @functools.wraps(alias)
+    def name(self, alias: str, **kwargs) -> "Self":
+        return self.alias(alias)
 
-    def isNotNull(self):
-        return TypedColumn[BooleanType](self._col.isNotNull())
+    def isNull(self) -> "Bool":
+        return Bool.wrap(self._col.isNull())
 
-    def like(self, pattern: str):
-        return TypedColumn[BooleanType](self._col.like(pattern))
+    def isNotNull(self) -> "Bool":
+        return Bool.wrap(self._col.isNotNull())
 
-    def _get_operand_column(self, other: "TypedColumn"):
-        # Utility function to decide if 'other' is a ColumnWrapper or a raw value.
+    def like(self, pattern: str) -> "Bool":
+        return Bool.wrap(self._col.like(pattern))
+
+    def _get_operand_column(self, other: Any):
         if isinstance(other, TypedColumn):
             return other._col
-        elif isinstance(other, pyspark.sql.Column):
-            return other
         else:
             return other
 
-    # Arithmetic operators
-    def __add__(self, other: "TypedColumn"):
-        return TypedColumn(self._col.__add__(self._get_operand_column(other)))
+    # Comparison operators — accept same-type column only.
+    # Primitives override to additionally accept Python literals.
+    def __eq__(self, other: Self) -> "Bool":  # type: ignore[override]
+        return Bool.wrap(self._col.__eq__(self._get_operand_column(other)))
 
-    def __sub__(self, other: "TypedColumn"):
-        return TypedColumn(self._col.__sub__(self._get_operand_column(other)))
+    def __ne__(self, other: Self) -> "Bool":  # type: ignore[override]
+        return Bool.wrap(self._col.__ne__(self._get_operand_column(other)))
 
-    def __mul__(self, other: "TypedColumn"):
-        return TypedColumn(self._col.__mul__(self._get_operand_column(other)))
+    def __lt__(self, other: Self) -> "Bool":
+        return Bool.wrap(self._col.__lt__(self._get_operand_column(other)))
 
-    def __truediv__(self, other: "TypedColumn"):
-        return TypedColumn(self._col.__truediv__(self._get_operand_column(other)))
+    def __le__(self, other: Self) -> "Bool":
+        return Bool.wrap(self._col.__le__(self._get_operand_column(other)))
 
-    def __mod__(self, other: "TypedColumn"):
-        return TypedColumn(self._col.__mod__(self._get_operand_column(other)))
+    def __gt__(self, other: Self) -> "Bool":
+        return Bool.wrap(self._col.__gt__(self._get_operand_column(other)))
 
-    def __pow__(self, other: "TypedColumn"):
-        return TypedColumn(self._col.__pow__(self._get_operand_column(other)))
+    def __ge__(self, other: Self) -> "Bool":
+        return Bool.wrap(self._col.__ge__(self._get_operand_column(other)))
 
-    # Comparison operators
-    def __eq__(  # type: ignore[override]
-        self, other: "TypedColumn"
-    ) -> "TypedColumn[BooleanType]":
-        return TypedColumn[BooleanType](
-            self._col.__eq__(self._get_operand_column(other))
-        )
+    def __add__(self, other: Any) -> "TypedColumn":
+        return TypedColumn(self._col.__add__(_unwrap(other)))
 
-    def __ne__(  # type: ignore[override]
-        self, other: "TypedColumn"
-    ) -> "TypedColumn":
-        return TypedColumn[BooleanType](
-            self._col.__ne__(self._get_operand_column(other))
-        )
+    def __sub__(self, other: Any) -> "TypedColumn":
+        return TypedColumn(self._col.__sub__(_unwrap(other)))
 
-    def __lt__(self, other: "TypedColumn"):
-        return TypedColumn[BooleanType](
-            self._col.__lt__(self._get_operand_column(other))
-        )
+    def __mul__(self, other: Any) -> "TypedColumn":
+        return TypedColumn(self._col.__mul__(_unwrap(other)))
 
-    def __le__(self, other: "TypedColumn"):
-        return TypedColumn[BooleanType](
-            self._col.__le__(self._get_operand_column(other))
-        )
+    def __truediv__(self, other: Any) -> "TypedColumn":
+        return TypedColumn(self._col.__truediv__(_unwrap(other)))
 
-    def __gt__(self, other: "TypedColumn"):
-        return TypedColumn[BooleanType](
-            self._col.__gt__(self._get_operand_column(other))
-        )
+    def __mod__(self, other: Any) -> "TypedColumn":
+        return TypedColumn(self._col.__mod__(_unwrap(other)))
 
-    def __ge__(self, other: "TypedColumn"):
-        return TypedColumn[BooleanType](
-            self._col.__ge__(self._get_operand_column(other))
-        )
+    def __pow__(self, other: Any) -> "TypedColumn":
+        return TypedColumn(self._col.__pow__(_unwrap(other)))
 
-    # Logical operators
-    def __and__(self, other: "TypedColumn"):
-        return TypedColumn[BooleanType](
-            self._col.__and__(self._get_operand_column(other))
-        )
-
-    def __or__(self, other: "TypedColumn"):
-        return TypedColumn[BooleanType](
-            self._col.__or__(self._get_operand_column(other))
-        )
-
-    def __invert__(self):
-        return TypedColumn[BooleanType](self._col.__invert__())
-
-    # Unary negation
-    def __neg__(self):
-        return TypedColumn[T](self._col.__neg__())
+    def __neg__(self) -> "TypedColumn":
+        return TypedColumn(self._col.__neg__())
 
     def desc(self):
-        return TypedColumn[T](self.column.desc())
+        return TypedColumn[T](self._col.desc())
 
     def asc(self):
-        return TypedColumn[T](self.column.asc())
+        return TypedColumn[T](self._col.asc())
 
-    def isin(self, *cols: Any):
-        return TypedColumn[BooleanType](self.to_spark().isin(*cols))
+    def isin(self, *cols: Any) -> "Bool":
+        return Bool.wrap(self.to_spark().isin(*cols))
 
-    def rlike(self, item: str) -> "TypedColumn[BooleanType]":
-        return TypedColumn[BooleanType](self.to_spark().rlike(item))
+    def rlike(self, item: str) -> "Bool":
+        return Bool.wrap(self.to_spark().rlike(item))
 
 
 class AliasedTypedColumn(TypedColumn):
@@ -166,3 +155,27 @@ class AliasedTypedColumn(TypedColumn):
         super().__init__(c)
         self._name = name
         self.original_name = original_name
+
+
+class Bool(TypedColumn[BooleanType]):
+    _data_type = BooleanType
+    __hash__ = TypedColumn.__hash__
+
+    def __eq__(self, other: "Bool | bool") -> "Bool":  # type: ignore[override]
+        return Bool.wrap(self._col.__eq__(_unwrap(other)))
+
+    def __ne__(self, other: "Bool | bool") -> "Bool":  # type: ignore[override]
+        return Bool.wrap(self._col.__ne__(_unwrap(other)))
+
+    def __and__(self, other: "Bool | bool") -> "Bool":
+        return Bool.wrap(self._col.__and__(_unwrap(other)))
+
+    def __or__(self, other: "Bool | bool") -> "Bool":
+        return Bool.wrap(self._col.__or__(_unwrap(other)))
+
+    def __invert__(self) -> "Bool":
+        return Bool.wrap(self._col.__invert__())
+
+
+def _unwrap(other: object) -> Any:
+    return other._col if isinstance(other, TypedColumn) else other  # type: ignore[union-attr]
