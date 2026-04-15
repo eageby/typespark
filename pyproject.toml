@@ -9,6 +9,7 @@ dependencies = [
     "attrs>=25.1.0,<26",
     "pyyaml>=6.0.2,<7",
     "simple-parsing>=0.1.7,<0.2",
+    "typing-extensions>=4.15.0",
 ]
 
 [project.optional-dependencies]
