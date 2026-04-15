@@ -51,7 +51,7 @@ class Generator[T: TypedColumn](ABC):
             c = self._col
         c = col(self._alias)
 
-        return self._elem_type.set_column(c, self._alias)
+        return self._elem_type._set_column(c, self._alias)
 
     # delegate all unknown attributes/methods to materialized Column
     def __getattr__(self, name: str):

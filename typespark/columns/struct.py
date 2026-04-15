@@ -9,6 +9,7 @@ from pyspark.sql.types import StringType, StructType
 from typespark.base import _Base
 from typespark.columns import TypedColumn
 from typespark.columns.utils import is_typed_column_type
+from typespark.exceptions import UnnamedColumnError
 from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.utils import get_field_name, unwrap_origin
 
@@ -19,7 +20,7 @@ from typespark.utils import get_field_name, unwrap_origin
 )
 class Struct(TypedColumn[StructType], _Base):
     @classmethod
-    def set_column(cls, col: Column, name: str, tp: type[TypedColumn] | None = None):
+    def _set_column(cls, col: Column, name: str):
         new = cls._build(col)
         object.__setattr__(new, "_col", col)  # Circumventing frozen
         object.__setattr__(new, "_name", name)  # Circumventing frozen
@@ -47,6 +48,8 @@ class Struct(TypedColumn[StructType], _Base):
     def from_json(
         cls, json: TypedColumn[StringType], options: dict[str, str] | None = None
     ) -> Self:
-        return cls.set_column(
-            from_json(json.to_spark(), cls.generate_schema(), options), json._name, None
+        if json._name is None:
+            raise UnnamedColumnError(column_type=json.__class__, operation="from_json")
+        return cls._set_column(
+            from_json(json.to_spark(), cls.generate_schema(), options), json._name
         )
