@@ -21,7 +21,6 @@ def field(
     is_foreign_key: Optional[type] = None,
     **kwargs,
 ):
-
     metadata = {
         DF_ALIAS: df_alias,
         NULLABLE_COLUMN: nullable,
@@ -63,7 +62,6 @@ def decimal(
     nullable: Optional[bool] = None,
     **kwargs,
 ):
-
     metadata = {
         DF_ALIAS: df_alias,
         DECIMAL_TYPE_METADATA_PRECISION: precision,
@@ -73,7 +71,7 @@ def decimal(
     return attrs.field(metadata=metadata, **kwargs)
 
 
-@attrs.define
+@attrs.define(init=False)
 class MetaData:
     precision: Optional[int] = attrs.field(
         alias=DECIMAL_TYPE_METADATA_PRECISION, default=None
@@ -82,8 +80,13 @@ class MetaData:
     nullable: bool = attrs.field(alias=NULLABLE_COLUMN, default=True)
     primary_key: Optional[bool] = attrs.field(alias=PRIMARY_KEY, default=None)
     foreign_key: Optional[type] = attrs.field(alias=FOREIGN_KEY, default=None)
-    # foreign_key: Optional[type[BaseDataFrame]] = attrs.field(
-    #     alias=FOREIGN_KEY, default=None
-    # )
 
     df_alias: Optional[str] = attrs.field(alias=DF_ALIAS, default=None)
+
+    def __init__(self, **kwargs):
+        filtered = {
+            attribute.alias or attribute.name: kwargs[attribute.alias or attribute.name]
+            for attribute in attrs.fields(self.__class__)
+            if (attribute.alias or attribute.name) in kwargs
+        }
+        self.__attrs_init__(**filtered)  # type: ignore[attr-defined]
