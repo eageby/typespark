@@ -14,7 +14,7 @@ def bitwise_not[T: Numeric](col: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.bitwise_not`.
     """
-    return ts.Column(F.bitwise_not(col.to_spark()))  # type: ignore
+    return ts.Column.wrap(F.bitwise_not(col.to_spark()))  # type: ignore
 
 
 def crc32(col: ts.Binary) -> ts.Long:
@@ -22,7 +22,7 @@ def crc32(col: ts.Binary) -> ts.Long:
 
     Wrapper for :func:`pyspark.sql.functions.crc32`.
     """
-    return ts.Long(F.crc32(col.to_spark()))
+    return ts.Long.wrap(F.crc32(col.to_spark()))
 
 
 def current_date() -> ts.Date:
@@ -30,7 +30,7 @@ def current_date() -> ts.Date:
 
     Wrapper for :func:`pyspark.sql.functions.current_date`.
     """
-    return ts.Date(F.current_date())
+    return ts.Date.wrap(F.current_date())
 
 
 def current_timestamp() -> ts.Timestamp:
@@ -38,7 +38,7 @@ def current_timestamp() -> ts.Timestamp:
 
     Wrapper for :func:`pyspark.sql.functions.current_timestamp`.
     """
-    return ts.Timestamp(F.current_timestamp())
+    return ts.Timestamp.wrap(F.current_timestamp())
 
 
 def equal_null[T: types.DataType](col1: ts.Column[T], col2: ts.Column[T]) -> ts.Bool:
@@ -46,7 +46,7 @@ def equal_null[T: types.DataType](col1: ts.Column[T], col2: ts.Column[T]) -> ts.
 
     Wrapper for :func:`pyspark.sql.functions.equal_null`.
     """
-    return ts.Bool(F.equal_null(col1.to_spark(), col2.to_spark()))
+    return ts.Bool.wrap(F.equal_null(col1.to_spark(), col2.to_spark()))
 
 
 @overload
@@ -66,7 +66,9 @@ def from_json(
 
 
 def from_json[T: ts.Struct](
-    col: ts.String, schema: type[T] | types.StructType, options: dict[str, str] | None = None
+    col: ts.String,
+    schema: type[T] | types.StructType,
+    options: dict[str, str] | None = None,
 ) -> ts.Column | T:
     """Parses a JSON string column into a struct.
 
@@ -77,7 +79,7 @@ def from_json[T: ts.Struct](
     """
     if isinstance(schema, type) and issubclass(schema, ts.Struct):
         return schema.from_json(col, options)
-    return ts.Column(F.from_json(col.to_spark(), schema, options))
+    return ts.Column.wrap(F.from_json(col.to_spark(), schema, options))
 
 
 def greatest[T: ts.Column](*cols: T) -> T:
@@ -85,7 +87,7 @@ def greatest[T: ts.Column](*cols: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.greatest`.
     """
-    return ts.Column(F.greatest(*[c.to_spark() for c in cols]))  # type: ignore
+    return ts.Column.wrap(F.greatest(*[c.to_spark() for c in cols]))  # type: ignore
 
 
 def hash(col: ts.Column) -> ts.Int:
@@ -93,7 +95,7 @@ def hash(col: ts.Column) -> ts.Int:
 
     Wrapper for :func:`pyspark.sql.functions.hash`.
     """
-    return ts.Int(F.hash(col.to_spark()))
+    return ts.Int.wrap(F.hash(col.to_spark()))
 
 
 def isnan(col: Numeric) -> ts.Bool:
@@ -101,7 +103,7 @@ def isnan(col: Numeric) -> ts.Bool:
 
     Wrapper for :func:`pyspark.sql.functions.isnan`.
     """
-    return ts.Bool(F.isnan(col.to_spark()))
+    return ts.Bool.wrap(F.isnan(col.to_spark()))
 
 
 def isnull(col: ts.Column) -> ts.Bool:
@@ -109,7 +111,7 @@ def isnull(col: ts.Column) -> ts.Bool:
 
     Wrapper for :func:`pyspark.sql.functions.isnull`.
     """
-    return ts.Bool(F.isnull(col.to_spark()))
+    return ts.Bool.wrap(F.isnull(col.to_spark()))
 
 
 def isnotnull(col: ts.Column) -> ts.Bool:
@@ -117,7 +119,7 @@ def isnotnull(col: ts.Column) -> ts.Bool:
 
     Wrapper for :func:`pyspark.sql.functions.isnotnull`.
     """
-    return ts.Bool(F.isnotnull(col.to_spark()))
+    return ts.Bool.wrap(F.isnotnull(col.to_spark()))
 
 
 def least[T: ts.Column](*cols: T) -> T:
@@ -125,7 +127,7 @@ def least[T: ts.Column](*cols: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.least`.
     """
-    return ts.Column(F.least(*[c.to_spark() for c in cols]))  # type: ignore
+    return ts.Column.wrap(F.least(*[c.to_spark() for c in cols]))  # type: ignore
 
 
 @overload
@@ -149,7 +151,7 @@ def lit(value: LiteralType) -> ts.Column:
 
     Wrapper for :func:`pyspark.sql.functions.lit`.
     """
-    return ts.Column(F.lit(value))
+    return ts.Column.wrap(F.lit(value))
 
 
 def md5(col: ts.Column) -> ts.String:
@@ -157,7 +159,7 @@ def md5(col: ts.Column) -> ts.String:
 
     Wrapper for :func:`pyspark.sql.functions.md5`.
     """
-    return ts.String(F.md5(col.to_spark()))
+    return ts.String.wrap(F.md5(col.to_spark()))
 
 
 def monotonically_increasing_id() -> ts.Long:
@@ -165,7 +167,7 @@ def monotonically_increasing_id() -> ts.Long:
 
     Wrapper for :func:`pyspark.sql.functions.monotonically_increasing_id`.
     """
-    return ts.Long(F.monotonically_increasing_id())
+    return ts.Long.wrap(F.monotonically_increasing_id())
 
 
 def nanvl[T: Numeric](col1: T, col2: T) -> T:
@@ -173,7 +175,7 @@ def nanvl[T: Numeric](col1: T, col2: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.nanvl`.
     """
-    return ts.Column(F.nanvl(col1.to_spark(), col2.to_spark()))  # type: ignore
+    return ts.Column.wrap(F.nanvl(col1.to_spark(), col2.to_spark()))  # type: ignore
 
 
 def nullif[T: types.DataType](col1: ts.Column[T], col2: ts.Column[T]) -> ts.Column[T]:
@@ -181,7 +183,7 @@ def nullif[T: types.DataType](col1: ts.Column[T], col2: ts.Column[T]) -> ts.Colu
 
     Wrapper for :func:`pyspark.sql.functions.nullif`.
     """
-    return ts.Column(F.nullif(col1.to_spark(), col2.to_spark()))
+    return ts.Column.wrap(F.nullif(col1.to_spark(), col2.to_spark()))
 
 
 def nvl[T: types.DataType](col1: ts.Column[T], col2: ts.Column[T]) -> ts.Column[T]:
@@ -189,15 +191,17 @@ def nvl[T: types.DataType](col1: ts.Column[T], col2: ts.Column[T]) -> ts.Column[
 
     Wrapper for :func:`pyspark.sql.functions.nvl`.
     """
-    return ts.Column(F.nvl(col1.to_spark(), col2.to_spark()))
+    return ts.Column.wrap(F.nvl(col1.to_spark(), col2.to_spark()))
 
 
-def nvl2[T: types.DataType](col1: ts.Column, col2: ts.Column[T], col3: ts.Column[T]) -> ts.Column[T]:
+def nvl2[T: types.DataType](
+    col1: ts.Column, col2: ts.Column[T], col3: ts.Column[T]
+) -> ts.Column[T]:
     """Returns `col2` if `col1` is not null, otherwise returns `col3`.
 
     Wrapper for :func:`pyspark.sql.functions.nvl2`.
     """
-    return ts.Column(F.nvl2(col1.to_spark(), col2.to_spark(), col3.to_spark()))
+    return ts.Column.wrap(F.nvl2(col1.to_spark(), col2.to_spark(), col3.to_spark()))
 
 
 def spark_partition_id() -> ts.Int:
@@ -205,7 +209,7 @@ def spark_partition_id() -> ts.Int:
 
     Wrapper for :func:`pyspark.sql.functions.spark_partition_id`.
     """
-    return ts.Int(F.spark_partition_id())
+    return ts.Int.wrap(F.spark_partition_id())
 
 
 def typeof(col: ts.Column) -> ts.String:
@@ -213,7 +217,7 @@ def typeof(col: ts.Column) -> ts.String:
 
     Wrapper for :func:`pyspark.sql.functions.typeof`.
     """
-    return ts.String(F.typeof(col.to_spark()))
+    return ts.String.wrap(F.typeof(col.to_spark()))
 
 
 def base64(col: ts.Binary) -> ts.String:
@@ -221,7 +225,7 @@ def base64(col: ts.Binary) -> ts.String:
 
     Wrapper for :func:`pyspark.sql.functions.base64`.
     """
-    return ts.String(F.base64(col.to_spark()))
+    return ts.String.wrap(F.base64(col.to_spark()))
 
 
 def version() -> ts.String:
@@ -229,7 +233,7 @@ def version() -> ts.String:
 
     Wrapper for :func:`pyspark.sql.functions.version`.
     """
-    return ts.String(F.version())
+    return ts.String.wrap(F.version())
 
 
 class WhenStatement[T: types.DataType](ts.TypedColumn[T]):
@@ -240,22 +244,26 @@ class WhenStatement[T: types.DataType](ts.TypedColumn[T]):
 
         Wrapper for :meth:`pyspark.sql.Column.when`.
         """
-        return WhenStatement[T](self.to_spark().when(condition.to_spark(), value.to_spark()))
+        return WhenStatement[T].wrap(
+            self.to_spark().when(condition.to_spark(), value.to_spark())
+        )
 
     def otherwise(self, value: ts.TypedColumn[T]) -> ts.TypedColumn[T]:
         """Adds a final `ELSE value` clause to the expression.
 
         Wrapper for :meth:`pyspark.sql.Column.otherwise`.
         """
-        return ts.TypedColumn(self.to_spark().otherwise(value.to_spark()))
+        return ts.TypedColumn.wrap(self.to_spark().otherwise(value.to_spark()))
 
 
-def when[T: types.DataType](condition: ts.Bool, value: ts.TypedColumn[T]) -> WhenStatement[T]:
+def when[T: types.DataType](
+    condition: ts.Bool, value: ts.TypedColumn[T]
+) -> WhenStatement[T]:
     """Starts a `CASE WHEN condition THEN value` expression. Chain `.when()` and `.otherwise()` to complete it.
 
     Wrapper for :func:`pyspark.sql.functions.when`.
     """
-    return WhenStatement[T](F.when(condition.to_spark(), value.to_spark()))
+    return WhenStatement[T].wrap(F.when(condition.to_spark(), value.to_spark()))
 
 
 def xxhash64(*cols: ts.Column) -> ts.Long:
@@ -263,4 +271,4 @@ def xxhash64(*cols: ts.Column) -> ts.Long:
 
     Wrapper for :func:`pyspark.sql.functions.xxhash64`.
     """
-    return ts.Long(F.xxhash64(*[c.to_spark() for c in cols]))
+    return ts.Long.wrap(F.xxhash64(*[c.to_spark() for c in cols]))

@@ -11,7 +11,7 @@ def abs[T: Numeric](col: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.abs`.
     """
-    return TypedColumn(F.abs(col.to_spark()))  # type: ignore
+    return TypedColumn.wrap(F.abs(col.to_spark()))  # type: ignore
 
 
 def acos(col: Numeric) -> typespark.Double:
@@ -19,7 +19,7 @@ def acos(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.acos`.
     """
-    return typespark.Double(F.acos(col.to_spark()))
+    return typespark.Double.wrap(F.acos(col.to_spark()))
 
 
 def acosh(col: Numeric) -> typespark.Double:
@@ -27,15 +27,17 @@ def acosh(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.acosh`.
     """
-    return typespark.Double(F.acosh(col.to_spark()))
+    return typespark.Double.wrap(F.acosh(col.to_spark()))
 
 
-def add_months(start: typespark.Date, months: typespark.Integer | int) -> typespark.Date:
+def add_months(
+    start: typespark.Date, months: typespark.Integer | int
+) -> typespark.Date:
     """Returns the date that is `months` months after `start`.
 
     Wrapper for :func:`pyspark.sql.functions.add_months`.
     """
-    return typespark.Date(
+    return typespark.Date.wrap(
         F.add_months(
             start.to_spark(),
             months.to_spark() if isinstance(months, typespark.Column) else months,
@@ -48,7 +50,7 @@ def asin(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.asin`.
     """
-    return typespark.Double(F.asin(col.to_spark()))
+    return typespark.Double.wrap(F.asin(col.to_spark()))
 
 
 def asinh(col: Numeric) -> typespark.Double:
@@ -56,7 +58,7 @@ def asinh(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.asinh`.
     """
-    return typespark.Double(F.asinh(col.to_spark()))
+    return typespark.Double.wrap(F.asinh(col.to_spark()))
 
 
 def atan(col: Numeric) -> typespark.Double:
@@ -64,7 +66,7 @@ def atan(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.atan`.
     """
-    return typespark.Double(F.atan(col.to_spark()))
+    return typespark.Double.wrap(F.atan(col.to_spark()))
 
 
 def atan2(col1: Numeric, col2: Numeric) -> typespark.Double:
@@ -72,7 +74,7 @@ def atan2(col1: Numeric, col2: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.atan2`.
     """
-    return typespark.Double(F.atan2(col1.to_spark(), col2.to_spark()))
+    return typespark.Double.wrap(F.atan2(col1.to_spark(), col2.to_spark()))
 
 
 def atanh(col: Numeric) -> typespark.Double:
@@ -80,7 +82,7 @@ def atanh(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.atanh`.
     """
-    return typespark.Double(F.atanh(col.to_spark()))
+    return typespark.Double.wrap(F.atanh(col.to_spark()))
 
 
 def bround(col: Numeric, scale: int = 0) -> typespark.Double:
@@ -88,7 +90,7 @@ def bround(col: Numeric, scale: int = 0) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.bround`.
     """
-    return typespark.Double(F.bround(col.to_spark(), scale))
+    return typespark.Double.wrap(F.bround(col.to_spark(), scale))
 
 
 def cbrt(col: Numeric) -> typespark.Double:
@@ -96,7 +98,7 @@ def cbrt(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.cbrt`.
     """
-    return typespark.Double(F.cbrt(col.to_spark()))
+    return typespark.Double.wrap(F.cbrt(col.to_spark()))
 
 
 def ceil(col: Numeric, scale: typespark.Int | int | None = None) -> typespark.Column:
@@ -104,7 +106,7 @@ def ceil(col: Numeric, scale: typespark.Int | int | None = None) -> typespark.Co
 
     Wrapper for :func:`pyspark.sql.functions.ceil`.
     """
-    return typespark.Column(
+    return typespark.Column.wrap(
         F.ceil(
             col.to_spark(),
             scale.to_spark() if isinstance(scale, typespark.Column) else scale,
@@ -117,7 +119,7 @@ def cos(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.cos`.
     """
-    return typespark.Double(F.cos(col.to_spark()))
+    return typespark.Double.wrap(F.cos(col.to_spark()))
 
 
 def cosh(col: Numeric) -> typespark.Double:
@@ -125,7 +127,7 @@ def cosh(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.cosh`.
     """
-    return typespark.Double(F.cosh(col.to_spark()))
+    return typespark.Double.wrap(F.cosh(col.to_spark()))
 
 
 def cot(col: Numeric) -> typespark.Double:
@@ -133,7 +135,7 @@ def cot(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.cot`.
     """
-    return typespark.Double(F.cot(col.to_spark()))
+    return typespark.Double.wrap(F.cot(col.to_spark()))
 
 
 def csc(col: Numeric) -> typespark.Double:
@@ -141,7 +143,7 @@ def csc(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.csc`.
     """
-    return typespark.Double(F.csc(col.to_spark()))
+    return typespark.Double.wrap(F.csc(col.to_spark()))
 
 
 def degrees(col: Numeric) -> typespark.Double:
@@ -149,7 +151,7 @@ def degrees(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.degrees`.
     """
-    return typespark.Double(F.degrees(col.to_spark()))
+    return typespark.Double.wrap(F.degrees(col.to_spark()))
 
 
 def e() -> typespark.Double:
@@ -157,7 +159,7 @@ def e() -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.e`.
     """
-    return typespark.Double(F.e())
+    return typespark.Double.wrap(F.e())
 
 
 def exp(col: Numeric) -> typespark.Double:
@@ -165,7 +167,7 @@ def exp(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.exp`.
     """
-    return typespark.Double(F.exp(col.to_spark()))
+    return typespark.Double.wrap(F.exp(col.to_spark()))
 
 
 def expm1(col: Numeric) -> typespark.Double:
@@ -173,7 +175,7 @@ def expm1(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.expm1`.
     """
-    return typespark.Double(F.expm1(col.to_spark()))
+    return typespark.Double.wrap(F.expm1(col.to_spark()))
 
 
 def factorial(col: typespark.Integer) -> typespark.Long:
@@ -181,7 +183,7 @@ def factorial(col: typespark.Integer) -> typespark.Long:
 
     Wrapper for :func:`pyspark.sql.functions.factorial`.
     """
-    return typespark.Long(F.factorial(col.to_spark()))
+    return typespark.Long.wrap(F.factorial(col.to_spark()))
 
 
 def floor(col: Numeric, scale: typespark.Int | int | None = None) -> typespark.Column:
@@ -189,7 +191,7 @@ def floor(col: Numeric, scale: typespark.Int | int | None = None) -> typespark.C
 
     Wrapper for :func:`pyspark.sql.functions.floor`.
     """
-    return typespark.Column(
+    return typespark.Column.wrap(
         F.floor(
             col.to_spark(),
             scale.to_spark() if isinstance(scale, typespark.Column) else scale,
@@ -202,7 +204,7 @@ def hypot(col1: Numeric, col2: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.hypot`.
     """
-    return typespark.Double(F.hypot(col1.to_spark(), col2.to_spark()))
+    return typespark.Double.wrap(F.hypot(col1.to_spark(), col2.to_spark()))
 
 
 def ln(col: Numeric) -> typespark.Double:
@@ -210,7 +212,7 @@ def ln(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.ln`.
     """
-    return typespark.Double(F.ln(col.to_spark()))
+    return typespark.Double.wrap(F.ln(col.to_spark()))
 
 
 def log(col: Numeric, base: float | None = None) -> typespark.Double:
@@ -219,8 +221,8 @@ def log(col: Numeric, base: float | None = None) -> typespark.Double:
     Wrapper for :func:`pyspark.sql.functions.log`.
     """
     if base is not None:
-        return typespark.Double(F.log(base, col.to_spark()))  # type: ignore[call-arg, arg-type]
-    return typespark.Double(F.log(col.to_spark()))
+        return typespark.Double.wrap(F.log(base, col.to_spark()))  # type: ignore[call-arg, arg-type]
+    return typespark.Double.wrap(F.log(col.to_spark()))
 
 
 def log10(col: Numeric) -> typespark.Double:
@@ -228,7 +230,7 @@ def log10(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.log10`.
     """
-    return typespark.Double(F.log10(col.to_spark()))
+    return typespark.Double.wrap(F.log10(col.to_spark()))
 
 
 def log1p(col: Numeric) -> typespark.Double:
@@ -236,7 +238,7 @@ def log1p(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.log1p`.
     """
-    return typespark.Double(F.log1p(col.to_spark()))
+    return typespark.Double.wrap(F.log1p(col.to_spark()))
 
 
 def log2(col: Numeric) -> typespark.Double:
@@ -244,7 +246,7 @@ def log2(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.log2`.
     """
-    return typespark.Double(F.log2(col.to_spark()))
+    return typespark.Double.wrap(F.log2(col.to_spark()))
 
 
 def negate[T: Numeric](col: T) -> T:
@@ -252,7 +254,7 @@ def negate[T: Numeric](col: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.negate`.
     """
-    return typespark.Column(F.negate(col.to_spark()))  # type: ignore
+    return typespark.Column.wrap(F.negate(col.to_spark()))  # type: ignore
 
 
 def pi() -> typespark.Double:
@@ -260,7 +262,7 @@ def pi() -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.pi`.
     """
-    return typespark.Double(F.pi())
+    return typespark.Double.wrap(F.pi())
 
 
 def pmod[T: Numeric](dividend: T, divisor: T) -> T:
@@ -268,7 +270,7 @@ def pmod[T: Numeric](dividend: T, divisor: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.pmod`.
     """
-    return typespark.Column(F.pmod(dividend.to_spark(), divisor.to_spark()))  # type: ignore
+    return typespark.Column.wrap(F.pmod(dividend.to_spark(), divisor.to_spark()))  # type: ignore
 
 
 def positive[T: Numeric](col: T) -> T:
@@ -276,7 +278,7 @@ def positive[T: Numeric](col: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.positive`.
     """
-    return typespark.Column(F.positive(col.to_spark()))  # type: ignore
+    return typespark.Column.wrap(F.positive(col.to_spark()))  # type: ignore
 
 
 def pow(col: Numeric, other: Numeric | float) -> typespark.Double:
@@ -284,7 +286,7 @@ def pow(col: Numeric, other: Numeric | float) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.pow`.
     """
-    return typespark.Double(
+    return typespark.Double.wrap(
         F.pow(
             col.to_spark(),
             other.to_spark() if isinstance(other, TypedColumn) else other,
@@ -297,7 +299,7 @@ def radians(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.radians`.
     """
-    return typespark.Double(F.radians(col.to_spark()))
+    return typespark.Double.wrap(F.radians(col.to_spark()))
 
 
 def rand(seed: int | None = None) -> typespark.Double:
@@ -305,7 +307,7 @@ def rand(seed: int | None = None) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.rand`.
     """
-    return typespark.Double(F.rand(seed))
+    return typespark.Double.wrap(F.rand(seed))
 
 
 def randn(seed: int | None = None) -> typespark.Double:
@@ -313,7 +315,7 @@ def randn(seed: int | None = None) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.randn`.
     """
-    return typespark.Double(F.randn(seed))
+    return typespark.Double.wrap(F.randn(seed))
 
 
 def rint(col: Numeric) -> typespark.Double:
@@ -321,7 +323,7 @@ def rint(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.rint`.
     """
-    return typespark.Double(F.rint(col.to_spark()))
+    return typespark.Double.wrap(F.rint(col.to_spark()))
 
 
 def round(col: Numeric, scale: int = 0) -> typespark.Column:
@@ -329,7 +331,7 @@ def round(col: Numeric, scale: int = 0) -> typespark.Column:
 
     Wrapper for :func:`pyspark.sql.functions.round`.
     """
-    return typespark.Column(F.round(col.to_spark(), scale))
+    return typespark.Column.wrap(F.round(col.to_spark(), scale))
 
 
 def sec(col: Numeric) -> typespark.Double:
@@ -337,7 +339,7 @@ def sec(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.sec`.
     """
-    return typespark.Double(F.sec(col.to_spark()))
+    return typespark.Double.wrap(F.sec(col.to_spark()))
 
 
 def sign[T: Numeric](col: T) -> T:
@@ -345,7 +347,7 @@ def sign[T: Numeric](col: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.sign`.
     """
-    return typespark.Column(F.sign(col.to_spark()))  # type: ignore
+    return typespark.Column.wrap(F.sign(col.to_spark()))  # type: ignore
 
 
 def sin(col: Numeric) -> typespark.Double:
@@ -353,7 +355,7 @@ def sin(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.sin`.
     """
-    return typespark.Double(F.sin(col.to_spark()))
+    return typespark.Double.wrap(F.sin(col.to_spark()))
 
 
 def sinh(col: Numeric) -> typespark.Double:
@@ -361,7 +363,7 @@ def sinh(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.sinh`.
     """
-    return typespark.Double(F.sinh(col.to_spark()))
+    return typespark.Double.wrap(F.sinh(col.to_spark()))
 
 
 def sqrt(col: Numeric) -> typespark.Double:
@@ -369,7 +371,7 @@ def sqrt(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.sqrt`.
     """
-    return typespark.Double(F.sqrt(col.to_spark()))
+    return typespark.Double.wrap(F.sqrt(col.to_spark()))
 
 
 def tan(col: Numeric) -> typespark.Double:
@@ -377,7 +379,7 @@ def tan(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.tan`.
     """
-    return typespark.Double(F.tan(col.to_spark()))
+    return typespark.Double.wrap(F.tan(col.to_spark()))
 
 
 def tanh(col: Numeric) -> typespark.Double:
@@ -385,15 +387,17 @@ def tanh(col: Numeric) -> typespark.Double:
 
     Wrapper for :func:`pyspark.sql.functions.tanh`.
     """
-    return typespark.Double(F.tanh(col.to_spark()))
+    return typespark.Double.wrap(F.tanh(col.to_spark()))
 
 
-def width_bucket(v: Numeric, min: Numeric, max: Numeric, numBucket: typespark.Integer | int) -> typespark.Long:
+def width_bucket(
+    v: Numeric, min: Numeric, max: Numeric, numBucket: typespark.Integer | int
+) -> typespark.Long:
     """Returns the bucket number for `v` partitioning [`min`, `max`] into `numBucket` equal-width buckets.
 
     Wrapper for :func:`pyspark.sql.functions.width_bucket`.
     """
-    return typespark.Long(
+    return typespark.Long.wrap(
         F.width_bucket(
             v.to_spark(),
             min.to_spark(),

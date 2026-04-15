@@ -12,7 +12,7 @@ def rank() -> typespark.Int:
 
     Wrapper for :func:`pyspark.sql.functions.rank`.
     """
-    return typespark.Int(F.rank())
+    return typespark.Int.wrap(F.rank())
 
 
 def dense_rank() -> typespark.Int:
@@ -20,7 +20,7 @@ def dense_rank() -> typespark.Int:
 
     Wrapper for :func:`pyspark.sql.functions.dense_rank`.
     """
-    return typespark.Int(F.dense_rank())
+    return typespark.Int.wrap(F.dense_rank())
 
 
 def row_number() -> typespark.Int:
@@ -28,7 +28,7 @@ def row_number() -> typespark.Int:
 
     Wrapper for :func:`pyspark.sql.functions.row_number`.
     """
-    return typespark.Int(F.row_number())
+    return typespark.Int.wrap(F.row_number())
 
 
 def lag[T: DataType](
@@ -41,8 +41,8 @@ def lag[T: DataType](
     Wrapper for :func:`pyspark.sql.functions.lag`.
     """
     if default is not None:
-        return TypedColumn(F.lag(col.to_spark(), offset, default.to_spark()))
-    return TypedColumn(F.lag(col.to_spark(), offset))
+        return TypedColumn.wrap(F.lag(col.to_spark(), offset, default.to_spark()))
+    return TypedColumn.wrap(F.lag(col.to_spark(), offset))
 
 
 def lead[T: DataType](
@@ -55,5 +55,5 @@ def lead[T: DataType](
     Wrapper for :func:`pyspark.sql.functions.lead`.
     """
     if default is not None:
-        return TypedColumn(F.lead(col.to_spark(), offset, default.to_spark()))
-    return TypedColumn(F.lead(col.to_spark(), offset))
+        return TypedColumn.wrap(F.lead(col.to_spark(), offset, default.to_spark()))
+    return TypedColumn.wrap(F.lead(col.to_spark(), offset))
