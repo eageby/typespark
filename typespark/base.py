@@ -15,6 +15,7 @@ from typing import (
 )
 
 import attrs
+from pyspark.sql.types import StructType
 
 from typespark import schema
 from typespark.columns import TypedColumn, is_typed_column_type
@@ -88,13 +89,35 @@ class _Base:
             missing = available is not None and field_alias not in available
 
             if not missing:
+                struct_cls = unwrap_type(f.type)
+                if (
+                    available is not None
+                    and struct_cls is not None
+                    and isinstance(struct_cls, type)
+                    and issubclass(struct_cls, _Base)
+                    and hasattr(source, "schema")
+                ):
+                    try:
+                        nested_type = source.schema[field_alias].dataType
+                    except KeyError:
+                        pass
+                    else:
+                        if isinstance(nested_type, StructType):
+                            actual = set(nested_type.fieldNames())
+                            for sub_alias in struct_cls._column_aliases():
+                                if sub_alias not in actual:
+                                    raise MissingColumnError(
+                                        model=struct_cls,
+                                        field_name=sub_alias,
+                                        expected_column=sub_alias,
+                                        available_columns=sorted(actual),
+                                        parent_field=field_alias,
+                                    )
                 column = col_ref(field_alias) if col_ref else source[field_alias]
                 object.__setattr__(
                     new,
                     field_name,
-                    unwrap_type(f.type).set_column(
-                        column, field_alias, unwrap_type(f.type)
-                    ),
+                    unwrap_type(f.type)._set_column(column, field_alias),
                 )
             elif f.default is not attrs.NOTHING:
                 default = f.default
@@ -108,10 +131,9 @@ class _Base:
                 object.__setattr__(
                     new,
                     field_name,
-                    unwrap_type(f.type).set_column(
+                    unwrap_type(f.type)._set_column(
                         default.to_spark().alias(field_alias),
                         field_alias,
-                        unwrap_type(f.type),
                     ),
                 )
             else:

@@ -87,8 +87,8 @@ class MetaData:
 
     def __init__(self, **kwargs):
         filtered = {
-            attribute.alias: kwargs[attribute.alias]
+            attribute.alias or attribute.name: kwargs[attribute.alias or attribute.name]
             for attribute in attrs.fields(self.__class__)
-            if attribute.alias in kwargs
+            if (attribute.alias or attribute.name) in kwargs
         }
         self.__attrs_init__(**filtered)  # type: ignore[attr-defined]
