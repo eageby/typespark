@@ -1,6 +1,9 @@
 from pyspark.sql import types
+from pyspark.sql.types import ArrayType, IntegerType, StringType, StructType
 
 import typespark as ts
+from typespark.columns.struct import Struct
+from typespark.metadata import field
 
 
 def test_schema():
@@ -47,3 +50,58 @@ def test_array_schema():
 
     assert isinstance(schema.fields[0].dataType.elementType, types.StringType)
     assert isinstance(schema.fields[1].dataType.elementType, types.IntegerType)
+
+
+def test_schema_element_type_equality():
+    class Data(ts.DataFrame):
+        tags: ts.Array[ts.String]
+        counts: ts.Array[ts.Integer]
+
+    schema = Data.generate_schema()
+
+    assert schema["tags"].dataType.elementType == StringType()
+    assert schema["counts"].dataType.elementType == IntegerType()
+
+
+def test_schema_nested_struct():
+    class Info(Struct):
+        label: ts.String
+        value: ts.Integer
+
+    class Data(ts.DataFrame):
+        info: Info
+
+    schema = Data.generate_schema()
+
+    struct_type = schema["info"].dataType
+    assert isinstance(struct_type, StructType)
+    assert struct_type["label"].dataType == StringType()
+    assert struct_type["value"].dataType == IntegerType()
+
+
+def test_schema_array_of_struct():
+    class Item(Struct):
+        name: ts.String
+        count: ts.Integer
+
+    class Data(ts.DataFrame):
+        items: ts.Array[Item]
+
+    schema = Data.generate_schema()
+
+    array_type = schema["items"].dataType
+    assert isinstance(array_type, ArrayType)
+    elem = array_type.elementType
+    assert isinstance(elem, StructType)
+    assert elem["name"].dataType == StringType()
+    assert elem["count"].dataType == IntegerType()
+
+
+def test_schema_with_df_alias():
+    class Data(ts.DataFrame):
+        name_: ts.String = field(df_alias="name")
+
+    schema = Data.generate_schema()
+
+    assert schema.fieldNames() == ["name"]
+    assert schema["name"].dataType == StringType()
