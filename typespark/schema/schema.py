@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Callable, Iterable, get_args, get_origin
+from typing import TYPE_CHECKING, Callable, Iterable
 
 import attrs
 from attr import AttrsInstance
-from pyspark.sql.types import DataType, StructField, StructType
+from pyspark.sql.types import ArrayType, DataType, StructField, StructType
 from simple_parsing import docstring
 
 from typespark.columns import TypedColumn, is_typed_column_type
+from typespark.columns.array import TypedArrayType
 from typespark.metadata import MetaData
 
 if TYPE_CHECKING:
@@ -45,49 +46,31 @@ def _kwarg_safe_call(func: Callable, attrs_instance: AttrsInstance):
     return func(**_extract_kwargs(func, attrs_instance))
 
 
-def _get_type_args(type: type):
-    return get_args(type) or get_args(getattr(type, "__orig_bases__", [None])[0])
-
-
-def _construct_type(type: type, m: MetaData):
-    field_type_args = _get_type_args(type)
-    field_type: type[DataType] = field_type_args[0]
-
-    return _kwarg_safe_call(field_type, m)
-
-
-def get_type_instance(field: attrs.Attribute, m: MetaData):
-    if field.type is None:
+def get_type_instance(field: attrs.Attribute, m: MetaData) -> DataType:
+    tp = field.type
+    if tp is None:
         raise ValueError("Field type missing")
 
-    origin = get_origin(field.type)
-    if (
-        not get_args(field.type)
-        and is_typed_column_type(field.type)
-        and attrs.has(field.type)
-    ):
-        return generate_schema(field.type)  # type: ignore
+    # Struct — has attrs fields, generates a StructType
+    if attrs.has(tp):
+        return generate_schema(tp)  # type: ignore
 
-    elif (
-        origin
-        and get_args(field.type)
-        and is_typed_column_type(field.type)
-        and is_typed_column_type(_get_type_args(field.type)[0])
-    ):
-        main_type = _get_type_args(origin)[0]
-        sub_type = _construct_type(get_args(field.type)[0], m)
+    # Array — _elem_type carries the element class
+    if issubclass(tp, TypedArrayType):
+        elem = tp._elem_type
+        if elem is None:
+            raise ValueError(f"Array field '{field.name}' has no element type")
+        elem_schema = generate_schema(elem) if attrs.has(elem) else _kwarg_safe_call(elem._data_type, m)  # type: ignore
+        return ArrayType(elem_schema)
 
-        return main_type(sub_type)
-    else:
-        return _construct_type(field.type, m)
+    # Primitive — _data_type is the Spark DataType class
+    return _kwarg_safe_call(tp._data_type, m)  # type: ignore
 
 
 def _construct_struct_field(
     cls: type[BaseDataFrame] | type[TypedColumn] | type[_Base], field: attrs.Attribute
 ):
-    m = MetaData(
-        **{k: v for k, v in field.metadata.items() if k in _extract_arg_names(MetaData)}
-    )
+    m = MetaData(**field.metadata)
     name = m.df_alias or field.name
     doc = docstring.get_attribute_docstring(cls, field.alias or field.name).help_string
     type_instance = get_type_instance(field, m)
