@@ -1,5 +1,6 @@
 import json
 
+import pytest
 from pyspark.sql import SparkSession
 
 from tests.conftest import Person
@@ -7,6 +8,7 @@ from tests.utils import collect_values
 from typespark import Int, String
 from typespark.columns.struct import Struct
 from typespark.dataframe import BaseDataFrame
+from typespark.exceptions import MissingColumnError
 from typespark.metadata import field
 from typespark.type_alias import Integer
 
@@ -126,6 +128,35 @@ def test_struct_init_alias(person: Person):
     assert result_values[0]["person"]["a"] == 30
     assert result_values[1]["person"]["name"] == "Bob"
     assert result_values[1]["person"]["a"] == 25
+
+
+def test_missing_struct_subfield_raises(spark: SparkSession):
+    from pyspark.sql import Row
+    from pyspark.sql.types import StringType, StructField as SF, StructType as ST
+
+    schema = ST([
+        SF("address", ST([SF("street", StringType()), SF("zip", StringType())]))
+    ])
+    data = [Row(address=Row(street="Main St", zip="12345"))]
+    df = spark.createDataFrame(data, schema=schema)
+
+    class Address(Struct):
+        street: String
+        zip: String
+        city: String  # not present in the DataFrame
+
+    class DataClass(BaseDataFrame):
+        address: Address
+
+    with pytest.raises(MissingColumnError) as exc_info:
+        DataClass.from_df(df)
+
+    err = exc_info.value
+    assert err.parent_field == "address"
+    assert err.expected_column == "city"
+    assert err.model is Address
+    assert "city" in str(err)
+    assert "address" in str(err)
 
 
 def test_struct_from_json(spark: SparkSession):
