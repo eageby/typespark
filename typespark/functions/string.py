@@ -2,7 +2,18 @@ from typing import overload
 
 import pyspark.sql.functions as F
 
-from typespark import Array, Binary, Bool, Column, Int, Integer, String, TypedArrayType, TypedColumn, int_literal
+from typespark import (
+    Array,
+    Binary,
+    Bool,
+    Column,
+    Int,
+    Integer,
+    String,
+    TypedArrayType,
+    TypedColumn,
+    int_literal,
+)
 
 from ._type_aliases import Numeric
 
@@ -12,7 +23,7 @@ def ascii(col: String) -> Int:
 
     Wrapper for :func:`pyspark.sql.functions.ascii`.
     """
-    return Int(F.ascii(col.to_spark()))
+    return Int.wrap(F.ascii(col.to_spark()))
 
 
 def bin(col: Numeric) -> String:
@@ -20,7 +31,7 @@ def bin(col: Numeric) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.bin`.
     """
-    return String(F.bin(col.to_spark()))
+    return String.wrap(F.bin(col.to_spark()))
 
 
 def btrim(col: String, trim: String | None = None) -> String:
@@ -28,7 +39,7 @@ def btrim(col: String, trim: String | None = None) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.btrim`.
     """
-    return String(F.btrim(col.to_spark(), trim.to_spark() if trim else None))
+    return String.wrap(F.btrim(col.to_spark(), trim.to_spark() if trim else None))
 
 
 def char(col: Integer) -> String:
@@ -36,7 +47,7 @@ def char(col: Integer) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.char`.
     """
-    return String(F.char(col.to_spark()))
+    return String.wrap(F.char(col.to_spark()))
 
 
 def char_length(col: String) -> Int:
@@ -44,7 +55,7 @@ def char_length(col: String) -> Int:
 
     Wrapper for :func:`pyspark.sql.functions.char_length`.
     """
-    return Int(F.char_length(col.to_spark()))
+    return Int.wrap(F.char_length(col.to_spark()))
 
 
 def concat(*cols: String | Array) -> String | Array:
@@ -53,9 +64,8 @@ def concat(*cols: String | Array) -> String | Array:
     Wrapper for :func:`pyspark.sql.functions.concat`.
     """
     if isinstance(cols[0], Array):
-        elem_type = cols[0]._elem_type
-        return Array(F.concat(*[c.to_spark() for c in cols]), elem_type)
-    return String(F.concat(*[c.to_spark() for c in cols]))
+        return cols[0].__class__(F.concat(*[c.to_spark() for c in cols]))
+    return String.wrap(F.concat(*[c.to_spark() for c in cols]))
 
 
 def concat_ws(sep: str, *cols: String) -> String:
@@ -63,7 +73,7 @@ def concat_ws(sep: str, *cols: String) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.concat_ws`.
     """
-    return String(F.concat_ws(sep, *[c.to_spark() for c in cols]))
+    return String.wrap(F.concat_ws(sep, *[c.to_spark() for c in cols]))
 
 
 @overload
@@ -79,7 +89,7 @@ def contains(left: String | Binary, right: String | Binary) -> Bool:
 
     Wrapper for :func:`pyspark.sql.functions.contains`.
     """
-    return Bool(F.contains(left.to_spark(), right.to_spark()))
+    return Bool.wrap(F.contains(left.to_spark(), right.to_spark()))
 
 
 def decode(col: Binary, charset: str) -> String:
@@ -87,7 +97,7 @@ def decode(col: Binary, charset: str) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.decode`.
     """
-    return String(F.decode(col.to_spark(), charset))
+    return String.wrap(F.decode(col.to_spark(), charset))
 
 
 def encode(col: String, charset: str) -> Binary:
@@ -95,7 +105,7 @@ def encode(col: String, charset: str) -> Binary:
 
     Wrapper for :func:`pyspark.sql.functions.encode`.
     """
-    return Binary(F.encode(col.to_spark(), charset))
+    return Binary.wrap(F.encode(col.to_spark(), charset))
 
 
 def endswith(col: String, suffix: String) -> Bool:
@@ -103,7 +113,7 @@ def endswith(col: String, suffix: String) -> Bool:
 
     Wrapper for :func:`pyspark.sql.functions.endswith`.
     """
-    return Bool(F.endswith(col.to_spark(), suffix.to_spark()))
+    return Bool.wrap(F.endswith(col.to_spark(), suffix.to_spark()))
 
 
 def find_in_set(col: String, str: String) -> Int:
@@ -111,7 +121,7 @@ def find_in_set(col: String, str: String) -> Int:
 
     Wrapper for :func:`pyspark.sql.functions.find_in_set`.
     """
-    return Int(F.find_in_set(col.to_spark(), str.to_spark()))
+    return Int.wrap(F.find_in_set(col.to_spark(), str.to_spark()))
 
 
 def format_number(col: Numeric, d: int) -> String:
@@ -119,7 +129,7 @@ def format_number(col: Numeric, d: int) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.format_number`.
     """
-    return String(F.format_number(col.to_spark(), d))
+    return String.wrap(F.format_number(col.to_spark(), d))
 
 
 def format_string(format: str, *cols: Column) -> String:
@@ -127,7 +137,7 @@ def format_string(format: str, *cols: Column) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.format_string`.
     """
-    return String(F.format_string(format, *[c.to_spark() for c in cols]))
+    return String.wrap(F.format_string(format, *[c.to_spark() for c in cols]))
 
 
 def hex(col: Column) -> String:
@@ -135,7 +145,7 @@ def hex(col: Column) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.hex`.
     """
-    return String(F.hex(col.to_spark()))
+    return String.wrap(F.hex(col.to_spark()))
 
 
 def initcap(col: String) -> String:
@@ -143,7 +153,7 @@ def initcap(col: String) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.initcap`.
     """
-    return String(F.initcap(col.to_spark()))
+    return String.wrap(F.initcap(col.to_spark()))
 
 
 def instr(col: String, substr: str) -> Int:
@@ -151,7 +161,7 @@ def instr(col: String, substr: str) -> Int:
 
     Wrapper for :func:`pyspark.sql.functions.instr`.
     """
-    return Int(F.instr(col.to_spark(), substr))
+    return Int.wrap(F.instr(col.to_spark(), substr))
 
 
 def left(col: String, len: Integer | int) -> String:
@@ -159,7 +169,7 @@ def left(col: String, len: Integer | int) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.left`.
     """
-    return String(
+    return String.wrap(
         F.left(
             col.to_spark(),
             len.to_spark() if isinstance(len, TypedColumn) else F.lit(len),
@@ -172,7 +182,7 @@ def length(col: String | Binary) -> Int:
 
     Wrapper for :func:`pyspark.sql.functions.length`.
     """
-    return Int(F.length(col.to_spark()))
+    return Int.wrap(F.length(col.to_spark()))
 
 
 def levenshtein(col1: String, col2: String, threshold: int | None = None) -> Int:
@@ -180,7 +190,7 @@ def levenshtein(col1: String, col2: String, threshold: int | None = None) -> Int
 
     Wrapper for :func:`pyspark.sql.functions.levenshtein`.
     """
-    return Int(F.levenshtein(col1.to_spark(), col2.to_spark(), threshold))
+    return Int.wrap(F.levenshtein(col1.to_spark(), col2.to_spark(), threshold))
 
 
 def locate(substr: str, col: String, pos: int = 1) -> Int:
@@ -188,7 +198,7 @@ def locate(substr: str, col: String, pos: int = 1) -> Int:
 
     Wrapper for :func:`pyspark.sql.functions.locate`.
     """
-    return Int(F.locate(substr, col.to_spark(), pos))
+    return Int.wrap(F.locate(substr, col.to_spark(), pos))
 
 
 def lower(col: String) -> String:
@@ -196,7 +206,7 @@ def lower(col: String) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.lower`.
     """
-    return String(F.lower(col.to_spark()))
+    return String.wrap(F.lower(col.to_spark()))
 
 
 def lpad(
@@ -208,7 +218,7 @@ def lpad(
 
     Wrapper for :func:`pyspark.sql.functions.lpad`.
     """
-    return String(
+    return String.wrap(
         F.lpad(
             col.to_spark(),
             len.to_spark() if isinstance(len, TypedColumn) else len,
@@ -222,7 +232,7 @@ def ltrim(col: String, trim: String | None = None) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.ltrim`.
     """
-    return String(F.ltrim(col.to_spark(), trim.to_spark() if trim else None))
+    return String.wrap(F.ltrim(col.to_spark(), trim.to_spark() if trim else None))
 
 
 def octet_length(col: String | Binary) -> Int:
@@ -230,7 +240,7 @@ def octet_length(col: String | Binary) -> Int:
 
     Wrapper for :func:`pyspark.sql.functions.octet_length`.
     """
-    return Int(F.octet_length(col.to_spark()))
+    return Int.wrap(F.octet_length(col.to_spark()))
 
 
 def overlay(
@@ -243,7 +253,7 @@ def overlay(
 
     Wrapper for :func:`pyspark.sql.functions.overlay`.
     """
-    return String(
+    return String.wrap(
         F.overlay(
             col.to_spark(),
             replace.to_spark(),
@@ -258,7 +268,7 @@ def regexp_extract(string: String, pattern: str, idx: int) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.regexp_extract`.
     """
-    return String(
+    return String.wrap(
         F.regexp_extract(
             string.to_spark(),
             pattern,
@@ -267,12 +277,14 @@ def regexp_extract(string: String, pattern: str, idx: int) -> String:
     )
 
 
-def regexp_replace(string: String, pattern: str | String, replacement: str | String) -> String:
+def regexp_replace(
+    string: String, pattern: str | String, replacement: str | String
+) -> String:
     """Replaces all substrings of `string` matching `pattern` with `replacement`.
 
     Wrapper for :func:`pyspark.sql.functions.regexp_replace`.
     """
-    return String(
+    return String.wrap(
         F.regexp_replace(
             string.to_spark(),
             pattern.to_spark() if isinstance(pattern, Column) else pattern,
@@ -286,7 +298,9 @@ def repeat(col: String, n: Integer | int) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.repeat`.
     """
-    return String(F.repeat(col.to_spark(), n.to_spark() if isinstance(n, TypedColumn) else n))
+    return String.wrap(
+        F.repeat(col.to_spark(), n.to_spark() if isinstance(n, TypedColumn) else n)
+    )
 
 
 def replace(src: String, search: String, replace: String | None = None) -> String:
@@ -294,7 +308,11 @@ def replace(src: String, search: String, replace: String | None = None) -> Strin
 
     Wrapper for :func:`pyspark.sql.functions.replace`.
     """
-    return String(F.replace(src.to_spark(), search.to_spark(), replace.to_spark() if replace else None))
+    return String.wrap(
+        F.replace(
+            src.to_spark(), search.to_spark(), replace.to_spark() if replace else None
+        )
+    )
 
 
 @overload
@@ -311,8 +329,8 @@ def reverse(col: String | Array) -> String | Array:
     Wrapper for :func:`pyspark.sql.functions.reverse`.
     """
     if isinstance(col, TypedArrayType):
-        return Array(F.reverse(col.to_spark()), col._elem_type)
-    return String(F.reverse(col.to_spark()))
+        return col.__class__(F.reverse(col.to_spark()))
+    return String.wrap(F.reverse(col.to_spark()))
 
 
 def right(col: String, len: Integer | int) -> String:
@@ -320,7 +338,7 @@ def right(col: String, len: Integer | int) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.right`.
     """
-    return String(
+    return String.wrap(
         F.right(
             col.to_spark(),
             len.to_spark() if isinstance(len, TypedColumn) else F.lit(len),
@@ -337,7 +355,7 @@ def rpad(
 
     Wrapper for :func:`pyspark.sql.functions.rpad`.
     """
-    return String(
+    return String.wrap(
         F.rpad(
             col.to_spark(),
             len.to_spark() if isinstance(len, TypedColumn) else len,
@@ -351,7 +369,7 @@ def rtrim(col: String, trim: String | None = None) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.rtrim`.
     """
-    return String(F.rtrim(col.to_spark(), trim.to_spark() if trim else None))
+    return String.wrap(F.rtrim(col.to_spark(), trim.to_spark() if trim else None))
 
 
 def sha1(col: Binary | String) -> String:
@@ -359,7 +377,7 @@ def sha1(col: Binary | String) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.sha1`.
     """
-    return String(F.sha1(col.to_spark()))
+    return String.wrap(F.sha1(col.to_spark()))
 
 
 def sha2(col: Binary | String, numBits: int) -> String:
@@ -367,7 +385,7 @@ def sha2(col: Binary | String, numBits: int) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.sha2`.
     """
-    return String(F.sha2(col.to_spark(), numBits))
+    return String.wrap(F.sha2(col.to_spark(), numBits))
 
 
 def soundex(col: String) -> String:
@@ -375,7 +393,7 @@ def soundex(col: String) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.soundex`.
     """
-    return String(F.soundex(col.to_spark()))
+    return String.wrap(F.soundex(col.to_spark()))
 
 
 def split(
@@ -387,13 +405,12 @@ def split(
 
     Wrapper for :func:`pyspark.sql.functions.split`.
     """
-    return Array(
+    return Array[String].wrap(
         F.split(
             col.to_spark(),
             pattern.to_spark() if isinstance(pattern, Column) else pattern,
             limit.to_spark() if isinstance(limit, Column) else limit,
-        ),
-        String,
+        )
     )
 
 
@@ -402,7 +419,9 @@ def split_part(src: String, delimiter: String, partNum: Int) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.split_part`.
     """
-    return String(F.split_part(src.to_spark(), delimiter.to_spark(), partNum.to_spark()))
+    return String.wrap(
+        F.split_part(src.to_spark(), delimiter.to_spark(), partNum.to_spark())
+    )
 
 
 def startswith(str: String, prefix: String) -> Bool:
@@ -410,7 +429,7 @@ def startswith(str: String, prefix: String) -> Bool:
 
     Wrapper for :func:`pyspark.sql.functions.startswith`.
     """
-    return Bool(F.startswith(str.to_spark(), prefix.to_spark()))
+    return Bool.wrap(F.startswith(str.to_spark(), prefix.to_spark()))
 
 
 def substr(
@@ -425,12 +444,18 @@ def substr(
     """
     args = [
         col.to_spark(),
-        startPos.to_spark() if isinstance(startPos, TypedColumn) else int_literal(startPos).to_spark(),
+        startPos.to_spark()
+        if isinstance(startPos, TypedColumn)
+        else int_literal(startPos).to_spark(),
     ]
     if length is not None:
-        args.append(length.to_spark() if isinstance(length, TypedColumn) else int_literal(length).to_spark())
+        args.append(
+            length.to_spark()
+            if isinstance(length, TypedColumn)
+            else int_literal(length).to_spark()
+        )
 
-    return String(F.substr(*args))
+    return String.wrap(F.substr(*args))
 
 
 def substring(
@@ -442,7 +467,7 @@ def substring(
 
     Wrapper for :func:`pyspark.sql.functions.substring`.
     """
-    return String(
+    return String.wrap(
         F.substring(
             str.to_spark(),
             pos.to_spark() if isinstance(pos, TypedColumn) else pos,
@@ -457,7 +482,7 @@ def substring_index(col: String, delim: str, count: int) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.substring_index`.
     """
-    return String(F.substring_index(col.to_spark(), delim, count))
+    return String.wrap(F.substring_index(col.to_spark(), delim, count))
 
 
 def translate(col: String, matchingString: str, replaceString: str) -> String:
@@ -466,7 +491,7 @@ def translate(col: String, matchingString: str, replaceString: str) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.translate`.
     """
-    return String(F.translate(col.to_spark(), matchingString, replaceString))
+    return String.wrap(F.translate(col.to_spark(), matchingString, replaceString))
 
 
 def trim(col: String, trim: String | None = None):
@@ -474,7 +499,7 @@ def trim(col: String, trim: String | None = None):
 
     Wrapper for :func:`pyspark.sql.functions.trim`.
     """
-    return String(F.trim(col.to_spark(), trim.to_spark() if trim else None))
+    return String.wrap(F.trim(col.to_spark(), trim.to_spark() if trim else None))
 
 
 def unhex(col: String) -> Binary:
@@ -482,7 +507,7 @@ def unhex(col: String) -> Binary:
 
     Wrapper for :func:`pyspark.sql.functions.unhex`.
     """
-    return Binary(F.unhex(col.to_spark()))
+    return Binary.wrap(F.unhex(col.to_spark()))
 
 
 def upper(col: String) -> String:
@@ -490,7 +515,7 @@ def upper(col: String) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.upper`.
     """
-    return String(F.upper(col.to_spark()))
+    return String.wrap(F.upper(col.to_spark()))
 
 
 def url_decode(col: String) -> String:
@@ -498,7 +523,7 @@ def url_decode(col: String) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.url_decode`.
     """
-    return String(F.url_decode(col.to_spark()))
+    return String.wrap(F.url_decode(col.to_spark()))
 
 
 def url_encode(col: String) -> String:
@@ -506,7 +531,7 @@ def url_encode(col: String) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.url_encode`.
     """
-    return String(F.url_encode(col.to_spark()))
+    return String.wrap(F.url_encode(col.to_spark()))
 
 
 def unbase64(col: String) -> Binary:
@@ -514,4 +539,4 @@ def unbase64(col: String) -> Binary:
 
     Wrapper for :func:`pyspark.sql.functions.unbase64`.
     """
-    return Binary(F.unbase64(col.to_spark()))
+    return Binary.wrap(F.unbase64(col.to_spark()))
