@@ -1,5 +1,5 @@
 from pyspark.sql import types
-from pyspark.sql.types import ArrayType, IntegerType, StringType, StructType
+from pyspark.sql.types import ArrayType, IntegerType, NullType, ShortType, StringType, StructType
 
 import typespark as ts
 from typespark.columns.struct import Struct
@@ -105,3 +105,23 @@ def test_schema_with_df_alias():
 
     assert schema.fieldNames() == ["name"]
     assert schema["name"].dataType == StringType()
+
+
+def test_schema_bare_typed_column_class():
+    """Bare TypedColumn[T] with a DataType class should resolve via get_args fallback."""
+
+    class Data(ts.DataFrame):
+        a: ts.Column[ShortType]
+
+    schema = Data.generate_schema()
+    assert schema["a"].dataType == ShortType()
+
+
+def test_schema_bare_typed_column_instance():
+    """Bare TypedColumn[T] with a DataType instance should be returned as-is."""
+
+    class Data(ts.DataFrame):
+        a: ts.Column[NullType()]  # type: ignore[type-arg]
+
+    schema = Data.generate_schema()
+    assert schema["a"].dataType == NullType()
