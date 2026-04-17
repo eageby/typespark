@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Callable, Iterable
+from typing import TYPE_CHECKING, Callable, Iterable, get_args
 
 import attrs
 from attr import AttrsInstance
@@ -55,16 +55,38 @@ def get_type_instance(field: attrs.Attribute, m: MetaData) -> DataType:
     if attrs.has(tp):
         return generate_schema(tp)  # type: ignore
 
-    # Array — _elem_type carries the element class
-    if issubclass(tp, TypedArrayType):
+    # Array — guard issubclass against GenericAlias (e.g. TypedColumn[T])
+    origin = getattr(tp, "__origin__", tp)
+    try:
+        is_array = issubclass(origin, TypedArrayType)
+    except TypeError:
+        is_array = False
+
+    if is_array:
         elem = tp._elem_type
         if elem is None:
             raise ValueError(f"Array field '{field.name}' has no element type")
         elem_schema = generate_schema(elem) if attrs.has(elem) else _kwarg_safe_call(elem._data_type, m)  # type: ignore
         return ArrayType(elem_schema)
 
-    # Primitive — _data_type is the Spark DataType class
-    return _kwarg_safe_call(tp._data_type, m)  # type: ignore
+    # Concrete primitive subclass with _data_type set
+    data_type_cls = getattr(tp, "_data_type", None)
+    if data_type_cls is not None:
+        return _kwarg_safe_call(data_type_cls, m)
+
+    # Fallback: bare TypedColumn[T] — extract T from generic args
+    args = get_args(tp)
+    if args:
+        t = args[0]
+        if isinstance(t, DataType):
+            return t  # already an instance (e.g. DecimalType(10, 2))
+        if isinstance(t, type) and issubclass(t, DataType):
+            return _kwarg_safe_call(t, m)
+
+    raise ValueError(
+        f"Cannot determine DataType for field '{field.name}' with type {tp!r}. "
+        "Use a primitive subclass (String, Integer, …) or bare TypedColumn[SomeDataType]."
+    )
 
 
 def _construct_struct_field(
