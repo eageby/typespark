@@ -21,7 +21,6 @@ def field(
     metadata: dict[str, str] = {},
     **kwargs,
 ):
-
     md = {
         DF_ALIAS: df_alias,
         NULLABLE_COLUMN: nullable,
@@ -65,7 +64,6 @@ def decimal(
     metadata: dict[str, str] = {},
     **kwargs,
 ):
-
     md = {
         DF_ALIAS: df_alias,
         DECIMAL_TYPE_METADATA_PRECISION: precision,
@@ -75,7 +73,7 @@ def decimal(
     return attrs.field(metadata=md, **kwargs)
 
 
-@attrs.define
+@attrs.define(init=False)
 class MetaData:
     precision: Optional[int] = attrs.field(
         alias=DECIMAL_TYPE_METADATA_PRECISION, default=None
@@ -86,3 +84,11 @@ class MetaData:
     foreign_key: Optional[type] = attrs.field(alias=FOREIGN_KEY, default=None)
 
     df_alias: Optional[str] = attrs.field(alias=DF_ALIAS, default=None)
+
+    def __init__(self, **kwargs):
+        filtered = {
+            attribute.alias or attribute.name: kwargs[attribute.alias or attribute.name]
+            for attribute in attrs.fields(self.__class__)
+            if (attribute.alias or attribute.name) in kwargs
+        }
+        self.__attrs_init__(**filtered)  # type: ignore[attr-defined]
