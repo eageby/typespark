@@ -14,7 +14,7 @@ def bitwise_not[T: Numeric](col: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.bitwise_not`.
     """
-    return ts.Column.wrap(F.bitwise_not(col.to_spark()))  # type: ignore
+    return type(col).wrap(F.bitwise_not(col.to_spark()))
 
 
 def crc32(col: ts.Binary) -> ts.Long:
@@ -87,7 +87,7 @@ def greatest[T: ts.Column](*cols: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.greatest`.
     """
-    return ts.Column.wrap(F.greatest(*[c.to_spark() for c in cols]))  # type: ignore
+    return type(cols[0]).wrap(F.greatest(*[c.to_spark() for c in cols]))
 
 
 def hash(col: ts.Column) -> ts.Int:
@@ -127,7 +127,7 @@ def least[T: ts.Column](*cols: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.least`.
     """
-    return ts.Column.wrap(F.least(*[c.to_spark() for c in cols]))  # type: ignore
+    return type(cols[0]).wrap(F.least(*[c.to_spark() for c in cols]))
 
 
 @overload
@@ -175,7 +175,7 @@ def nanvl[T: Numeric](col1: T, col2: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.nanvl`.
     """
-    return ts.Column.wrap(F.nanvl(col1.to_spark(), col2.to_spark()))  # type: ignore
+    return type(col1).wrap(F.nanvl(col1.to_spark(), col2.to_spark()))
 
 
 def nullif[T: types.DataType](col1: ts.Column[T], col2: ts.Column[T]) -> ts.Column[T]:
