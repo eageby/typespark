@@ -1,4 +1,5 @@
 from typespark import (
+    Column,
     Date,
     Decimal,
     Double,
@@ -8,5 +9,5 @@ from typespark import (
     Timestamp,
 )
 
-type Numeric = Int | Long | Float | Double | Decimal
+type Numeric = Int | Long | Float | Double | Decimal | Column
 type DateOrTimestamp = Date | Timestamp
