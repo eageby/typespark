@@ -27,9 +27,9 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import BooleanType, DataType, StructType, TimestampType
 
 from typespark.base import _Base
-from typespark.columns import AliasedTypedColumn, TypedColumn
+from typespark.columns import AliasedTypedColumn, TypedColumn, is_typed_column_type
 from typespark.columns.generator import DeferredColumn, Generator
-from typespark.columns.groups import _AggregateColumn, _GroupColumn
+from typespark.columns.groups import _AggregateMixin, _GroupColumn
 from typespark.define import define
 from typespark.exceptions import MissingColumnError
 from typespark.metadata import decimal, field, foreign_key, primary_key
@@ -65,9 +65,16 @@ class _DataFrameFields:
 )
 class BaseDataFrame(_DataFrameFields, _Base):
     def __attrs_post_init__(self):
-        object.__setattr__(
-            self, "_dataframe", self._resolve(*self.columns)
-        )  # Circumventing frozen
+        resolved = self._resolve(*self.columns)
+        object.__setattr__(self, "_dataframe", resolved)
+        self._rematerialize(resolved)
+
+    def _rematerialize(self, df: pyspark.sql.DataFrame) -> None:
+        rebuilt = self.__class__._build(df)
+        self.__dict__.update(
+            {k: v for k, v in rebuilt.__dict__.items()
+             if k not in ("_dataframe", "_alias")}
+        )
 
     def to_spark(self):
         return self._dataframe
@@ -169,8 +176,8 @@ class BaseDataFrame(_DataFrameFields, _Base):
 
         Used by __attrs_post_init__ and select().
         """
-        aggregates = [c.column for c in cols if isinstance(c, _AggregateColumn)]
-        groups = [c.column for c in cols if isinstance(c, _GroupColumn)]
+        aggregates = [c for c in cols if isinstance(c, _AggregateMixin)]
+        groups = [c for c in cols if isinstance(c, _GroupColumn)]
         projections = {c.parent for c in cols if isinstance(c, DeferredColumn)}
 
         if (aggregates or groups) and projections:
@@ -182,8 +189,8 @@ class BaseDataFrame(_DataFrameFields, _Base):
             if not aggregates:
                 raise ValueError("Need to specify aggregates if using groups.")
 
-            return self._dataframe.groupBy(*[g._col for g in groups]).agg(
-                *[a._col for a in aggregates]
+            return self._dataframe.groupBy(*[g.to_spark() for g in groups]).agg(
+                *[a.to_spark() for a in aggregates]
             )
 
         if len(projections) > 0:

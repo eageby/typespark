@@ -65,6 +65,20 @@ class TypedColumn[T: DataType]:
         )
 
     def group(self) -> Self:
+        """Mark column as a group key for use in an aggregate DataFrame constructor.
+
+        Example::
+
+            class Agg(ts.DataFrame):
+                name: ts.String
+                total: ts.Int
+
+            Agg(df, name=df.name.group(), total=ts.sum(df.age))
+
+        The returned value is a ``_GroupColumn`` sentinel. Arithmetic and comparison
+        operations on it raise ``TypeError`` — operate on the field after construction
+        instead.
+        """
         return _GroupColumn(self)  # type: ignore
 
     def cast[U: DataType](self, dataType: U) -> "TypedColumn[U]":

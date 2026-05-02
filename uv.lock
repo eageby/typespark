@@ -687,12 +687,13 @@ wheels = [
 
 [[package]]
 name = "typespark"
-version = "0.1.0"
+version = "1.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "attrs" },
     { name = "pyyaml" },
     { name = "simple-parsing" },
+    { name = "typing-extensions" },
 ]
 
 [package.optional-dependencies]
@@ -720,9 +721,10 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", specifier = ">=25.1.0,<26" },
-    { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=3.5.2,<=4.0" },
+    { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=3.5.2,<4.1" },
     { name = "pyyaml", specifier = ">=6.0.2,<7" },
     { name = "simple-parsing", specifier = ">=0.1.7,<0.2" },
+    { name = "typing-extensions", specifier = ">=4.15.0" },
 ]
 provides-extras = ["pyspark"]
 
@@ -739,7 +741,7 @@ dev = [
     { name = "pandas", specifier = ">=2.2.3,<3" },
     { name = "prettyprinter", specifier = ">=0.18.0,<0.19" },
     { name = "pyarrow", specifier = ">=19.0.0,<20" },
-    { name = "pyspark", specifier = ">=3.5.2,<=4.0" },
+    { name = "pyspark", specifier = ">=3.5.2,<4.1" },
     { name = "pytest", specifier = ">=8.3.4,<9" },
 ]
 

@@ -1,30 +1,33 @@
+from typing import TypeVar
+
 from pyspark.sql import functions as F
-from pyspark.sql.types import DataType
 
 from typespark.columns import TypedColumn
-from typespark.columns.groups import _AggregateColumn
+from typespark.columns.groups import _make_aggregate
 from typespark.type_alias import Integer
 
-
-def sum[T: DataType](col: TypedColumn[T]) -> TypedColumn[T]:
-    return _AggregateColumn(TypedColumn(F.sum(col.to_spark())))  # type: ignore
+C = TypeVar("C", bound=TypedColumn)
 
 
-def first[T: DataType](col: TypedColumn[T]) -> TypedColumn[T]:
-    return _AggregateColumn(TypedColumn(F.first(col.to_spark())))  # type: ignore
+def sum(col: C) -> C:
+    return _make_aggregate(type(col), F.sum(col.to_spark()))  # type: ignore[return-value]
 
 
-def max[T: DataType](col: TypedColumn[T]) -> TypedColumn[T]:
-    return _AggregateColumn(TypedColumn(F.max(col.to_spark())))  # type: ignore
+def first(col: C) -> C:
+    return _make_aggregate(type(col), F.first(col.to_spark()))  # type: ignore[return-value]
 
 
-def max_by[T: DataType](col: TypedColumn[T], ord: TypedColumn) -> TypedColumn[T]:
-    return _AggregateColumn(TypedColumn(F.max_by(col.to_spark(), ord.to_spark())))  # type: ignore
+def max(col: C) -> C:
+    return _make_aggregate(type(col), F.max(col.to_spark()))  # type: ignore[return-value]
 
 
-def min[T: DataType](col: TypedColumn[T]) -> TypedColumn[T]:
-    return _AggregateColumn(TypedColumn(F.min(col.to_spark())))  # type: ignore
+def max_by(col: C, ord: TypedColumn) -> C:
+    return _make_aggregate(type(col), F.max_by(col.to_spark(), ord.to_spark()))  # type: ignore[return-value]
+
+
+def min(col: C) -> C:
+    return _make_aggregate(type(col), F.min(col.to_spark()))  # type: ignore[return-value]
 
 
 def count(col: TypedColumn) -> Integer:
-    return _AggregateColumn(TypedColumn(F.count(col.to_spark())))  # type: ignore
+    return _make_aggregate(Integer, F.count(col.to_spark()))  # type: ignore[return-value]
