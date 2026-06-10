@@ -29,7 +29,6 @@ from typespark._base import _Base
 from typespark.columns import AliasedTypedColumn, TypedColumn
 from typespark.columns._generator import DeferredColumn, Generator
 from typespark.columns._groups import _AggregateMixin, _GroupColumn
-from typespark._exceptions import MissingColumnError
 from typespark.metadata import decimal, field, foreign_key, primary_key
 
 
@@ -132,11 +131,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
 
         col_ref = (lambda fa: F.col(f"{alias}.{fa}")) if alias else None
 
-        try:
-            new = cls._build(df, col_ref=col_ref)
-        except MissingColumnError as e:
-            e.available_columns = df.columns
-            raise
+        new = cls._build(df, col_ref=col_ref)
 
         object.__setattr__(new, "_alias", alias)
 

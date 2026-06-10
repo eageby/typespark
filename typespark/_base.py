@@ -141,5 +141,6 @@ class _Base:
                     model=cls,
                     field_name=field_name,
                     expected_column=field_alias,
+                    available_columns=sorted(available) if available is not None else None,
                 )
         return new
