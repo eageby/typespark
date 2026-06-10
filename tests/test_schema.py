@@ -3,6 +3,7 @@ from pyspark.sql.types import ArrayType, IntegerType, NullType, ShortType, Strin
 
 import typespark as ts
 from typespark.columns.struct import Struct
+from typespark.field_transforms import df_alias
 from typespark.metadata import field
 
 
@@ -105,6 +106,34 @@ def test_schema_with_df_alias():
 
     assert schema.fieldNames() == ["name"]
     assert schema["name"].dataType == StringType()
+
+
+def to_pascal(s: str) -> str:
+    return s.replace("_", " ").title().replace(" ", "")
+
+
+def test_field_transformer_applies_to_fields_with_default():
+    """df_alias transformer must run on fields that use ts.field(default=...) with no explicit df_alias."""
+
+    class Data(ts.DataFrame, field_transformers=[df_alias(to_pascal)]):
+        first_name: ts.String = field(default=None)
+        last_name: ts.String
+
+    schema = Data.generate_schema()
+
+    assert schema.fieldNames() == ["FirstName", "LastName"]
+
+
+def test_explicit_df_alias_overrides_field_transformer():
+    """An explicit df_alias must not be overwritten by a field_transformer."""
+
+    class Data(ts.DataFrame, field_transformers=[df_alias(to_pascal)]):
+        runtime: ts.String = field(df_alias="_runtime")
+        company_id: ts.String
+
+    schema = Data.generate_schema()
+
+    assert schema.fieldNames() == ["_runtime", "CompanyId"]
 
 
 def test_schema_bare_typed_column_class():

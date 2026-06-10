@@ -32,7 +32,7 @@ def df_alias(func: Callable[[str], str]) -> FieldTransformer:
 
     def alias_converter(field: attrs.Attribute):
         m = field.metadata.copy()
-        if metadata.DF_ALIAS in m:
+        if m.get(metadata.DF_ALIAS) is not None:
             return field
 
         f = field.evolve(metadata={**m, metadata.DF_ALIAS: func(field.name)})
