@@ -1,8 +1,9 @@
 import attrs
-from typing import ClassVar
+from typing import ClassVar, Self
 
 from pyspark.sql import Column
-from pyspark.sql.types import ArrayType
+from pyspark.sql.functions import from_json as _spark_from_json
+from pyspark.sql.types import ArrayType, StringType
 
 from typespark.columns.columns import TypedColumn
 from typespark.columns._generator import Exploded
@@ -51,6 +52,12 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
         return ArrayType(_elem_data_type(cls._elem_type))
 
     @classmethod
+    def from_json(cls, json: "TypedColumn[StringType]", options: dict[str, str] | None = None) -> "Self":
+        if json._name is None:
+            raise UnnamedColumnError(column_type=json.__class__, operation="from_json")
+        return cls._set_column(_spark_from_json(json.to_spark(), cls.generate_schema(), options), json._name)
+
+    @classmethod
     def generate_schema(cls) -> ArrayType:
         if cls._elem_type is None:
             raise ValueError(f"{cls.__name__} has no element type — use ArrayOf(ElemType)")
@@ -59,8 +66,9 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
     def getItem(self, key: int) -> T:
         item = self._col.getItem(key)
         if self._elem_type is not None:
-            return self._elem_type(item)
-        return TypedColumn(item)  # type: ignore
+            name = f"{self._name}[{key}]" if self._name else str(key)
+            return self._elem_type._set_column(item, name)
+        return TypedColumn.wrap(item)  # type: ignore
 
     def explode(self) -> T:
         if self._name is None:

@@ -5,12 +5,12 @@ from pyspark.sql import SparkSession
 
 from tests.conftest import Person
 from tests.utils import collect_values
-from typespark import Int, String
+from typespark import Int, Integer, MissingColumnError, String
 from typespark.columns.struct import Struct
 from typespark.dataframe import BaseDataFrame
-from typespark import MissingColumnError
 from typespark.metadata import field
-from typespark import Integer
+
+from ..typespark.field_transforms import df_alias
 
 
 def test_struct_access(struct_dataframe):
@@ -132,11 +132,13 @@ def test_struct_init_alias(person: Person):
 
 def test_missing_struct_subfield_raises(spark: SparkSession):
     from pyspark.sql import Row
-    from pyspark.sql.types import StringType, StructField as SF, StructType as ST
+    from pyspark.sql.types import StringType
+    from pyspark.sql.types import StructField as SF
+    from pyspark.sql.types import StructType as ST
 
-    schema = ST([
-        SF("address", ST([SF("street", StringType()), SF("zip", StringType())]))
-    ])
+    schema = ST(
+        [SF("address", ST([SF("street", StringType()), SF("zip", StringType())]))]
+    )
     data = [Row(address=Row(street="Main St", zip="12345"))]
     df = spark.createDataFrame(data, schema=schema)
 
@@ -157,6 +159,35 @@ def test_missing_struct_subfield_raises(spark: SparkSession):
     assert err.model is Address
     assert "city" in str(err)
     assert "address" in str(err)
+
+
+def test_array_of_struct_from_json(spark: SparkSession):
+    class Raw(BaseDataFrame):
+        data: String
+
+    class Item(Struct):
+        id: Int
+        name_: String = field(df_alias="name")
+
+    class Normalized(BaseDataFrame):
+        first_id: Int
+        first_name: String
+
+    rows = [
+        {"data": json.dumps([{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}])}
+    ]
+    df = Raw.from_df(spark.createDataFrame(rows))
+
+    import typespark as ts
+
+    parsed = ts.ArrayOf(Item).from_json(df.data)
+    first = parsed.getItem(0)
+
+    result = Normalized(df, first_id=first.id, first_name=first.name_)
+    values = collect_values(result)
+
+    assert values[0]["first_id"] == 1
+    assert values[0]["first_name"] == "Alice"
 
 
 def test_struct_from_json(spark: SparkSession):
