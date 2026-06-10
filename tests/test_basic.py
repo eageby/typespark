@@ -207,7 +207,7 @@ def test_from_df_missing_col(dataframe):
         ExtendedPerson.from_df(dataframe)
 
     assert exc_info.value.expected_column == "surname"
-    assert exc_info.value.available_columns == ["name", "age"]
+    assert exc_info.value.available_columns == ["age", "name"]
 
 
 def test_from_df_missing_col_with_default(dataframe):
