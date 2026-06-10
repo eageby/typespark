@@ -130,6 +130,14 @@ def least[T: ts.Column](*cols: T) -> T:
     return type(cols[0]).wrap(F.least(*[c.to_spark() for c in cols]))
 
 
+def coalesce[C: ts.Column](*cols: C) -> C:
+    """Returns the first non-null value from the given columns.
+
+    Wrapper for :func:`pyspark.sql.functions.coalesce`.
+    """
+    return type(cols[0]).wrap(F.coalesce(*[c.to_spark() for c in cols]))  # type: ignore[return-value]
+
+
 @overload
 def lit(value: str) -> ts.String: ...
 

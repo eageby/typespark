@@ -218,13 +218,6 @@ def cardinality(col: typespark.Array) -> typespark.Int:
     return typespark.Int.wrap(F.cardinality(col.to_spark()))
 
 
-def coalesce[T: DataType](*cols: typespark.Column[T]) -> typespark.Column[T]:
-    """Returns the first non-null value from the given columns.
-
-    Wrapper for :func:`pyspark.sql.functions.coalesce`.
-    """
-    return typespark.Column.wrap(F.coalesce(*[c.to_spark() for c in cols]))
-
 
 def collect_list[T: DataType](
     col: typespark.Column[T],
