@@ -46,6 +46,24 @@ def _kwarg_safe_call(func: Callable, attrs_instance: AttrsInstance):
     return func(**_extract_kwargs(func, attrs_instance))
 
 
+def _schema_for_elem(elem: type, m: MetaData) -> DataType:
+    """Recursively resolve DataType for an array element — primitive, struct, or nested array."""
+    if attrs.has(elem):
+        return generate_schema(elem)  # type: ignore
+    try:
+        if issubclass(elem, TypedArrayType):
+            inner = elem._elem_type
+            if inner is None:
+                raise ValueError(f"Nested array type {elem.__name__} has no element type")
+            return ArrayType(_schema_for_elem(inner, m))
+    except TypeError:
+        pass
+    data_type = getattr(elem, "_data_type", None)
+    if data_type is not None:
+        return _kwarg_safe_call(data_type, m)
+    raise ValueError(f"Cannot determine DataType for element type {elem!r}")
+
+
 def get_type_instance(field: attrs.Attribute, m: MetaData) -> DataType:
     tp = field.type
     if tp is None:
@@ -66,8 +84,7 @@ def get_type_instance(field: attrs.Attribute, m: MetaData) -> DataType:
         elem = tp._elem_type
         if elem is None:
             raise ValueError(f"Array field '{field.name}' has no element type")
-        elem_schema = generate_schema(elem) if attrs.has(elem) else _kwarg_safe_call(elem._data_type, m)  # type: ignore
-        return ArrayType(elem_schema)
+        return ArrayType(_schema_for_elem(elem, m))
 
     # Concrete primitive subclass with _data_type set
     data_type_cls = getattr(tp, "_data_type", None)
