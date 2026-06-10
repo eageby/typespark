@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import (
     Any,
-    Never,
     Optional,
     Self,
     dataclass_transform,
@@ -217,16 +216,6 @@ class BaseDataFrame(_DataFrameFields, _Base):
         return self._project(*resolved)
 
     # ── User-facing select ───────────────────────────────────────────
-
-    def __getattr__(self, name: str) -> Never:
-        if hasattr(pyspark.sql.DataFrame, name):
-            raise AttributeError(
-                f"'{name}' is not yet wrapped by BaseDataFrame. "
-                f"Use .to_df().{name}() to access the underlying PySpark DataFrame."
-            )
-        raise AttributeError(
-            f"'{type(self).__name__}' object has no attribute '{name}'"
-        )
 
     def select(
         self, *cols: str | pyspark.sql.Column | TypedColumn[DataType]
