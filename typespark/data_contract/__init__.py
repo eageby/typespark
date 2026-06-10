@@ -1,3 +1,5 @@
+__all__ = ["serialize_product", "generate_types"]
+
 try:
     import datacontract_specification
 except ImportError as e:

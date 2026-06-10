@@ -13,7 +13,7 @@ from typespark.columns.array import TypedArrayType
 from typespark.metadata import MetaData
 
 if TYPE_CHECKING:
-    from typespark.base import _Base
+    from typespark._base import _Base
     from typespark.dataframe import BaseDataFrame
 
 

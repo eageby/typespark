@@ -7,7 +7,7 @@ from pyspark.sql.types import IntegerType, LongType, StringType
 from typespark.columns.array import ArrayOf, TypedArrayType
 from typespark.columns.columns import TypedColumn
 from typespark.columns.primitives import Integer, String
-from typespark.exceptions import UnnamedColumnError
+from typespark import UnnamedColumnError
 
 
 # ── Primitive subclassing ─────────────────────────────────────────────────────

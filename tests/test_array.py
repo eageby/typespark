@@ -1,12 +1,11 @@
 from pyspark.sql.types import StringType
 
 from tests.utils import collect_values
-from typespark import String
-from typespark.dataframe import BaseDataFrame
+from typespark import Integer, String
 from typespark.columns.array import TypedArrayType
 from typespark.columns.struct import Struct
+from typespark.dataframe import BaseDataFrame
 from typespark.metadata import field
-from typespark.type_alias import Integer
 
 
 def test_array(array_dataframe):
