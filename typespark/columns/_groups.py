@@ -98,7 +98,7 @@ def _make_aggregate(target_cls: type, spark_col: pyspark.sql.Column):
     """
     if target_cls not in _agg_cls_cache:
         _agg_cls_cache[target_cls] = type(
-            f"_Agg{target_cls.__name__}", (_AggregateMixin, target_cls), {}
+            f"_Agg{target_cls.__name__}", (_AggregateMixin, target_cls), {"_data_type": None}
         )
     agg_cls = _agg_cls_cache[target_cls]
     return agg_cls.wrap(spark_col)

@@ -10,8 +10,6 @@ from typespark.columns.struct import Struct
 from typespark.dataframe import BaseDataFrame
 from typespark.metadata import field
 
-from ..typespark.field_transforms import df_alias
-
 
 def test_struct_access(struct_dataframe):
     class Nested(Struct):
