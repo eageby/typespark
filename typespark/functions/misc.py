@@ -58,6 +58,14 @@ def from_json[T: ts.Struct](
 
 
 @overload
+def from_json[E: ts.TypedColumn](
+    col: ts.String,
+    schema: type[ts.TypedArrayType[E]],
+    options: dict[str, str] | None = None,
+) -> ts.TypedArrayType[E]: ...
+
+
+@overload
 def from_json(
     col: ts.String,
     schema: types.StructType,
@@ -67,18 +75,22 @@ def from_json(
 
 def from_json[T: ts.Struct](
     col: ts.String,
-    schema: type[T] | types.StructType,
+    schema: type[T] | type[ts.TypedArrayType] | types.StructType,
     options: dict[str, str] | None = None,
 ) -> ts.Column | T:
-    """Parses a JSON string column into a struct.
+    """Parses a JSON string column into a struct or array.
 
-    Pass a TypeSpark Struct subclass for a typed result, or a PySpark StructType
-    for an untyped Column.
+    - Pass a ``Struct`` subclass for a typed struct result.
+    - Pass an ``ArrayOf(X)`` class for a typed array result.
+    - Pass a PySpark ``StructType`` for an untyped Column.
 
     Wrapper for :func:`pyspark.sql.functions.from_json`.
     """
     if isinstance(schema, type) and issubclass(schema, ts.Struct):
         return schema.from_json(col, options)
+    if isinstance(schema, type) and issubclass(schema, ts.TypedArrayType):
+        arr_schema = schema.generate_schema()
+        return schema.wrap(F.from_json(col.to_spark(), arr_schema, options))
     return ts.Column.wrap(F.from_json(col.to_spark(), schema, options))
 
 

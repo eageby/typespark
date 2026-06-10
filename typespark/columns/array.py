@@ -11,6 +11,21 @@ from typespark._exceptions import UnnamedColumnError
 _array_cache: dict[type, type] = {}
 
 
+def _elem_data_type(elem: "type[TypedColumn]") -> "DataType":
+    """Recursively resolve DataType for an array element type."""
+    from pyspark.sql.types import DataType
+    if attrs.has(elem):
+        return elem.generate_schema()  # type: ignore[attr-defined]
+    if issubclass(elem, TypedArrayType):
+        inner = elem._elem_type
+        if inner is None:
+            raise ValueError(f"Nested array type {elem.__name__} has no element type")
+        return ArrayType(_elem_data_type(inner))
+    if elem._data_type is not None:
+        return elem._data_type()
+    raise ValueError(f"Cannot determine DataType for element type {elem!r}")
+
+
 def ArrayOf(elem_type: type[TypedColumn]) -> type["TypedArrayType"]:
     if elem_type in _array_cache:
         return _array_cache[elem_type]
@@ -33,9 +48,13 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
     def _cast_schema(cls) -> ArrayType | None:
         if cls._elem_type is None:
             return None
-        elem = cls._elem_type
-        elem_schema = elem.generate_schema() if attrs.has(elem) else elem._data_type()
-        return ArrayType(elem_schema)
+        return ArrayType(_elem_data_type(cls._elem_type))
+
+    @classmethod
+    def generate_schema(cls) -> ArrayType:
+        if cls._elem_type is None:
+            raise ValueError(f"{cls.__name__} has no element type — use ArrayOf(ElemType)")
+        return ArrayType(_elem_data_type(cls._elem_type))
 
     def getItem(self, key: int) -> T:
         item = self._col.getItem(key)

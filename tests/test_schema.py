@@ -125,3 +125,34 @@ def test_schema_bare_typed_column_instance():
 
     schema = Data.generate_schema()
     assert schema["a"].dataType == NullType()
+
+
+def test_array_of_struct_generate_schema():
+    class Item(Struct):
+        label: ts.String
+
+    schema = ts.ArrayOf(Item).generate_schema()
+
+    assert isinstance(schema, ArrayType)
+    assert isinstance(schema.elementType, StructType)
+    assert schema.elementType["label"].dataType == StringType()
+
+
+def test_nested_array_generate_schema():
+    schema = ts.ArrayOf(ts.ArrayOf(ts.Integer)).generate_schema()
+
+    assert isinstance(schema, ArrayType)
+    assert isinstance(schema.elementType, ArrayType)
+    assert schema.elementType.elementType == IntegerType()
+
+
+def test_nested_array_field_in_dataframe():
+    class Data(ts.DataFrame):
+        matrix: ts.ArrayOf(ts.ArrayOf(ts.Integer))
+
+    schema = Data.generate_schema()
+
+    outer = schema["matrix"].dataType
+    assert isinstance(outer, ArrayType)
+    assert isinstance(outer.elementType, ArrayType)
+    assert outer.elementType.elementType == IntegerType()
