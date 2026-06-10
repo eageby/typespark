@@ -1,5 +1,5 @@
 import functools
-from typing import Any, ClassVar, Never, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Never, Self, overload
 
 __all__ = ["TypedColumn", "AliasedTypedColumn", "Bool"]
 
@@ -9,11 +9,44 @@ from pyspark.sql.types import BooleanType, DataType
 
 from ._groups import _GroupColumn
 
+if TYPE_CHECKING:
+    from pyspark.sql.types import (
+        BinaryType,
+        DateType,
+        DecimalType,
+        DoubleType,
+        FloatType,
+        IntegerType,
+        LongType,
+        ShortType,
+        StringType,
+        TimestampType,
+    )
+    from typespark.columns.primitives import (
+        Binary,
+        Date,
+        Decimal,
+        Double,
+        Float,
+        Integer,
+        Long,
+        Short,
+        String,
+        Timestamp,
+    )
+
+_concrete_registry: dict[type[DataType], "type[TypedColumn]"] = {}
+
 
 class TypedColumn[T: DataType]:
     _col: pyspark.sql.Column
     _name: str | None = None
     _data_type: ClassVar[type[DataType] | None] = None
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        super().__init_subclass__(**kwargs)
+        if cls._data_type is not None:
+            _concrete_registry[cls._data_type] = cls
 
     @classmethod
     def _cast_schema(cls) -> DataType | None:
@@ -83,8 +116,33 @@ class TypedColumn[T: DataType]:
         """
         return _GroupColumn(self)  # type: ignore
 
+    if TYPE_CHECKING:
+        @overload
+        def cast(self, dataType: "BooleanType") -> "Bool": ...
+        @overload
+        def cast(self, dataType: "BinaryType") -> "Binary": ...
+        @overload
+        def cast(self, dataType: "DateType") -> "Date": ...
+        @overload
+        def cast(self, dataType: "DecimalType") -> "Decimal": ...
+        @overload
+        def cast(self, dataType: "DoubleType") -> "Double": ...
+        @overload
+        def cast(self, dataType: "FloatType") -> "Float": ...
+        @overload
+        def cast(self, dataType: "IntegerType") -> "Integer": ...
+        @overload
+        def cast(self, dataType: "LongType") -> "Long": ...
+        @overload
+        def cast(self, dataType: "ShortType") -> "Short": ...
+        @overload
+        def cast(self, dataType: "StringType") -> "String": ...
+        @overload
+        def cast(self, dataType: "TimestampType") -> "Timestamp": ...
+
     def cast[U: DataType](self, dataType: U) -> "TypedColumn[U]":
-        return TypedColumn(self._col.cast(dataType))._set_name(self._name)
+        target = _concrete_registry.get(type(dataType), TypedColumn)
+        return target.wrap(self._col.cast(dataType))._set_name(self._name)  # type: ignore[return-value]
 
     def alias(self, alias: str, **kwargs) -> "Self":
         return AliasedTypedColumn(self._col.alias(alias, **kwargs), alias, self._name)  # type: ignore
