@@ -3,7 +3,7 @@ from pyspark.sql.types import DoubleType, StringType
 
 import typespark as ts
 from tests.conftest import Person
-from typespark.columns.groups import _FORBIDDEN_OPS, _GroupColumn
+from typespark.columns._groups import _FORBIDDEN_OPS, _GroupColumn
 from typespark.functions.aggregates import count, sum
 
 

@@ -9,7 +9,6 @@ For operations not wrapped here, use .to_df() to access the underlying DataFrame
 from __future__ import annotations
 
 from typing import (
-    TYPE_CHECKING,
     Any,
     Never,
     Optional,
@@ -26,16 +25,12 @@ from pyspark.sql import Row
 from pyspark.sql import functions as F
 from pyspark.sql.types import BooleanType, DataType, StructType, TimestampType
 
-from typespark.base import _Base
-from typespark.columns import AliasedTypedColumn, TypedColumn, is_typed_column_type
-from typespark.columns.generator import DeferredColumn, Generator
-from typespark.columns.groups import _AggregateMixin, _GroupColumn
-from typespark.define import define
-from typespark.exceptions import MissingColumnError
+from typespark._base import _Base
+from typespark.columns import AliasedTypedColumn, TypedColumn
+from typespark.columns._generator import DeferredColumn, Generator
+from typespark.columns._groups import _AggregateMixin, _GroupColumn
+from typespark._exceptions import MissingColumnError
 from typespark.metadata import decimal, field, foreign_key, primary_key
-
-if TYPE_CHECKING:
-    from typespark.field_transforms import FieldTransformer
 
 
 def _dataframe_converter(df: "BaseDataFrame | pyspark.sql.DataFrame"):
@@ -72,8 +67,11 @@ class BaseDataFrame(_DataFrameFields, _Base):
     def _rematerialize(self, df: pyspark.sql.DataFrame) -> None:
         rebuilt = self.__class__._build(df)
         self.__dict__.update(
-            {k: v for k, v in rebuilt.__dict__.items()
-             if k not in ("_dataframe", "_alias")}
+            {
+                k: v
+                for k, v in rebuilt.__dict__.items()
+                if k not in ("_dataframe", "_alias")
+            }
         )
 
     def to_spark(self):
@@ -190,7 +188,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
                 raise ValueError("Need to specify aggregates if using groups.")
 
             return self._dataframe.groupBy(*[g.to_spark() for g in groups]).agg(
-                *[a.to_spark() for a in aggregates]
+                *[a.to_spark() for a in aggregates if isinstance(a, TypedColumn)]
             )
 
         if len(projections) > 0:

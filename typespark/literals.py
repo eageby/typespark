@@ -1,6 +1,6 @@
 from typing_extensions import deprecated
 
-from typespark.type_alias import Bool, Integer, String
+from typespark import Bool, Integer, String
 
 LiteralType = str | int | float | bool | None
 

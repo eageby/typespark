@@ -19,10 +19,10 @@ from pyspark.sql.types import StructType
 
 from typespark import schema
 from typespark.columns import TypedColumn, is_typed_column_type
-from typespark.exceptions import InvalidDefaultColumnError, MissingColumnError
+from typespark._exceptions import InvalidDefaultColumnError, MissingColumnError
 from typespark.utils import get_field_name, unwrap_type
 
-from .define import define
+from ._define import define
 from .field_transforms import FieldTransformer
 
 if TYPE_CHECKING:

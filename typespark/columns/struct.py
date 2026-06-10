@@ -6,10 +6,10 @@ from pyspark.sql import Column
 from pyspark.sql.functions import from_json, struct
 from pyspark.sql.types import StringType, StructType
 
-from typespark.base import _Base
+from typespark._base import _Base
 from typespark.columns import TypedColumn
 from typespark.columns.utils import is_typed_column_type
-from typespark.exceptions import UnnamedColumnError
+from typespark._exceptions import UnnamedColumnError
 from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.utils import get_field_name, unwrap_origin
 

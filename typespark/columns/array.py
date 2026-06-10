@@ -5,8 +5,8 @@ from pyspark.sql import Column
 from pyspark.sql.types import ArrayType
 
 from typespark.columns.columns import TypedColumn
-from typespark.columns.generator import Exploded
-from typespark.exceptions import UnnamedColumnError
+from typespark.columns._generator import Exploded
+from typespark._exceptions import UnnamedColumnError
 
 _array_cache: dict[type, type] = {}
 

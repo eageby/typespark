@@ -8,9 +8,9 @@ from tests.utils import collect_values
 from typespark import Int, String
 from typespark.columns.struct import Struct
 from typespark.dataframe import BaseDataFrame
-from typespark.exceptions import MissingColumnError
+from typespark import MissingColumnError
 from typespark.metadata import field
-from typespark.type_alias import Integer
+from typespark import Integer
 
 
 def test_struct_access(struct_dataframe):

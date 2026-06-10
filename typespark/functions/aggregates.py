@@ -31,8 +31,8 @@ from pyspark.sql import functions as F
 
 from typespark.columns import TypedColumn
 from typespark.columns.array import ArrayOf, TypedArrayType
-from typespark.columns.groups import _make_aggregate
-from typespark.type_alias import Double, Integer, Long
+from typespark.columns._groups import _make_aggregate
+from typespark.columns.primitives import Double, Integer, Long
 
 C = TypeVar("C", bound=TypedColumn)
 

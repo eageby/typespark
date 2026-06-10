@@ -7,7 +7,7 @@ from tests.conftest import Id, Person, Range
 from tests.utils import collect_column, collect_values
 from typespark import DataFrame, Int, String, Timestamp
 from typespark.dataframe import BaseDataFrame
-from typespark.exceptions import MissingColumnError
+from typespark import MissingColumnError
 from typespark.literals import string_literal
 from typespark.metadata import field
 
