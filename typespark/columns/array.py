@@ -26,7 +26,7 @@ def _elem_data_type(elem: "type[TypedColumn]") -> "DataType":
     raise ValueError(f"Cannot determine DataType for element type {elem!r}")
 
 
-def ArrayOf(elem_type: type[TypedColumn]) -> type["TypedArrayType"]:
+def ArrayOf[T: TypedColumn](elem_type: type[T]) -> "type[TypedArrayType[T]]":
     if elem_type in _array_cache:
         return _array_cache[elem_type]
     cls = type(
