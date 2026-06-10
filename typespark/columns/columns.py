@@ -82,16 +82,6 @@ class TypedColumn[T: DataType]:
         self._name = name
         return self
 
-    def __getattr__(self, item: str) -> Never:
-        if hasattr(pyspark.sql.Column, item):
-            raise AttributeError(
-                f"'{item}' is not yet wrapped by TypedColumn. "
-                f"Use .to_spark().{item} to access the underlying PySpark Column."
-            )
-        raise AttributeError(
-            f"'{type(self).__name__}' object has no attribute '{item}'"
-        )
-
     def __repr__(self):
         return (
             f"{self.__class__.__name__}<'{self._name}'>"
@@ -117,6 +107,7 @@ class TypedColumn[T: DataType]:
         return _GroupColumn(self)  # type: ignore
 
     if TYPE_CHECKING:
+
         @overload
         def cast(self, dataType: "BooleanType") -> "Bool": ...
         @overload
