@@ -12,6 +12,7 @@ from pyspark.sql.types import (
     FloatType,
     IntegerType,
     LongType,
+    ShortType,
     StringType,
     TimestampType,
 )
@@ -334,6 +335,10 @@ class Decimal(_DecimalOpsMixin, TypedColumn[DecimalType]):
 
 class Binary(_BinaryOpsMixin, TypedColumn[BinaryType]):
     _data_type = BinaryType
+
+
+class Short(_IntOpsMixin, TypedColumn[ShortType]):
+    _data_type = ShortType
 
 
 class Integer(_IntOpsMixin, TypedColumn[IntegerType]):

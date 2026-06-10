@@ -6,6 +6,7 @@ __all__ = [
     "ArrayOf",
     "Binary",
     "Date",
+    "Short",
     "Decimal",
     "Double",
     "Float",
@@ -29,6 +30,7 @@ from .primitives import (
     Int,
     Integer,
     Long,
+    Short,
     String,
     Timestamp,
 )
