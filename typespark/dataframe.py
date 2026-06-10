@@ -182,7 +182,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
                 raise ValueError("Need to specify aggregates if using groups.")
 
             return self._dataframe.groupBy(*[g.to_spark() for g in groups]).agg(
-                *[a.to_spark() for a in aggregates if isinstance(a, TypedColumn)]
+                *[a.to_spark() for a in aggregates]
             )
 
         if len(projections) > 0:
