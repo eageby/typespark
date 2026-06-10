@@ -82,6 +82,9 @@ class _AggregateMixin:
         inst._name = self._name  # type: ignore[attr-defined]
         return inst
 
+    def to_spark(self) -> pyspark.sql.Column:
+        return super().to_spark()  # type: ignore[misc]
+
 
 _agg_cls_cache: dict[type, type] = {}
 
