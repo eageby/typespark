@@ -5,7 +5,7 @@ Pass aggregate columns alongside ``.group()`` columns when constructing a typed
 
 Implemented
 -----------
-count, countDistinct, approx_count_distinct,
+count, count_distinct, count_if, countDistinct, approx_count_distinct,
 sum (with Integer/Long → Long overloads),
 avg, mean, stddev, stddev_samp, stddev_pop,
 corr, covar_pop, covar_samp,
@@ -32,6 +32,7 @@ from pyspark.sql import functions as F
 from typespark.columns import TypedColumn
 from typespark.columns.array import ArrayOf, TypedArrayType
 from typespark.columns._groups import _make_aggregate
+from typespark.columns.columns import Bool
 from typespark.columns.primitives import Double, Integer, Long
 
 C = TypeVar("C", bound=TypedColumn)
@@ -81,6 +82,14 @@ def countDistinct(*cols: TypedColumn) -> Long:
 
 def approx_count_distinct(col: TypedColumn, rsd: float = 0.05) -> Long:
     return _make_aggregate(Long, F.approx_count_distinct(col.to_spark(), rsd))  # type: ignore[return-value]
+
+
+def count_distinct(*cols: TypedColumn) -> Long:
+    return _make_aggregate(Long, F.count_distinct(*[c.to_spark() for c in cols]))  # type: ignore[return-value]
+
+
+def count_if(col: Bool) -> Long:
+    return _make_aggregate(Long, F.count_if(col.to_spark()))  # type: ignore[return-value]
 
 
 # ---------------------------------------------------------------------------

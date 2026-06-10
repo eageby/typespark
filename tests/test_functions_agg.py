@@ -7,6 +7,7 @@ import typespark as ts
 from typespark import BaseDataFrame
 from typespark.columns.array import TypedArrayType
 from typespark.columns.primitives import Double, Integer, Long, String
+from typespark.columns.columns import Bool
 from typespark.functions.aggregates import (
     approx_count_distinct,
     avg,
@@ -14,6 +15,8 @@ from typespark.functions.aggregates import (
     collect_set,
     corr,
     count,
+    count_distinct,
+    count_if,
     countDistinct,
     covar_pop,
     covar_samp,
@@ -99,6 +102,28 @@ def test_count_distinct_value(num_frame: NumFrame) -> None:
 def test_approx_count_distinct_returns_long(num_frame: NumFrame) -> None:
     result = approx_count_distinct(num_frame.name)
     assert isinstance(result, Long)
+
+
+def test_count_distinct_returns_long(num_frame: NumFrame) -> None:
+    result = count_distinct(num_frame.age)
+    assert isinstance(result, Long)
+
+
+def test_count_distinct_value(num_frame: NumFrame) -> None:
+    col = count_distinct(num_frame.age)
+    row = num_frame.to_df().agg(col.to_spark().alias("v")).collect()[0]
+    assert row["v"] == 3
+
+
+def test_count_if_returns_long(num_frame: NumFrame) -> None:
+    result = count_if(num_frame.age > 26)
+    assert isinstance(result, Long)
+
+
+def test_count_if_value(num_frame: NumFrame) -> None:
+    col = count_if(num_frame.age > 26)
+    row = num_frame.to_df().agg(col.to_spark().alias("v")).collect()[0]
+    assert row["v"] == 2
 
 
 # ---------------------------------------------------------------------------
