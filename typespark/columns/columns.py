@@ -59,6 +59,8 @@ class TypedColumn[T: DataType]:
         col = c.to_spark() if isinstance(c, TypedColumn) else c
         schema = self.__class__._cast_schema()
         self._col = col.cast(schema) if schema is not None else col
+        if isinstance(c, TypedColumn):
+            self._name = c._name
 
     @classmethod
     def wrap(cls, c: pyspark.sql.Column) -> "Self":
