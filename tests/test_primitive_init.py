@@ -87,6 +87,21 @@ def test_integer_from_typed_column(spark):
     assert collect_one(spark, Integer(col)) == 7
 
 
+def test_integer_preserves_name_from_typed_column():
+    named = Integer._set_column(F.lit(7).cast(IntegerType()), "my_col")
+    assert Integer(named)._name == "my_col"
+
+
+def test_string_preserves_name_from_typed_column():
+    named = String._set_column(F.lit("x"), "src_col")
+    assert String(named)._name == "src_col"
+
+
+def test_date_preserves_name_from_typed_column():
+    named = Date._set_column(F.lit(None).cast(DateType()), "dob")
+    assert Date(named)._name == "dob"
+
+
 # ---------------------------------------------------------------------------
 # Long
 # ---------------------------------------------------------------------------
