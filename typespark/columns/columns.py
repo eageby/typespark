@@ -200,11 +200,11 @@ class TypedColumn[T: DataType]:
     def __neg__(self) -> "TypedColumn":
         return TypedColumn(self._col.__neg__())
 
-    def desc(self):
-        return TypedColumn[T](self._col.desc())
+    def desc(self) -> "Self":
+        return type(self).wrap(self._col.desc())
 
-    def asc(self):
-        return TypedColumn[T](self._col.asc())
+    def asc(self) -> "Self":
+        return type(self).wrap(self._col.asc())
 
     def isin(self, *cols: Any) -> "Bool":
         return Bool.wrap(self.to_spark().isin(*cols))

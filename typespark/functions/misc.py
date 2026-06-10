@@ -198,30 +198,28 @@ def nanvl[T: Numeric](col1: T, col2: T) -> T:
     return type(col1).wrap(F.nanvl(col1.to_spark(), col2.to_spark()))
 
 
-def nullif[T: types.DataType](col1: ts.Column[T], col2: ts.Column[T]) -> ts.Column[T]:
+def nullif[C: ts.Column](col1: C, col2: C) -> C:
     """Returns null if `col1` equals `col2`, otherwise returns `col1`.
 
     Wrapper for :func:`pyspark.sql.functions.nullif`.
     """
-    return ts.Column.wrap(F.nullif(col1.to_spark(), col2.to_spark()))
+    return type(col1).wrap(F.nullif(col1.to_spark(), col2.to_spark()))
 
 
-def nvl[T: types.DataType](col1: ts.Column[T], col2: ts.Column[T]) -> ts.Column[T]:
+def nvl[C: ts.Column](col1: C, col2: C) -> C:
     """Returns `col1` if it is not null, otherwise returns `col2`.
 
     Wrapper for :func:`pyspark.sql.functions.nvl`.
     """
-    return ts.Column.wrap(F.nvl(col1.to_spark(), col2.to_spark()))
+    return type(col1).wrap(F.nvl(col1.to_spark(), col2.to_spark()))
 
 
-def nvl2[T: types.DataType](
-    col1: ts.Column, col2: ts.Column[T], col3: ts.Column[T]
-) -> ts.Column[T]:
+def nvl2[C: ts.Column](col1: ts.Column, col2: C, col3: C) -> C:
     """Returns `col2` if `col1` is not null, otherwise returns `col3`.
 
     Wrapper for :func:`pyspark.sql.functions.nvl2`.
     """
-    return ts.Column.wrap(F.nvl2(col1.to_spark(), col2.to_spark(), col3.to_spark()))
+    return type(col2).wrap(F.nvl2(col1.to_spark(), col2.to_spark(), col3.to_spark()))
 
 
 def spark_partition_id() -> ts.Int:
@@ -256,34 +254,32 @@ def version() -> ts.String:
     return ts.String.wrap(F.version())
 
 
-class WhenStatement[T: types.DataType](ts.TypedColumn[T]):
+class WhenStatement[C: ts.Column](ts.Column):
     """Represents a chained `CASE WHEN` expression. Use `.when()` to add branches and `.otherwise()` for a default."""
 
-    def when(self, condition: ts.Bool, value: ts.TypedColumn[T]) -> "WhenStatement[T]":
+    def when(self, condition: ts.Bool, value: C) -> "WhenStatement[C]":
         """Adds another `WHEN condition THEN value` branch to the expression.
 
         Wrapper for :meth:`pyspark.sql.Column.when`.
         """
-        return WhenStatement[T].wrap(
+        return WhenStatement.wrap(  # type: ignore[return-value]
             self.to_spark().when(condition.to_spark(), value.to_spark())
         )
 
-    def otherwise(self, value: ts.TypedColumn[T]) -> ts.TypedColumn[T]:
+    def otherwise(self, value: C) -> C:
         """Adds a final `ELSE value` clause to the expression.
 
         Wrapper for :meth:`pyspark.sql.Column.otherwise`.
         """
-        return ts.TypedColumn.wrap(self.to_spark().otherwise(value.to_spark()))
+        return type(value).wrap(self.to_spark().otherwise(value.to_spark()))  # type: ignore[return-value]
 
 
-def when[T: types.DataType](
-    condition: ts.Bool, value: ts.TypedColumn[T]
-) -> WhenStatement[T]:
+def when[C: ts.Column](condition: ts.Bool, value: C) -> WhenStatement[C]:
     """Starts a `CASE WHEN condition THEN value` expression. Chain `.when()` and `.otherwise()` to complete it.
 
     Wrapper for :func:`pyspark.sql.functions.when`.
     """
-    return WhenStatement[T].wrap(F.when(condition.to_spark(), value.to_spark()))
+    return WhenStatement.wrap(F.when(condition.to_spark(), value.to_spark()))  # type: ignore[return-value]
 
 
 def xxhash64(*cols: ts.Column) -> ts.Long:

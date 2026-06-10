@@ -1,5 +1,4 @@
 import pyspark.sql.functions as F
-from pyspark.sql.types import DataType
 
 import typespark
 from typespark.columns.columns import TypedColumn
@@ -31,29 +30,29 @@ def row_number() -> typespark.Int:
     return typespark.Int.wrap(F.row_number())
 
 
-def lag[T: DataType](
-    col: TypedColumn[T],
+def lag[C: TypedColumn](
+    col: C,
     offset: int = 1,
-    default: TypedColumn[T] | None = None,
-) -> TypedColumn[T]:
+    default: C | None = None,
+) -> C:
     """Returns the value from a row at a given offset prior to the current row within a window.
 
     Wrapper for :func:`pyspark.sql.functions.lag`.
     """
     if default is not None:
-        return TypedColumn.wrap(F.lag(col.to_spark(), offset, default.to_spark()))
-    return TypedColumn.wrap(F.lag(col.to_spark(), offset))
+        return type(col).wrap(F.lag(col.to_spark(), offset, default.to_spark()))
+    return type(col).wrap(F.lag(col.to_spark(), offset))
 
 
-def lead[T: DataType](
-    col: TypedColumn[T],
+def lead[C: TypedColumn](
+    col: C,
     offset: int = 1,
-    default: TypedColumn[T] | None = None,
-) -> TypedColumn[T]:
+    default: C | None = None,
+) -> C:
     """Returns the value from a row at a given offset after the current row within a window.
 
     Wrapper for :func:`pyspark.sql.functions.lead`.
     """
     if default is not None:
-        return TypedColumn.wrap(F.lead(col.to_spark(), offset, default.to_spark()))
-    return TypedColumn.wrap(F.lead(col.to_spark(), offset))
+        return type(col).wrap(F.lead(col.to_spark(), offset, default.to_spark()))
+    return type(col).wrap(F.lead(col.to_spark(), offset))
