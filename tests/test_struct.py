@@ -189,6 +189,23 @@ def test_array_of_struct_from_json(spark: SparkSession):
     assert values[0]["first_name"] == "Alice"
 
 
+def test_struct_null(spark: SparkSession):
+    class Address(Struct):
+        street: String
+        city: String
+
+    class Container(BaseDataFrame):
+        address: Address
+
+    raw_df = spark.createDataFrame([Row(x=1)])
+    result_df = raw_df.select(Address.null().to_spark().alias("address"))
+    container = Container.from_df(result_df)
+
+    assert isinstance(container.address, Address)
+    values = collect_values(container)
+    assert values[0]["address"] is None
+
+
 def test_struct_wrap(spark: SparkSession):
     class Address(Struct):
         street: String
