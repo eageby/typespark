@@ -12,7 +12,6 @@ from typespark import (
     String,
     TypedArrayType,
     TypedColumn,
-    int_literal,
 )
 
 from ._type_aliases import Numeric
@@ -446,13 +445,13 @@ def substr(
         col.to_spark(),
         startPos.to_spark()
         if isinstance(startPos, TypedColumn)
-        else int_literal(startPos).to_spark(),
+        else Integer(startPos).to_spark(),
     ]
     if length is not None:
         args.append(
             length.to_spark()
             if isinstance(length, TypedColumn)
-            else int_literal(length).to_spark()
+            else Integer(length).to_spark()
         )
 
     return String.wrap(F.substr(*args))

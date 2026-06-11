@@ -4,7 +4,7 @@ import pytest
 from pyspark.sql import SparkSession
 from pyspark.sql.types import DoubleType, IntegerType, LongType
 
-from typespark import DataFrame, Double, Float, Int, int_literal
+from typespark import DataFrame, Double, Float, Int, Integer
 from typespark import functions as tsf
 
 from .utils import collect_column
@@ -440,7 +440,7 @@ def test_width_bucket(spark: SparkSession):
         v: Double
 
     df = Nums.from_df(spark.createDataFrame([(0.5,), (1.5,), (2.5,)], schema=Nums.generate_schema()))
-    result = df.select(tsf.width_bucket(df.v, int_literal(0), int_literal(3), 3).alias("bucket"))
+    result = df.select(tsf.width_bucket(df.v, Integer(0), Integer(3), 3).alias("bucket"))
     vals = collect_column(result, "bucket")
     assert vals == [1, 2, 3]
     assert isinstance(result.to_spark().schema["bucket"].dataType, LongType)
