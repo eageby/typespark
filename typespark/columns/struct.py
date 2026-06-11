@@ -45,6 +45,10 @@ class Struct(TypedColumn[StructType], _Base):
         return attrs.asdict(self, filter=lambda f, _: is_typed_column_type(f.type))
 
     @classmethod
+    def null(cls) -> Self:
+        return cls.wrap(F.lit(None).cast(cls.generate_schema()))
+
+    @classmethod
     def from_json(
         cls, json: TypedColumn[StringType], options: dict[str, str] | None = None
     ) -> Self:

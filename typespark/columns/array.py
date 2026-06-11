@@ -2,6 +2,7 @@ import attrs
 from typing import ClassVar, Self
 
 from pyspark.sql import Column
+import pyspark.sql.functions as F
 from pyspark.sql.functions import from_json as _spark_from_json
 from pyspark.sql.types import ArrayType, StringType
 
@@ -50,6 +51,10 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
         if cls._elem_type is None:
             return None
         return ArrayType(_elem_data_type(cls._elem_type))
+
+    @classmethod
+    def null(cls) -> "Self":
+        return cls.wrap(F.lit(None).cast(cls.generate_schema()))
 
     @classmethod
     def from_json(cls, json: "TypedColumn[StringType]", options: dict[str, str] | None = None) -> "Self":
