@@ -1,7 +1,8 @@
 import json
 
 import pytest
-from pyspark.sql import SparkSession
+from pyspark.sql import Row, SparkSession
+from pyspark.sql import functions as F
 
 from tests.conftest import Person
 from tests.utils import collect_values
@@ -186,6 +187,27 @@ def test_array_of_struct_from_json(spark: SparkSession):
 
     assert values[0]["first_id"] == 1
     assert values[0]["first_name"] == "Alice"
+
+
+def test_struct_wrap(spark: SparkSession):
+    class Address(Struct):
+        street: String
+        city: String
+
+    class Container(BaseDataFrame):
+        address: Address
+
+    raw_df = spark.createDataFrame([Row(street="Main St", city="Springfield")])
+    result_df = raw_df.select(F.struct(F.col("street"), F.col("city")).alias("address"))
+    container = Container.from_df(result_df)
+
+    assert isinstance(container.address, Address)
+    assert isinstance(container.address.street, String)
+    assert isinstance(container.address.city, String)
+
+    values = collect_values(container)
+    assert values[0]["address"]["street"] == "Main St"
+    assert values[0]["address"]["city"] == "Springfield"
 
 
 def test_struct_from_json(spark: SparkSession):
