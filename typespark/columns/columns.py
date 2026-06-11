@@ -1,5 +1,5 @@
 import functools
-from typing import TYPE_CHECKING, Any, ClassVar, Never, Self, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Self, overload
 
 __all__ = ["TypedColumn", "AliasedTypedColumn", "Bool"]
 
@@ -66,8 +66,8 @@ class TypedColumn[T: DataType]:
     def wrap(cls, c: pyspark.sql.Column) -> "Self":
         """Wrap a column without casting."""
         self = object.__new__(cls)
-        self._col = c
-        self._set_name(None)
+        object.__setattr__(self, "_col", c)  # Circumventing frozen
+        object.__setattr__(self, "_name", None)  # Circumventing frozen
         return self
 
     def _set_name(self, name: str | None):
