@@ -20,7 +20,6 @@ from typespark import (
     Double,
     Int,
     String,
-    string_literal,
 )
 from typespark import functions as tsf
 
@@ -70,9 +69,9 @@ def test_when(spark: SparkSession):
     ]
     integers = IntTestData.from_df(spark.createDataFrame(data, schema=IntTestData.generate_schema()))
 
-    a = tsf.when(integers.a > integers.b, string_literal("A"))
-    b = a.when(integers.a == integers.b, string_literal("eq"))
-    c = b.otherwise(string_literal("B"))
+    a = tsf.when(integers.a > integers.b, String("A"))
+    b = a.when(integers.a == integers.b, String("eq"))
+    c = b.otherwise(String("B"))
 
     result = integers.select(c.alias("when"))
 

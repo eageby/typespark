@@ -45,7 +45,7 @@ def test_array_append(spark: SparkSession):
     df = spark.createDataFrame(data, schema=Arrays.generate_schema())
 
     arrays = Arrays.from_df(df)
-    result = arrays.select(tsf.array_append(arrays.a, ts.int_literal(10)).alias("array"))
+    result = arrays.select(tsf.array_append(arrays.a, ts.Integer(10)).alias("array"))
 
     values = collect_column(result, "array")
 
@@ -69,8 +69,8 @@ def test_array_contains(spark: SparkSession):
 
     arrays = Arrays.from_df(spark.createDataFrame(data, schema=Arrays.generate_schema()))
     result = arrays.select(
-        tsf.array_contains(arrays.a, ts.int_literal(2)).alias("2"),
-        tsf.array_contains(arrays.a, ts.int_literal(10)).alias("10"),
+        tsf.array_contains(arrays.a, ts.Integer(2)).alias("2"),
+        tsf.array_contains(arrays.a, ts.Integer(10)).alias("10"),
     )
 
     values = collect_values(result)
@@ -196,7 +196,7 @@ def test_array_insert(spark: SparkSession):
         a: ts.TypedArrayType[ts.Int]
 
     df = Arrays.from_df(spark.createDataFrame([Row(a=[1, 2, 3])], schema=Arrays.generate_schema()))
-    result = df.select(tsf.array_insert(df.a, 2, ts.int_literal(10)).alias("v"))
+    result = df.select(tsf.array_insert(df.a, 2, ts.Integer(10)).alias("v"))
     assert collect_column(result, "v") == [[1, 10, 2, 3]]
 
 
@@ -242,7 +242,7 @@ def test_array_position(spark: SparkSession):
         a: ts.TypedArrayType[ts.Int]
 
     df = Arrays.from_df(spark.createDataFrame([Row(a=[10, 20, 30])], schema=Arrays.generate_schema()))
-    result = df.select(tsf.array_position(df.a, ts.int_literal(20)).alias("v"))
+    result = df.select(tsf.array_position(df.a, ts.Integer(20)).alias("v"))
     assert collect_column(result, "v") == [2]
     assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.LongType)
 
@@ -252,7 +252,7 @@ def test_array_prepend(spark: SparkSession):
         a: ts.TypedArrayType[ts.Int]
 
     df = Arrays.from_df(spark.createDataFrame([Row(a=[2, 3])], schema=Arrays.generate_schema()))
-    result = df.select(tsf.array_prepend(df.a, ts.int_literal(1)).alias("v"))
+    result = df.select(tsf.array_prepend(df.a, ts.Integer(1)).alias("v"))
     assert collect_column(result, "v") == [[1, 2, 3]]
 
 
@@ -261,7 +261,7 @@ def test_array_remove(spark: SparkSession):
         a: ts.TypedArrayType[ts.Int]
 
     df = Arrays.from_df(spark.createDataFrame([Row(a=[1, 2, 3, 2, 1])], schema=Arrays.generate_schema()))
-    result = df.select(tsf.array_remove(df.a, ts.int_literal(2)).alias("v"))
+    result = df.select(tsf.array_remove(df.a, ts.Integer(2)).alias("v"))
     assert collect_column(result, "v") == [[1, 3, 1]]
 
 

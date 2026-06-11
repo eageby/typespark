@@ -8,7 +8,6 @@ from tests.utils import collect_column, collect_values
 from typespark import DataFrame, Int, String, Timestamp
 from typespark.dataframe import BaseDataFrame
 from typespark import MissingColumnError
-from typespark.literals import string_literal
 from typespark.metadata import field
 
 
@@ -214,7 +213,7 @@ def test_from_df_missing_col_with_default(dataframe):
     class ExtendedPerson(BaseDataFrame):
         name: String
         age: Int
-        surname: String = field(default=string_literal("Doe"))
+        surname: String = field(default=String("Doe"))
 
     df = ExtendedPerson.from_df(dataframe)
 
@@ -227,7 +226,7 @@ def test_from_df_default_any_order(dataframe):
 
     class Reordered(BaseDataFrame):
         name: String
-        surname: String = field(default=string_literal("Doe"))
+        surname: String = field(default=String("Doe"))
         age: Int
 
     df = Reordered.from_df(dataframe)

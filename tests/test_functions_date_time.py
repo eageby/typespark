@@ -44,7 +44,7 @@ def test_add_months_with_col(spark: SparkSession):
     ]
     dates = DateTestData.from_df(spark.createDataFrame(data, schema=DateTestData.generate_schema()))
 
-    col: typespark.Date = tsf.add_months(dates.d, typespark.int_literal(1))
+    col: typespark.Date = tsf.add_months(dates.d, typespark.Integer(1))
     result = dates.select(col.alias("added"))
 
     values = collect_column(result, "added")
@@ -375,7 +375,7 @@ def test_timestamp_add(spark: SparkSession):
             schema=Timestamps.generate_schema(),
         )
     )
-    result = df.select(tsf.timestamp_add("DAY", typespark.int_literal(10), df.ts).alias("v"))
+    result = df.select(tsf.timestamp_add("DAY", typespark.Integer(10), df.ts).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0].day == 11
     assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampType)
@@ -541,7 +541,7 @@ def test_date_add(spark: SparkSession):
     df = Dates.from_df(spark.createDataFrame(data, schema=Dates.generate_schema()))
 
     result = df.select(
-        tsf.date_add(df.date, typespark.int_literal(1)).alias("added"),
+        tsf.date_add(df.date, typespark.Integer(1)).alias("added"),
     )
 
     values = collect_column(result, "added")
