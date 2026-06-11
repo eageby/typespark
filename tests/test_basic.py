@@ -234,3 +234,18 @@ def test_from_df_default_any_order(dataframe):
     assert set(df.to_df().columns) == {"name", "surname", "age"}
     assert collect_column(df, "surname") == ["Doe", "Doe"]
     assert collect_column(df, "age") == [30, 25]
+
+
+def test_drop_duplicates_no_subset(spark: SparkSession):
+    data = [("Alice", 30), ("Alice", 30), ("Bob", 25)]
+    df = Person.from_df(spark.createDataFrame(data, ["name", "age"]))
+    result = df.drop_duplicates()
+    assert len(collect_values(result)) == 2
+
+
+def test_drop_duplicates_with_subset(spark: SparkSession):
+    data = [("Alice", 30), ("Alice", 25), ("Bob", 25)]
+    df = Person.from_df(spark.createDataFrame(data, ["name", "age"]))
+    result = df.drop_duplicates(subset=[df.name])
+    assert len(collect_values(result)) == 2
+    assert isinstance(result, Person)

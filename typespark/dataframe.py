@@ -242,11 +242,13 @@ class BaseDataFrame(_DataFrameFields, _Base):
     def drop(self, *cols) -> BaseDataFrame:
         return BaseDataFrame._wrap(self._dataframe.drop(*cols))
 
-    def drop_duplicates(self, subset: list[str] | None = None) -> Self:
-        return self.__class__._wrap(self._dataframe.drop_duplicates(subset))
+    def drop_duplicates(self, subset: "list[TypedColumn] | None" = None) -> Self:
+        cols = [c._name for c in subset] if subset is not None else None
+        return self.__class__._wrap(self._dataframe.drop_duplicates(cols))
 
-    def dropDuplicates(self, subset: list[str] | None = None) -> Self:
-        return self.__class__._wrap(self._dataframe.dropDuplicates(subset))
+    def dropDuplicates(self, subset: "list[TypedColumn] | None" = None) -> Self:
+        cols = [c._name for c in subset] if subset is not None else None
+        return self.__class__._wrap(self._dataframe.dropDuplicates(cols))
 
     def distinct(self) -> Self:
         return self.__class__._wrap(self._dataframe.distinct())
