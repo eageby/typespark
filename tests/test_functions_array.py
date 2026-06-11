@@ -6,6 +6,19 @@ from tests.utils import collect_column, collect_values
 from typespark import functions as tsf
 
 
+def test_array_null(spark: SparkSession):
+    class Container(ts.DataFrame):
+        a: ts.TypedArrayType[ts.Int]
+
+    raw_df = spark.createDataFrame([Row(x=1)])
+    result_df = raw_df.select(ts.TypedArrayType[ts.Int].null().to_spark().alias("a"))
+    container = Container.from_df(result_df)
+
+    assert isinstance(container.a, ts.TypedArrayType)
+    values = collect_values(container)
+    assert values[0]["a"] is None
+
+
 def test_array(spark: SparkSession):
     class IntTestData(ts.DataFrame):
         a: ts.Int

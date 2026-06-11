@@ -3,13 +3,13 @@ from typing import Self, dataclass_transform
 import attr
 import attrs
 from pyspark.sql import Column
-from pyspark.sql.functions import from_json, struct
+from pyspark.sql.functions import from_json, lit, struct
 from pyspark.sql.types import StringType, StructType
 
 from typespark._base import _Base
+from typespark._exceptions import UnnamedColumnError
 from typespark.columns import TypedColumn
 from typespark.columns.utils import is_typed_column_type
-from typespark._exceptions import UnnamedColumnError
 from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.utils import get_field_name, unwrap_origin
 
@@ -46,7 +46,7 @@ class Struct(TypedColumn[StructType], _Base):
 
     @classmethod
     def null(cls) -> Self:
-        return cls.wrap(F.lit(None).cast(cls.generate_schema()))
+        return cls.wrap(lit(None).cast(cls.generate_schema()))
 
     @classmethod
     def from_json(
