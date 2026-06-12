@@ -613,3 +613,28 @@ def test_url_encode_decode(spark: SparkSession):
     decoded = encoded.select(tsf.url_decode(encoded.v).alias("v"))
     assert collect_column(decoded, "v") == ["hello world"]
     assert isinstance(encoded.to_spark().schema["v"].dataType, StringType)
+
+
+def test_regexp_extract_all_str_pattern(spark: SparkSession):
+    class Data(typespark.DataFrame):
+        s: typespark.String
+
+    df = Data.from_df(spark.createDataFrame([("hello world",)], schema=Data.generate_schema()))
+
+    result = df.select(tsf.regexp_extract_all(df.s, r"(\w+)", 1).alias("v"))
+    assert collect_column(result, "v") == [["hello", "world"]]
+    assert isinstance(result.to_spark().schema["v"].dataType, ArrayType)
+    assert isinstance(result.to_spark().schema["v"].dataType.elementType, StringType)
+
+
+def test_regexp_extract_all_column_pattern(spark: SparkSession):
+    class Data(typespark.DataFrame):
+        s: typespark.String
+        pat: typespark.String
+
+    df = Data.from_df(
+        spark.createDataFrame([("foo bar", r"\w+")], schema=Data.generate_schema())
+    )
+
+    result = df.select(tsf.regexp_extract_all(df.s, df.pat, 0).alias("v"))
+    assert collect_column(result, "v") == [["foo", "bar"]]
