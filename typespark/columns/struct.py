@@ -20,6 +20,13 @@ from typespark.utils import get_field_name, unwrap_origin
 )
 class Struct(TypedColumn[StructType], _Base):
     @classmethod
+    def wrap(cls, c: Column) -> "Self":
+        self = cls._build(c)
+        object.__setattr__(self, "_col", c)  # Circumventing frozen
+        object.__setattr__(self, "_name", None)  # Circumventing frozen
+        return self
+
+    @classmethod
     def _set_column(cls, col: Column, name: str):
         new = cls._build(col)
         object.__setattr__(new, "_col", col)  # Circumventing frozen

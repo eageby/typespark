@@ -227,6 +227,44 @@ def test_struct_wrap(spark: SparkSession):
     assert values[0]["address"]["city"] == "Springfield"
 
 
+def test_struct_wrap_sets_sub_columns(spark: SparkSession):
+    class Address(Struct):
+        street: String
+        city: String
+
+    raw = spark.createDataFrame([Row(street="Elm St", city="Shelbyville")])
+    col = F.struct(F.col("street"), F.col("city"))
+    wrapped = Address.wrap(col)
+
+    assert isinstance(wrapped, Address)
+    assert isinstance(wrapped.street, String)
+    assert isinstance(wrapped.city, String)
+    assert wrapped._name is None
+
+
+def test_struct_wrap_name_is_none(spark: SparkSession):
+    class Point(Struct):
+        x: Int
+        y: Int
+
+    col = F.struct(F.lit(1).alias("x"), F.lit(2).alias("y"))
+    wrapped = Point.wrap(col)
+
+    assert wrapped._name is None
+
+
+def test_struct_null_uses_wrap(spark: SparkSession):
+    class Tag(Struct):
+        key: String
+        value: String
+
+    null_col = Tag.null()
+
+    assert isinstance(null_col, Tag)
+    assert isinstance(null_col.key, String)
+    assert null_col._name is None
+
+
 def test_struct_from_json(spark: SparkSession):
     class Raw(BaseDataFrame):
         data: String
