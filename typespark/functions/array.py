@@ -4,9 +4,9 @@ from pyspark.sql.types import DataType
 import typespark
 
 
-def array[T: DataType](
-    *cols: typespark.Column[T],
-) -> typespark.Array[typespark.Column[T]]:
+def array[C: typespark.Column](
+    *cols: C,
+) -> typespark.Array[C]:
     """Creates an array column from the given columns.
 
     Wrapper for :func:`pyspark.sql.functions.array`.
@@ -218,7 +218,6 @@ def cardinality(col: typespark.Array) -> typespark.Int:
     return typespark.Int.wrap(F.cardinality(col.to_spark()))
 
 
-
 def collect_list[T: DataType](
     col: typespark.Column[T],
 ) -> typespark.Array[typespark.Column[T]]:
@@ -252,6 +251,24 @@ def element_at[T: typespark.TypedColumn](
             extraction.to_spark()
             if isinstance(extraction, typespark.TypedColumn)
             else extraction,
+        )
+    )
+
+
+def try_element_at[T: typespark.TypedColumn](
+    col: typespark.Array[T], extraction: typespark.Integer | int
+) -> T:
+    """Returns the element at position `extraction` in array `col` (1-based; negative counts from end).
+    Returns null if the index exceeds the array length, instead of raising an error.
+
+    Wrapper for :func:`pyspark.sql.functions.try_element_at`.
+    """
+    return typespark.Column.wrap(  # type: ignore
+        F.try_element_at(
+            col.to_spark(),
+            extraction.to_spark()
+            if isinstance(extraction, typespark.TypedColumn)
+            else F.lit(extraction),
         )
     )
 
