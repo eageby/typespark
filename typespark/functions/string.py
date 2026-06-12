@@ -57,13 +57,17 @@ def char_length(col: String) -> Int:
     return Int.wrap(F.char_length(col.to_spark()))
 
 
-def concat(*cols: String | Array) -> String | Array:
+@overload
+def concat(*cols: String) -> String: ...
+@overload
+def concat[T: TypedColumn](*cols: TypedArrayType[T]) -> TypedArrayType[T]: ...
+def concat(*cols: String | TypedArrayType) -> String | TypedArrayType:
     """Concatenates multiple string or array columns.
 
     Wrapper for :func:`pyspark.sql.functions.concat`.
     """
-    if isinstance(cols[0], Array):
-        return cols[0].__class__(F.concat(*[c.to_spark() for c in cols]))
+    if isinstance(cols[0], TypedArrayType):
+        return cols[0].__class__.wrap(F.concat(*[c.to_spark() for c in cols]))
     return String.wrap(F.concat(*[c.to_spark() for c in cols]))
 
 

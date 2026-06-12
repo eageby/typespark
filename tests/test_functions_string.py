@@ -38,6 +38,27 @@ def test_concat(spark: SparkSession):
     assert isinstance(result.to_spark().schema["no-op"].dataType, StringType)
 
 
+def test_concat_arrays(spark: SparkSession):
+    class Data(typespark.DataFrame):
+        a: typespark.Array[typespark.Int]
+        b: typespark.Array[typespark.Int]
+
+    rows = [Row(a=[1, 2], b=[3, 4]), Row(a=[5], b=[6, 7, 8])]
+    df = Data.from_df(spark.createDataFrame(rows, schema=Data.generate_schema()))
+
+    result = df.select(tsf.concat(df.a, df.b).alias("c"))
+
+    assert collect_column(result, "c") == [[1, 2, 3, 4], [5, 6, 7, 8]]
+    schema = result.to_spark().schema["c"].dataType
+    assert isinstance(schema, ArrayType)
+    assert isinstance(result.to_spark().schema["c"].dataType.elementType, IntegerType)
+
+    col = tsf.concat(df.a, df.b)
+    assert isinstance(col, TypedArrayType)
+    assert col._elem_type is typespark.Int
+
+
+
 def test_contains_string_column(spark: SparkSession):
     class Data(typespark.DataFrame):
         s: typespark.String
