@@ -1,10 +1,13 @@
 import attrs
-from typing import ClassVar, Self
+from typing import TYPE_CHECKING, ClassVar, Self
 
 from pyspark.sql import Column
 import pyspark.sql.functions as F
 from pyspark.sql.functions import from_json as _spark_from_json
 from pyspark.sql.types import ArrayType, StringType
+
+if TYPE_CHECKING:
+    from pyspark.sql.types import DataType
 
 from typespark.columns.columns import TypedColumn
 from typespark.columns._generator import Exploded
@@ -43,8 +46,9 @@ def ArrayOf[T: TypedColumn](elem_type: type[T]) -> "type[TypedArrayType[T]]":
 class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
     _elem_type: ClassVar[type[TypedColumn] | None] = None
 
-    def __class_getitem__(cls, item):
-        return ArrayOf(item)
+    if not TYPE_CHECKING:
+        def __class_getitem__(cls, item):
+            return ArrayOf(item)
 
     @classmethod
     def _cast_schema(cls) -> ArrayType | None:
