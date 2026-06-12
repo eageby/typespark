@@ -359,6 +359,15 @@ def test_element_at(spark: SparkSession):
     assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.IntegerType)
 
 
+def test_try_element_at(spark: SparkSession):
+    class Arrays(ts.DataFrame):
+        a: ts.TypedArrayType[ts.Int]
+
+    df = Arrays.from_df(spark.createDataFrame([Row(a=[10, 20, 30])], schema=Arrays.generate_schema()))
+    assert collect_column(df.select(tsf.try_element_at(df.a, 2).alias("v")), "v") == [20]
+    assert collect_column(df.select(tsf.try_element_at(df.a, 99).alias("v")), "v") == [None]
+
+
 def test_explode_outer(spark: SparkSession):
     class Arrays(ts.DataFrame):
         a: ts.TypedArrayType[ts.Int]

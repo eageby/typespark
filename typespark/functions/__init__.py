@@ -53,6 +53,7 @@ __all__ = [
     "size",
     "slice",
     "sort_array",
+    "try_element_at",
     "add_months",
     "date_add",
     "date_diff",
@@ -254,6 +255,7 @@ from .array import (
     size,
     slice,
     sort_array,
+    try_element_at,
 )
 from .date_time import (
     add_months,
