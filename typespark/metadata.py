@@ -1,4 +1,5 @@
-from typing import Optional
+from collections.abc import Mapping
+from typing import Any, Optional
 
 import attrs
 
@@ -18,7 +19,7 @@ def field(
     nullable: Optional[bool] = None,
     is_primary_key: Optional[bool] = None,
     is_foreign_key: Optional[type] = None,
-    metadata: dict[str, str] = {},
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
     **kwargs,
 ):
     md = {
@@ -26,19 +27,19 @@ def field(
         NULLABLE_COLUMN: nullable,
         PRIMARY_KEY: is_primary_key,
         FOREIGN_KEY: is_foreign_key,
-    } | metadata
+    } | dict(metadata)
 
     return attrs.field(metadata=md, **kwargs)
 
 
 def primary_key(
     df_alias: Optional[str] = None,
-    metadata: dict[str, str] = {},
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
 ):
     md = {
         DF_ALIAS: df_alias,
         PRIMARY_KEY: True,
-    } | metadata
+    } | dict(metadata)
 
     return attrs.field(metadata=md)
 
@@ -46,12 +47,12 @@ def primary_key(
 def foreign_key(
     reference: type,
     df_alias: Optional[str] = None,
-    metadata: dict[str, str] = {},
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
 ):
     md = {
         DF_ALIAS: df_alias,
         FOREIGN_KEY: reference,
-    } | metadata
+    } | dict(metadata)
 
     return attrs.field(metadata=md)
 
@@ -61,7 +62,7 @@ def decimal(
     scale: int,
     df_alias: Optional[str] = None,
     nullable: Optional[bool] = None,
-    metadata: dict[str, str] = {},
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
     **kwargs,
 ):
     md = {
@@ -69,7 +70,7 @@ def decimal(
         DECIMAL_TYPE_METADATA_PRECISION: precision,
         DECIMAL_TYPE_METADATA_SCALE: scale,
         NULLABLE_COLUMN: nullable,
-    } | metadata
+    } | dict(metadata)
     return attrs.field(metadata=md, **kwargs)
 
 
