@@ -41,7 +41,7 @@ def ArrayOf[T: TypedColumn](elem_type: type[T]) -> "type[TypedArrayType[T]]":
 
 
 class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
-    _elem_type: ClassVar[type[TypedColumn]]
+    _elem_type: ClassVar[type[T]]
 
     if not TYPE_CHECKING:
         def __class_getitem__(cls, item):
