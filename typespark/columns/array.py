@@ -22,10 +22,7 @@ def _elem_data_type(elem: "type[TypedColumn]") -> "DataType":
     if attrs.has(elem):
         return elem.generate_schema()  # type: ignore[attr-defined]
     if issubclass(elem, TypedArrayType):
-        inner = elem._elem_type
-        if inner is None:
-            raise ValueError(f"Nested array type {elem.__name__} has no element type")
-        return ArrayType(_elem_data_type(inner))
+        return ArrayType(_elem_data_type(elem._elem_type))
     if elem._data_type is not None:
         return elem._data_type()
     raise ValueError(f"Cannot determine DataType for element type {elem!r}")
@@ -44,16 +41,14 @@ def ArrayOf[T: TypedColumn](elem_type: type[T]) -> "type[TypedArrayType[T]]":
 
 
 class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
-    _elem_type: ClassVar[type[TypedColumn] | None] = None
+    _elem_type: ClassVar[type[TypedColumn]]
 
     if not TYPE_CHECKING:
         def __class_getitem__(cls, item):
             return ArrayOf(item)
 
     @classmethod
-    def _cast_schema(cls) -> ArrayType | None:
-        if cls._elem_type is None:
-            return None
+    def _cast_schema(cls) -> ArrayType:
         return ArrayType(_elem_data_type(cls._elem_type))
 
     @classmethod
@@ -68,16 +63,12 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
 
     @classmethod
     def generate_schema(cls) -> ArrayType:
-        if cls._elem_type is None:
-            raise ValueError(f"{cls.__name__} has no element type — use ArrayOf(ElemType)")
         return ArrayType(_elem_data_type(cls._elem_type))
 
     def getItem(self, key: int) -> T:
         item = self._col.getItem(key)
-        if self._elem_type is not None:
-            name = f"{self._name}[{key}]" if self._name else str(key)
-            return self._elem_type._set_column(item, name)
-        return TypedColumn.wrap(item)  # type: ignore
+        name = f"{self._name}[{key}]" if self._name else str(key)
+        return self._elem_type._set_column(item, name)
 
     def explode(self) -> T:
         if self._name is None:
