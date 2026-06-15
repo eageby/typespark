@@ -11,6 +11,11 @@ def array[C: typespark.Column](
 
     Wrapper for :func:`pyspark.sql.functions.array`.
     """
+    if not cols:
+        raise TypeError(
+            "array() requires at least one column to infer element type. "
+            "For an empty typed array use ArrayOf(ElemType).empty()."
+        )
     return ArrayOf(cols[0].__class__).wrap(F.array([c.to_spark() for c in cols]))
 
 
