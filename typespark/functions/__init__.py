@@ -41,6 +41,9 @@ __all__ = [
     "array_union",
     "arrays_overlap",
     "broadcast",
+    "filter",
+    "aggregate",
+    "transform",
     "cardinality",
     "collect_list",
     "collect_set",
@@ -430,6 +433,7 @@ from .string import (
     url_encode,
 )
 from .window_functions import dense_rank, lag, lead, rank, row_number
+from .higher_order import aggregate, filter, transform
 from .aggregates import (
     approx_count_distinct,
     avg,
