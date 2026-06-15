@@ -1,4 +1,5 @@
 import attrs
+import warnings
 from typing import TYPE_CHECKING, ClassVar, Self
 
 from pyspark.sql import Column
@@ -41,14 +42,23 @@ def ArrayOf[T: TypedColumn](elem_type: type[T]) -> "type[TypedArrayType[T]]":
 
 
 class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
-    _elem_type: ClassVar[type[T]]
+    _elem_type: ClassVar[type[T] | None] = None
 
     if not TYPE_CHECKING:
         def __class_getitem__(cls, item):
             return ArrayOf(item)
 
     @classmethod
-    def _cast_schema(cls) -> ArrayType:
+    def _cast_schema(cls) -> ArrayType | None:
+        if cls._elem_type is None:
+            warnings.warn(
+                f"{cls.__name__} constructed without a type parameter — "
+                "use TypedArrayType[ElemType](col) to enable schema casting. "
+                "No cast will be applied.",
+                UserWarning,
+                stacklevel=3,
+            )
+            return None
         return ArrayType(_elem_data_type(cls._elem_type))
 
     @classmethod
@@ -67,6 +77,8 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
 
     @classmethod
     def generate_schema(cls) -> ArrayType:
+        if cls._elem_type is None:
+            raise TypeError(f"Cannot generate schema for unparameterized {cls.__name__}")
         return ArrayType(_elem_data_type(cls._elem_type))
 
     def getItem(self, key: int) -> T:
