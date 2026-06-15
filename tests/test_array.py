@@ -1,3 +1,6 @@
+import warnings
+
+from pyspark.sql import functions as F
 from pyspark.sql.types import StringType
 
 from tests.utils import collect_values
@@ -123,3 +126,14 @@ def test_array_struct_to_new_with_cast(array_struct_dataframe):
     assert result_values[0]["age"] == "30"  # After casting
     assert result_values[1]["name"] == "Bob"
     assert result_values[1]["age"] == "25"  # After casting
+
+
+def test_bare_typed_array_type_no_error(spark):
+    """Regression: bare TypedArrayType(col) must not raise AttributeError."""
+    col = F.array(F.lit(1), F.lit(2))
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        instance = TypedArrayType(col)
+    assert instance is not None
+    assert any(issubclass(warning.category, UserWarning) for warning in w), \
+        "Expected a UserWarning when constructing bare TypedArrayType"
