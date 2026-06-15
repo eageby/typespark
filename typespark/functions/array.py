@@ -102,7 +102,7 @@ def array_max[T: typespark.TypedColumn](col: typespark.Array[T]) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.array_max`.
     """
-    elem_cls = col._elem_type or typespark.TypedColumn
+    elem_cls = col._elem_type
     return elem_cls.wrap(F.array_max(col.to_spark()))  # type: ignore
 
 
@@ -111,7 +111,7 @@ def array_min[T: typespark.TypedColumn](col: typespark.Array[T]) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.array_min`.
     """
-    elem_cls = col._elem_type or typespark.TypedColumn
+    elem_cls = col._elem_type
     return elem_cls.wrap(F.array_min(col.to_spark()))  # type: ignore
 
 
@@ -231,7 +231,7 @@ def element_at[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.element_at`.
     """
-    elem_cls = col._elem_type or typespark.TypedColumn
+    elem_cls = col._elem_type
     return elem_cls.wrap(  # type: ignore
         F.element_at(
             col.to_spark(),
@@ -250,7 +250,7 @@ def try_element_at[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.try_element_at`.
     """
-    elem_cls = col._elem_type or typespark.TypedColumn
+    elem_cls = col._elem_type
     return elem_cls.wrap(  # type: ignore
         F.try_element_at(
             col.to_spark(),
@@ -266,7 +266,7 @@ def explode[T: typespark.TypedColumn](col: typespark.Array[T]) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.explode`.
     """
-    elem_cls = col._elem_type or typespark.TypedColumn
+    elem_cls = col._elem_type
     return elem_cls.wrap(F.explode(col.to_spark()))  # type: ignore
 
 
@@ -275,7 +275,7 @@ def explode_outer[T: typespark.TypedColumn](col: typespark.Array[T]) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.explode_outer`.
     """
-    elem_cls = col._elem_type or typespark.TypedColumn
+    elem_cls = col._elem_type
     return elem_cls.wrap(F.explode_outer(col.to_spark()))  # type: ignore
 
 
@@ -287,7 +287,7 @@ def flatten[T: typespark.TypedColumn](
     Wrapper for :func:`pyspark.sql.functions.flatten`.
     """
     inner = col._elem_type
-    elem = inner._elem_type if inner is not None and issubclass(inner, _TAT) else None
+    elem = inner._elem_type if issubclass(inner, _TAT) else None
     result_cls = ArrayOf(elem) if elem is not None else typespark.TypedArrayType
     return result_cls.wrap(F.flatten(col.to_spark()))  # type: ignore
 
