@@ -52,6 +52,10 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
         return ArrayType(_elem_data_type(cls._elem_type))
 
     @classmethod
+    def empty(cls) -> "Self":
+        return cls.wrap(F.array().cast(cls.generate_schema()))
+
+    @classmethod
     def null(cls) -> "Self":
         return cls.wrap(F.lit(None).cast(cls.generate_schema()))
 
