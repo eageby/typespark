@@ -1,7 +1,7 @@
 import pyspark.sql.functions as F
-from pyspark.sql.types import DataType
 
 import typespark
+from typespark.columns.array import ArrayOf, TypedArrayType as _TAT
 
 
 def array[C: typespark.Column](
@@ -11,12 +11,12 @@ def array[C: typespark.Column](
 
     Wrapper for :func:`pyspark.sql.functions.array`.
     """
-    return typespark.Array.wrap(F.array([c.to_spark() for c in cols]))
+    return ArrayOf(cols[0].__class__).wrap(F.array([c.to_spark() for c in cols]))
 
 
-def array_append[T: DataType](
-    col: typespark.Array[typespark.Column[T]], value: typespark.Column[T]
-) -> typespark.Array[typespark.Column[T]]:
+def array_append[T: typespark.Column](
+    col: typespark.Array[T], value: T
+) -> typespark.Array[T]:
     """Appends `value` to the end of array `col`.
 
     Wrapper for :func:`pyspark.sql.functions.array_append`.
@@ -24,9 +24,7 @@ def array_append[T: DataType](
     return col.__class__.wrap(F.array_append(col.to_spark(), value.to_spark()))
 
 
-def array_compact[T: typespark.TypedColumn](
-    col: typespark.Array[T],
-) -> typespark.Array[T]:
+def array_compact[A: _TAT](col: A) -> A:
     """Removes null elements from array `col`.
 
     Wrapper for :func:`pyspark.sql.functions.array_compact`.
@@ -34,19 +32,17 @@ def array_compact[T: typespark.TypedColumn](
     return col.__class__.wrap(F.array_compact(col.to_spark()))  # type: ignore
 
 
-def array_contains[T: DataType](
-    col: typespark.Array[typespark.Column[T]], value: typespark.Column[T]
-) -> typespark.Column:
+def array_contains[T: typespark.Column](
+    col: typespark.Array[T], value: T
+) -> typespark.Bool:
     """Returns true if array `col` contains `value`.
 
     Wrapper for :func:`pyspark.sql.functions.array_contains`.
     """
-    return typespark.Column(F.array_contains(col.to_spark(), value.to_spark()))
+    return typespark.Bool.wrap(F.array_contains(col.to_spark(), value.to_spark()))
 
 
-def array_distinct[T: typespark.TypedColumn](
-    col: typespark.Array[T],
-) -> typespark.Array[T]:
+def array_distinct[A: _TAT](col: A) -> A:
     """Returns an array with duplicate elements removed from `col`.
 
     Wrapper for :func:`pyspark.sql.functions.array_distinct`.
@@ -54,9 +50,7 @@ def array_distinct[T: typespark.TypedColumn](
     return col.__class__.wrap(F.array_distinct(col.to_spark()))  # type: ignore
 
 
-def array_except[T: typespark.TypedColumn](
-    col1: typespark.Array[T], col2: typespark.Array[T]
-) -> typespark.Array[T]:
+def array_except[A: _TAT](col1: A, col2: A) -> A:
     """Returns elements in `col1` that are not in `col2`, without duplicates.
 
     Wrapper for :func:`pyspark.sql.functions.array_except`.
@@ -80,9 +74,7 @@ def array_insert[T: typespark.TypedColumn](
     )
 
 
-def array_intersect[T: typespark.TypedColumn](
-    col1: typespark.Array[T], col2: typespark.Array[T]
-) -> typespark.Array[T]:
+def array_intersect[A: _TAT](col1: A, col2: A) -> A:
     """Returns the intersection of `col1` and `col2`, without duplicates.
 
     Wrapper for :func:`pyspark.sql.functions.array_intersect`.
@@ -110,7 +102,8 @@ def array_max[T: typespark.TypedColumn](col: typespark.Array[T]) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.array_max`.
     """
-    return typespark.Column.wrap(F.array_max(col.to_spark()))  # type: ignore
+    elem_cls = col._elem_type or typespark.TypedColumn
+    return elem_cls.wrap(F.array_max(col.to_spark()))  # type: ignore
 
 
 def array_min[T: typespark.TypedColumn](col: typespark.Array[T]) -> T:
@@ -118,7 +111,8 @@ def array_min[T: typespark.TypedColumn](col: typespark.Array[T]) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.array_min`.
     """
-    return typespark.Column.wrap(F.array_min(col.to_spark()))  # type: ignore
+    elem_cls = col._elem_type or typespark.TypedColumn
+    return elem_cls.wrap(F.array_min(col.to_spark()))  # type: ignore
 
 
 def array_position[T: typespark.TypedColumn](
@@ -158,7 +152,7 @@ def array_repeat[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.array_repeat`.
     """
-    return typespark.Array.wrap(  # type: ignore
+    return ArrayOf(col.__class__).wrap(
         F.array_repeat(
             col.to_spark(),
             count.to_spark() if isinstance(count, typespark.TypedColumn) else count,
@@ -174,7 +168,7 @@ def array_size[T: typespark.TypedColumn](col: typespark.Array[T]) -> typespark.I
     return typespark.Int.wrap(F.array_size(col.to_spark()))
 
 
-def array_sort[T: typespark.TypedColumn](col: typespark.Array[T]) -> typespark.Array[T]:
+def array_sort[A: _TAT](col: A) -> A:
     """Returns array `col` sorted in ascending order, with nulls last.
 
     Wrapper for :func:`pyspark.sql.functions.array_sort`.
@@ -182,9 +176,7 @@ def array_sort[T: typespark.TypedColumn](col: typespark.Array[T]) -> typespark.A
     return col.__class__.wrap(F.array_sort(col.to_spark()))  # type: ignore
 
 
-def array_union[T: typespark.TypedColumn](
-    col1: typespark.Array[T], col2: typespark.Array[T]
-) -> typespark.Array[T]:
+def array_union[A: _TAT](col1: A, col2: A) -> A:
     """Returns the union of `col1` and `col2`, without duplicates.
 
     Wrapper for :func:`pyspark.sql.functions.array_union`.
@@ -192,9 +184,7 @@ def array_union[T: typespark.TypedColumn](
     return col1.__class__.wrap(F.array_union(col1.to_spark(), col2.to_spark()))  # type: ignore
 
 
-def arrays_overlap[T: typespark.TypedColumn](
-    a1: typespark.Array[T], a2: typespark.Array[T]
-) -> typespark.Bool:
+def arrays_overlap[A: _TAT](a1: A, a2: A) -> typespark.Bool:
     """Returns true if arrays `a1` and `a2` share at least one non-null element.
 
     Wrapper for :func:`pyspark.sql.functions.arrays_overlap`.
@@ -218,24 +208,20 @@ def cardinality(col: typespark.Array) -> typespark.Int:
     return typespark.Int.wrap(F.cardinality(col.to_spark()))
 
 
-def collect_list[T: DataType](
-    col: typespark.Column[T],
-) -> typespark.Array[typespark.Column[T]]:
+def collect_list[T: typespark.TypedColumn](col: T) -> typespark.Array[T]:
     """Aggregates values of `col` into an array, preserving duplicates and order.
 
     Wrapper for :func:`pyspark.sql.functions.collect_list`.
     """
-    return typespark.Array.wrap(F.collect_list(col.to_spark()))
+    return ArrayOf(col.__class__).wrap(F.collect_list(col.to_spark()))
 
 
-def collect_set[T: DataType](
-    col: typespark.Column[T],
-) -> typespark.Array[typespark.Column[T]]:
+def collect_set[T: typespark.TypedColumn](col: T) -> typespark.Array[T]:
     """Aggregates unique values of `col` into an array.
 
     Wrapper for :func:`pyspark.sql.functions.collect_set`.
     """
-    return typespark.Array.wrap(F.collect_set(col.to_spark()))
+    return ArrayOf(col.__class__).wrap(F.collect_set(col.to_spark()))
 
 
 def element_at[T: typespark.TypedColumn](
@@ -245,7 +231,8 @@ def element_at[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.element_at`.
     """
-    return typespark.Column.wrap(  # type: ignore
+    elem_cls = col._elem_type or typespark.TypedColumn
+    return elem_cls.wrap(  # type: ignore
         F.element_at(
             col.to_spark(),
             extraction.to_spark()
@@ -263,7 +250,8 @@ def try_element_at[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.try_element_at`.
     """
-    return typespark.Column.wrap(  # type: ignore
+    elem_cls = col._elem_type or typespark.TypedColumn
+    return elem_cls.wrap(  # type: ignore
         F.try_element_at(
             col.to_spark(),
             extraction.to_spark()
@@ -273,24 +261,22 @@ def try_element_at[T: typespark.TypedColumn](
     )
 
 
-def explode[T: DataType](
-    col: typespark.Array[typespark.Column[T]],
-) -> typespark.Column[T]:
+def explode[T: typespark.TypedColumn](col: typespark.Array[T]) -> T:
     """Explodes array `col` into separate rows. Rows with null or empty arrays are dropped.
 
     Wrapper for :func:`pyspark.sql.functions.explode`.
     """
-    return typespark.Column[T].wrap(F.explode(col.to_spark()))
+    elem_cls = col._elem_type or typespark.TypedColumn
+    return elem_cls.wrap(F.explode(col.to_spark()))  # type: ignore
 
 
-def explode_outer[T: DataType](
-    col: typespark.Array[typespark.Column[T]],
-) -> typespark.Column[T]:
+def explode_outer[T: typespark.TypedColumn](col: typespark.Array[T]) -> T:
     """Explodes array `col` into separate rows, preserving null/empty arrays as a single null row.
 
     Wrapper for :func:`pyspark.sql.functions.explode_outer`.
     """
-    return typespark.Column[T].wrap(F.explode_outer(col.to_spark()))
+    elem_cls = col._elem_type or typespark.TypedColumn
+    return elem_cls.wrap(F.explode_outer(col.to_spark()))  # type: ignore
 
 
 def flatten[T: typespark.TypedColumn](
@@ -300,7 +286,10 @@ def flatten[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.flatten`.
     """
-    return typespark.Array.wrap(F.flatten(col.to_spark()))  # type: ignore
+    inner = col._elem_type
+    elem = inner._elem_type if inner is not None and issubclass(inner, _TAT) else None
+    result_cls = ArrayOf(elem) if elem is not None else typespark.TypedArrayType
+    return result_cls.wrap(F.flatten(col.to_spark()))  # type: ignore
 
 
 def sequence[T: typespark.TypedColumn](
@@ -310,7 +299,7 @@ def sequence[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.sequence`.
     """
-    return typespark.Array.wrap(  # type: ignore
+    return ArrayOf(start.__class__).wrap(
         F.sequence(
             start.to_spark(),
             stop.to_spark(),
@@ -319,7 +308,7 @@ def sequence[T: typespark.TypedColumn](
     )
 
 
-def shuffle[T: typespark.TypedColumn](col: typespark.Array[T]) -> typespark.Array[T]:
+def shuffle[A: _TAT](col: A) -> A:
     """Returns a randomly shuffled copy of array `col`.
 
     Wrapper for :func:`pyspark.sql.functions.shuffle`.
@@ -335,11 +324,11 @@ def size(col: typespark.Array) -> typespark.Int:
     return typespark.Int.wrap(F.size(col.to_spark()))
 
 
-def slice[T: typespark.TypedColumn](
-    col: typespark.Array[T],
+def slice[A: _TAT](
+    col: A,
     start: typespark.Integer | int,
     length: typespark.Integer | int,
-) -> typespark.Array[T]:
+) -> A:
     """Returns a sub-array of `col` starting at `start` (1-based) with `length` elements.
 
     Wrapper for :func:`pyspark.sql.functions.slice`.
@@ -353,9 +342,7 @@ def slice[T: typespark.TypedColumn](
     )
 
 
-def sort_array[T: typespark.TypedColumn](
-    col: typespark.Array[T], asc: bool = True
-) -> typespark.Array[T]:
+def sort_array[A: _TAT](col: A, asc: bool = True) -> A:
     """Returns array `col` sorted in ascending order by default; set `asc=False` for descending.
 
     Wrapper for :func:`pyspark.sql.functions.sort_array`.
