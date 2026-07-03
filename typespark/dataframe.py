@@ -269,6 +269,31 @@ class BaseDataFrame(_DataFrameFields, _Base):
     ) -> Self:
         return self.filter(condition)
 
+    def qualify(
+        self, condition: pyspark.sql.Column | TypedColumn[BooleanType]
+    ) -> Self:
+        """Filter rows on a window-function expression, like SQL ``QUALIFY``.
+
+        Spark's DataFrame ``filter`` cannot reference window functions directly.
+        ``qualify`` materialises the boolean expression into a temporary column,
+        filters on it, then drops it — so window-based predicates work in one call::
+
+            w = Window.partitionBy(F.col("x")).orderBy(F.col("y"))
+            frame.qualify(F.row_number().over(w) == 1)
+
+        The window part currently uses raw PySpark; only the outer predicate is typed.
+        Schema is unchanged (the temporary column is dropped).
+        """
+        tmp = "__typespark_qualify__"
+        cond = (
+            condition.to_spark()
+            if isinstance(condition, TypedColumn)
+            else condition
+        )
+        return self.__class__._wrap(
+            self._dataframe.withColumn(tmp, cond).filter(F.col(tmp)).drop(tmp)
+        )
+
     def orderBy(
         self, *cols: TypedColumn[DataType] | pyspark.sql.Column, **kwargs: Any
     ) -> Self:
