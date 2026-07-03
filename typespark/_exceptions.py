@@ -42,6 +42,19 @@ class MissingColumnError(ValueError):
         super().__init__(msg)
 
 
+class LazyDataFrameError(RuntimeError):
+    def __init__(self, *, model: type, alias: str | None):
+        self.model = model
+        self.alias = alias
+
+        msg = (
+            f"{model.__name__}.lazy({alias!r}) holds column references only "
+            f"— it has no underlying DataFrame. Data operations (to_df, "
+            f"to_spark, filter, select, show, write, ...) are unavailable."
+        )
+        super().__init__(msg)
+
+
 class InvalidDefaultColumnError(TypeError):
     def __init__(
         self,

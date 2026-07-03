@@ -34,6 +34,7 @@ __all__ = [
     "UnnamedColumnError",
     "MissingColumnError",
     "InvalidDefaultColumnError",
+    "LazyDataFrameError",
 ]
 
 from typespark.columns import ArrayOf, TypedArrayType, TypedColumn
@@ -54,6 +55,7 @@ from typespark.columns.struct import Struct
 from typespark.dataframe import BaseDataFrame
 from typespark._exceptions import (
     InvalidDefaultColumnError,
+    LazyDataFrameError,
     MissingColumnError,
     UnnamedColumnError,
 )

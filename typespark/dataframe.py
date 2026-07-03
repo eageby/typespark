@@ -25,6 +25,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import BooleanType, DataType, StructType, TimestampType
 
 from typespark._base import _Base
+from typespark._exceptions import LazyDataFrameError
 from typespark.columns import AliasedTypedColumn, TypedColumn
 from typespark.columns._generator import DeferredColumn, Generator
 from typespark.columns._groups import _AggregateMixin, _GroupColumn
@@ -35,6 +36,28 @@ def _dataframe_converter(df: "BaseDataFrame | pyspark.sql.DataFrame"):
     if isinstance(df, pyspark.sql.DataFrame):
         return df
     return df.to_df()
+
+
+_LAZY_CLASS_CACHE: dict[type, type] = {}
+
+
+def _lazy_class(cls: type) -> type:
+    """Return (creating once, then caching) a subclass of ``cls`` whose
+    ``_dataframe`` access raises ``LazyDataFrameError``.
+
+    One lazy subclass per schema class, so ``isinstance`` / identity are stable
+    across ``lazy()`` calls (e.g. ``union`` compares ``self.__class__``).
+    """
+    cached = _LAZY_CLASS_CACHE.get(cls)
+    if cached is not None:
+        return cached
+
+    def _no_data(self):
+        raise LazyDataFrameError(model=cls, alias=self._alias)
+
+    lazy_cls = type(f"Lazy[{cls.__name__}]", (cls,), {"_dataframe": property(_no_data)})
+    _LAZY_CLASS_CACHE[cls] = lazy_cls
+    return lazy_cls
 
 
 @attrs.define(frozen=True)
@@ -141,6 +164,26 @@ class BaseDataFrame(_DataFrameFields, _Base):
         object.__setattr__(new, "_dataframe", df.select(*spark_columns))
 
         return new
+
+    @classmethod
+    def lazy(cls, alias: str | None = None) -> Self:
+        """Column-only handle: a typed instance with no underlying DataFrame.
+
+        For building column expressions (join / merge / filter conditions)
+        without materializing or referencing data — the typed analog of a bare
+        ``F.col(...)``. With ``alias``, columns resolve to ``col("<alias>.<field>")``;
+        without it, to ``col("<field>")``, matching ``from_df(alias=...)`` exactly.
+
+        Any operation that touches the data (``to_df``, ``to_spark``, ``filter``,
+        ``select``, ``show``, ...) raises ``LazyDataFrameError`` — this handle has
+        no DataFrame by design.
+        """
+        col_ref = (
+            (lambda fa: F.col(f"{alias}.{fa}")) if alias else (lambda fa: F.col(fa))
+        )
+        new = _lazy_class(cls)._build(None, col_ref=col_ref)
+        object.__setattr__(new, "_alias", alias)
+        return new  # type: ignore[return-value]
 
     # ── Internal projection ─────────────────────────────────────────
 
@@ -269,9 +312,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
     ) -> Self:
         return self.filter(condition)
 
-    def qualify(
-        self, condition: pyspark.sql.Column | TypedColumn[BooleanType]
-    ) -> Self:
+    def qualify(self, condition: pyspark.sql.Column | TypedColumn[BooleanType]) -> Self:
         """Filter rows on a window-function expression, like SQL ``QUALIFY``.
 
         Spark's DataFrame ``filter`` cannot reference window functions directly.
@@ -285,11 +326,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
         Schema is unchanged (the temporary column is dropped).
         """
         tmp = "__typespark_qualify__"
-        cond = (
-            condition.to_spark()
-            if isinstance(condition, TypedColumn)
-            else condition
-        )
+        cond = condition.to_spark() if isinstance(condition, TypedColumn) else condition
         return self.__class__._wrap(
             self._dataframe.withColumn(tmp, cond).filter(F.col(tmp)).drop(tmp)
         )
