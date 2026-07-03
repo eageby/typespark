@@ -38,6 +38,21 @@ def test_select_dataframe(person: Person):
     assert list(wrapped_values[0].keys()) == ["name"]
 
 
+def test_drop_by_typed_column(person: Person):
+    result = person.drop(person.age)
+    assert result.to_df().columns == ["name"]
+
+
+def test_drop_by_name(person: Person):
+    result = person.drop("age")
+    assert result.to_df().columns == ["name"]
+
+
+def test_drop_multiple_typed_columns(person: Person):
+    result = person.drop(person.name, person.age)
+    assert result.to_df().columns == []
+
+
 def test_aliasing(person: Person):
     class A(BaseDataFrame):
         n: String

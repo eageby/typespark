@@ -282,8 +282,9 @@ class BaseDataFrame(_DataFrameFields, _Base):
     def withColumn(self, colName: str, col: pyspark.sql.Column) -> BaseDataFrame:
         return BaseDataFrame._wrap(self._dataframe.withColumn(colName, col))
 
-    def drop(self, *cols) -> BaseDataFrame:
-        return BaseDataFrame._wrap(self._dataframe.drop(*cols))
+    def drop(self, *cols: str | TypedColumn | pyspark.sql.Column) -> BaseDataFrame:
+        spark_cols = [c.to_spark() if isinstance(c, TypedColumn) else c for c in cols]
+        return BaseDataFrame._wrap(self._dataframe.drop(*spark_cols))
 
     def drop_duplicates(self, subset: "list[TypedColumn] | None" = None) -> Self:
         cols = [c._name for c in subset] if subset is not None else None
