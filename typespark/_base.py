@@ -18,8 +18,8 @@ import attrs
 from pyspark.sql.types import StructType
 
 from typespark import schema
-from typespark.columns import TypedColumn, is_typed_column_type
 from typespark._exceptions import InvalidDefaultColumnError, MissingColumnError
+from typespark.columns import TypedColumn, is_typed_column_type
 from typespark.utils import get_field_name, unwrap_type
 
 from ._define import define
@@ -141,6 +141,8 @@ class _Base:
                     model=cls,
                     field_name=field_name,
                     expected_column=field_alias,
-                    available_columns=sorted(available) if available is not None else None,
+                    available_columns=sorted(available)
+                    if available is not None
+                    else None,
                 )
         return new

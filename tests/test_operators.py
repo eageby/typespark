@@ -1,4 +1,5 @@
 """Tests for typed operator overloads on TypedColumn primitives."""
+
 import datetime
 import decimal
 
@@ -54,9 +55,7 @@ class TsFrame(BaseDataFrame):
 
 @pytest.fixture
 def nums(spark):
-    return NumFrame.from_df(
-        spark.createDataFrame([Row(a=1, b=2), Row(a=3, b=4)])
-    )
+    return NumFrame.from_df(spark.createDataFrame([Row(a=1, b=2), Row(a=3, b=4)]))
 
 
 @pytest.fixture
@@ -71,16 +70,12 @@ def floats(spark):
 
 @pytest.fixture
 def strings(spark):
-    return StrFrame.from_df(
-        spark.createDataFrame([Row(s="apple"), Row(s="banana")])
-    )
+    return StrFrame.from_df(spark.createDataFrame([Row(s="apple"), Row(s="banana")]))
 
 
 @pytest.fixture
 def bools(spark):
-    return BoolFrame.from_df(
-        spark.createDataFrame([Row(flag=True), Row(flag=False)])
-    )
+    return BoolFrame.from_df(spark.createDataFrame([Row(flag=True), Row(flag=False)]))
 
 
 @pytest.fixture
@@ -350,3 +345,60 @@ def test_neg_returns_same_class(nums: NumFrame):
 def test_neg_double_returns_same_class(floats: FloatFrame):
     result = -floats.x
     assert isinstance(result, Double)
+
+
+# ---------------------------------------------------------------------------
+# between — inclusive range, literal and column bounds
+# ---------------------------------------------------------------------------
+
+
+def test_between_returns_bool(nums: NumFrame):
+    assert isinstance(nums.a.between(1, 2), Bool)
+
+
+def test_integer_between_literals(nums: NumFrame):
+    result = collect_column(nums.filter(nums.a.between(1, 2)), "a")
+    assert result == [1]
+
+
+def test_between_is_inclusive(nums: NumFrame):
+    result = collect_column(nums.filter(nums.a.between(1, 3)), "a")
+    assert result == [1, 3]
+
+
+def test_integer_between_columns(nums: NumFrame):
+    result = collect_column(nums.filter(nums.a.between(nums.a, nums.b)), "a")
+    assert result == [1, 3]
+
+
+def test_double_between_literals(floats: FloatFrame):
+    result = collect_column(floats.filter(floats.x.between(1.0, 2.0)), "x")
+    assert result == [1.5]
+
+
+def test_string_between_literals(strings: StrFrame):
+    result = collect_column(strings.filter(strings.s.between("a", "b")), "s")
+    assert result == ["apple"]
+
+
+def test_date_between_literals(dates: DateFrame):
+    result = collect_column(
+        dates.filter(
+            dates.d.between(datetime.date(2024, 1, 1), datetime.date(2024, 3, 1))
+        ),
+        "d",
+    )
+    assert result == [datetime.date(2024, 1, 1)]
+
+
+def test_timestamp_between_literals(timestamps: TsFrame):
+    result = collect_column(
+        timestamps.filter(
+            timestamps.ts.between(
+                datetime.datetime(2024, 1, 1, 0, 0, 0),
+                datetime.datetime(2024, 3, 1, 0, 0, 0),
+            )
+        ),
+        "ts",
+    )
+    assert len(result) == 1
