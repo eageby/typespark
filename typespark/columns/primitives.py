@@ -60,6 +60,9 @@ class _StringOpsMixin(TypedColumn):
     def __ge__(self, other: "Self | str") -> Bool:  # type: ignore[override]
         return Bool.wrap(self._col.__ge__(_unwrap(other)))
 
+    def between(self, lowerBound: "Self | str", upperBound: "Self | str") -> Bool:  # type: ignore[override]
+        return Bool.wrap(self._col.between(_unwrap(lowerBound), _unwrap(upperBound)))
+
 
 class _DateOpsMixin(TypedColumn):
     __hash__ = TypedColumn.__hash__
@@ -89,6 +92,11 @@ class _DateOpsMixin(TypedColumn):
     def __ge__(self, other: "Self | datetime.date") -> Bool:  # type: ignore[override]
         return Bool.wrap(self._col.__ge__(_unwrap(other)))
 
+    def between(  # type: ignore[override]
+        self, lowerBound: "Self | datetime.date", upperBound: "Self | datetime.date"
+    ) -> Bool:
+        return Bool.wrap(self._col.between(_unwrap(lowerBound), _unwrap(upperBound)))
+
 
 class _TimestampOpsMixin(TypedColumn):
     __hash__ = TypedColumn.__hash__
@@ -117,6 +125,13 @@ class _TimestampOpsMixin(TypedColumn):
 
     def __ge__(self, other: "Self | datetime.datetime") -> Bool:  # type: ignore[override]
         return Bool.wrap(self._col.__ge__(_unwrap(other)))
+
+    def between(  # type: ignore[override]
+        self,
+        lowerBound: "Self | datetime.datetime",
+        upperBound: "Self | datetime.datetime",
+    ) -> Bool:
+        return Bool.wrap(self._col.between(_unwrap(lowerBound), _unwrap(upperBound)))
 
 
 class _BinaryOpsMixin(TypedColumn):
@@ -165,6 +180,9 @@ class _IntOpsMixin(TypedColumn):
 
     def __ge__(self, other: "Self | int") -> Bool:  # type: ignore[override]
         return Bool.wrap(self._col.__ge__(_unwrap(other)))
+
+    def between(self, lowerBound: "Self | int", upperBound: "Self | int") -> Bool:  # type: ignore[override]
+        return Bool.wrap(self._col.between(_unwrap(lowerBound), _unwrap(upperBound)))
 
     # -- arithmetic --
     def __add__(self, other: "Self | int") -> "Self":
@@ -218,6 +236,11 @@ class _FloatOpsMixin(TypedColumn):
     def __ge__(self, other: "Self | int | float") -> Bool:  # type: ignore[override]
         return Bool.wrap(self._col.__ge__(_unwrap(other)))
 
+    def between(  # type: ignore[override]
+        self, lowerBound: "Self | int | float", upperBound: "Self | int | float"
+    ) -> Bool:
+        return Bool.wrap(self._col.between(_unwrap(lowerBound), _unwrap(upperBound)))
+
     # -- arithmetic --
     def __add__(self, other: "Self | int | float") -> "Self":
         return self.__class__.wrap(self._col.__add__(_unwrap(other)))
@@ -270,6 +293,13 @@ class _DecimalOpsMixin(TypedColumn):
 
     def __ge__(self, other: "Self | int | float | _decimal.Decimal") -> Bool:  # type: ignore[override]
         return Bool.wrap(self._col.__ge__(_unwrap(other)))
+
+    def between(  # type: ignore[override]
+        self,
+        lowerBound: "Self | int | float | _decimal.Decimal",
+        upperBound: "Self | int | float | _decimal.Decimal",
+    ) -> Bool:
+        return Bool.wrap(self._col.between(_unwrap(lowerBound), _unwrap(upperBound)))
 
     # -- arithmetic --
     def __add__(self, other: "Self | int | float | _decimal.Decimal") -> "Self":

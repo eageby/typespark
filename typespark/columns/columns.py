@@ -212,6 +212,14 @@ class TypedColumn[T: DataType]:
     def rlike(self, item: str) -> "Bool":
         return Bool.wrap(self.to_spark().rlike(item))
 
+    def between(self, lowerBound: Self, upperBound: Self) -> "Bool":
+        return Bool.wrap(
+            self.to_spark().between(
+                self._get_operand_column(lowerBound),
+                self._get_operand_column(upperBound),
+            )
+        )
+
 
 class AliasedTypedColumn(TypedColumn):
     """When creating projected query plans we need to keep track of what has been aliased."""
