@@ -55,16 +55,13 @@ class Generator[T: TypedColumn](ABC):
 
     # delegate all unknown attributes/methods to materialized Column
     def __getattr__(self, name: str):
-        col = self._materialize()
-        attr = getattr(col, name)
+        from typespark.columns.columns import TypedColumn as _TypedColumn
 
-        # if callable(attr):
-
-        #     def wrapper(*args, **kwargs):
-        #         return attr(*args, **kwargs)
-
-        #     return wrapper
-        return DeferredColumn(self, attr)
+        materialized = self._materialize()
+        attr = getattr(materialized, name)
+        if isinstance(attr, (Column, _TypedColumn)):
+            return DeferredColumn(self, attr)
+        return attr
 
     @abstractmethod
     def column_operation(self) -> Column: ...
