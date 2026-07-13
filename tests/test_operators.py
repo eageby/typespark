@@ -402,3 +402,45 @@ def test_timestamp_between_literals(timestamps: TsFrame):
         "ts",
     )
     assert len(result) == 1
+
+
+# ---------------------------------------------------------------------------
+# filter — callable (lambda) overload
+# ---------------------------------------------------------------------------
+
+
+def test_filter_callable_literal(nums: NumFrame):
+    result = collect_column(nums.filter(lambda f: f.a == 1), "a")
+    assert result == [1]
+
+
+def test_filter_callable_column_to_column(nums: NumFrame):
+    result = collect_column(nums.filter(lambda f: f.a < f.b), "a")
+    assert result == [1, 3]
+
+
+def test_filter_callable_compound(nums: NumFrame):
+    result = collect_column(nums.filter(lambda f: (f.a > 1) & (f.b < 5)), "a")
+    assert result == [3]
+
+
+def test_filter_callable_method(nums: NumFrame):
+    result = collect_column(nums.filter(lambda f: f.a.between(1, 2)), "a")
+    assert result == [1]
+
+
+def test_filter_callable_receives_self(nums: NumFrame):
+    seen = []
+
+    def cond(f):
+        seen.append(f)
+        return f.a == 1
+
+    nums.filter(cond)
+    assert seen == [nums]
+
+
+def test_filter_callable_matches_direct(nums: NumFrame):
+    direct = collect_column(nums.filter(nums.a >= 3), "a")
+    lazy = collect_column(nums.filter(lambda f: f.a >= 3), "a")
+    assert direct == lazy
