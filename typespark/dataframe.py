@@ -10,8 +10,10 @@ from __future__ import annotations
 
 from typing import (
     Any,
+    Callable,
     Optional,
     Self,
+    Union,
     dataclass_transform,
     overload,
 )
@@ -297,16 +299,31 @@ class BaseDataFrame(_DataFrameFields, _Base):
     def distinct(self) -> Self:
         return self.__class__._wrap(self._dataframe.distinct())
 
+    @overload
+    def filter(self, condition: Callable[[Self], TypedColumn[BooleanType]]): ...
+
+    @overload
     def filter(
         self, condition: str | pyspark.sql.Column | TypedColumn[BooleanType]
+    ) -> Self: ...
+
+    def filter(
+        self,
+        condition: Union[
+            str | pyspark.sql.Column | TypedColumn[BooleanType],
+            Callable[[Self], TypedColumn[BooleanType]],
+        ],
     ) -> Self:
-        return self.__class__._wrap(
-            self._dataframe.filter(
+        if callable(condition):
+            c = condition(self).to_spark()
+        else:
+            c = (
                 condition.to_spark()
                 if isinstance(condition, TypedColumn)
                 else condition
             )
-        )
+
+        return self.__class__._wrap(self._dataframe.filter(c))
 
     def where(
         self, condition: str | pyspark.sql.Column | TypedColumn[BooleanType]
