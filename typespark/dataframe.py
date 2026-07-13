@@ -300,7 +300,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
         return self.__class__._wrap(self._dataframe.distinct())
 
     @overload
-    def filter(self, condition: Callable[[Self], TypedColumn[BooleanType]]): ...
+    def filter(self, condition: Callable[[Self], TypedColumn[BooleanType]]) -> Self: ...
 
     @overload
     def filter(
