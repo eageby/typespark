@@ -463,6 +463,18 @@ class BaseDataFrame(_DataFrameFields, _Base):
             ),
         )
 
+    def crossJoin(self, other: BaseDataFrame | pyspark.sql.DataFrame) -> BaseDataFrame:
+        """Cartesian product with another DataFrame, returning an untyped ``BaseDataFrame``.
+
+        The result is untyped because the combined schema depends on the schemas of
+        both sides.
+        """
+        return BaseDataFrame._wrap(
+            self._dataframe.crossJoin(
+                other.to_df() if isinstance(other, BaseDataFrame) else other
+            ),
+        )
+
     def leftsemi(
         self,
         other: BaseDataFrame | pyspark.sql.DataFrame,
