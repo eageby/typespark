@@ -20,6 +20,7 @@ from typespark.functions.aggregates import (
     countDistinct,
     covar_pop,
     covar_samp,
+    first,
     last,
     mean,
     min_by,
@@ -257,8 +258,50 @@ def test_collect_set_elem_type(num_frame: NumFrame) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Type-preserving: last, min_by
+# Type-preserving: first, last, min_by
 # ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="function")
+def null_frame(spark):
+    """Single partition so first/last are deterministic; nulls at both ends."""
+    data = [
+        Row(name=None, age=30, score=1.5),
+        Row(name="Alice", age=28, score=2.5),
+        Row(name="Bob", age=25, score=3.0),
+        Row(name=None, age=40, score=4.0),
+    ]
+    df = spark.createDataFrame(data, NumFrame.generate_schema()).coalesce(1)
+    yield NumFrame.from_df(df)
+
+
+def test_first_returns_same_type(num_frame: NumFrame) -> None:
+    result = first(num_frame.name)
+    assert isinstance(result, String)
+
+
+def test_first_keeps_nulls_by_default(null_frame: NumFrame) -> None:
+    col = first(null_frame.name)
+    row = null_frame.to_df().agg(col.to_spark().alias("v")).collect()[0]
+    assert row["v"] is None
+
+
+def test_first_ignorenulls(null_frame: NumFrame) -> None:
+    col = first(null_frame.name, ignorenulls=True)
+    row = null_frame.to_df().agg(col.to_spark().alias("v")).collect()[0]
+    assert row["v"] == "Alice"
+
+
+def test_last_keeps_nulls_by_default(null_frame: NumFrame) -> None:
+    col = last(null_frame.name)
+    row = null_frame.to_df().agg(col.to_spark().alias("v")).collect()[0]
+    assert row["v"] is None
+
+
+def test_last_ignorenulls(null_frame: NumFrame) -> None:
+    col = last(null_frame.name, ignorenulls=True)
+    row = null_frame.to_df().agg(col.to_spark().alias("v")).collect()[0]
+    assert row["v"] == "Bob"
 
 
 def test_last_returns_same_type(num_frame: NumFrame) -> None:

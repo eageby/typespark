@@ -51,12 +51,12 @@ def max(col: C) -> C:
     return _make_aggregate(type(col), F.max(col.to_spark()))  # type: ignore[return-value]
 
 
-def first(col: C) -> C:
-    return _make_aggregate(type(col), F.first(col.to_spark()))  # type: ignore[return-value]
+def first(col: C, ignorenulls: bool = False) -> C:
+    return _make_aggregate(type(col), F.first(col.to_spark(), ignorenulls))  # type: ignore[return-value]
 
 
-def last(col: C) -> C:
-    return _make_aggregate(type(col), F.last(col.to_spark()))  # type: ignore[return-value]
+def last(col: C, ignorenulls: bool = False) -> C:
+    return _make_aggregate(type(col), F.last(col.to_spark(), ignorenulls))  # type: ignore[return-value]
 
 
 def min_by(col: C, ord: TypedColumn) -> C:
