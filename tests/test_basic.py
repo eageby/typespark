@@ -102,6 +102,21 @@ def test_broadcast(id: Id, small_range: Range):
     assert result[1]["id"] == 2
 
 
+def test_cross_join(person: Person, small_range: Range):
+    result = person.crossJoin(small_range)
+
+    assert isinstance(result, BaseDataFrame)
+    assert result.to_df().columns == ["name", "age", "id"]
+    assert result.count() == person.count() * small_range.count()
+
+
+def test_cross_join_raw_dataframe(person: Person, small_range: Range):
+    result = person.crossJoin(small_range.to_df())
+
+    assert result.to_df().columns == ["name", "age", "id"]
+    assert sorted(collect_column(result, "id")) == [0, 0, 1, 1, 2, 2]
+
+
 def test_leftsemi_filters_rows(id: Id, small_range: Range):
     # id has [1, 2, 3, 3, 4], small_range has [0, 1, 2]
     result = id.leftsemi(small_range, id.value == small_range.id)
