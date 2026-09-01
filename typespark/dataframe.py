@@ -28,7 +28,7 @@ from pyspark.sql.types import BooleanType, DataType, StructType, TimestampType
 
 from typespark._base import _Base
 from typespark._exceptions import LazyDataFrameError
-from typespark.columns import AliasedTypedColumn, TypedColumn
+from typespark.columns import TypedColumn
 from typespark.columns._generator import DeferredColumn, Generator
 from typespark.columns._groups import _AggregateMixin, _GroupColumn
 from typespark.metadata import decimal, field, foreign_key, primary_key
@@ -215,7 +215,12 @@ class BaseDataFrame(_DataFrameFields, _Base):
         """
         aggregates = [c for c in cols if isinstance(c, _AggregateMixin)]
         groups = [c for c in cols if isinstance(c, _GroupColumn)]
-        projections = {c.parent for c in cols if isinstance(c, DeferredColumn)}
+        projections: set[Generator] = set()
+        for c in cols:
+            if isinstance(c, DeferredColumn):
+                projections.add(c.parent)
+            elif isinstance(c, Generator):
+                projections.add(c)
 
         if (aggregates or groups) and projections:
             raise NotImplementedError(
@@ -231,25 +236,29 @@ class BaseDataFrame(_DataFrameFields, _Base):
             )
 
         if len(projections) > 0:
-            projected_cols = [
-                c.column_operation() if isinstance(c, Generator) else c
-                for c in projections
+            projected_cols = [g.column_operation() for g in projections]
+            # Step 1: materialize generators next to the source columns. Source
+            # columns are passed through unaliased and unprojected so that any
+            # other expression in `cols` (calculated columns included) still
+            # resolves in step 2. A source column shadowed by a generator alias
+            # is dropped — the generator replaces it.
+            generator_aliases = {g._alias for g in projections}
+            passthrough = [
+                F.col(name)
+                for name in self._dataframe.columns
+                if name not in generator_aliases
             ]
-            normal_cols = [
-                c
-                for c in cols
-                if not (isinstance(c, DeferredColumn) or isinstance(c, Generator))
-            ]
-            # Prevent aliasing normal cols twice
-            original_named_cols = [
-                F.col(n.original_name) if isinstance(n, AliasedTypedColumn) else n
-                for n in normal_cols
-            ]
-            # Step 1: materialize generators
-            df = self._dataframe.select(*projected_cols, *original_named_cols)  # type: ignore
+            df = self._dataframe.select(*projected_cols, *passthrough)
 
             # Step 2: select final materialized expressions
-            final_cols = [c.col if isinstance(c, DeferredColumn) else c for c in cols]
+            final_cols = [
+                c.col
+                if isinstance(c, DeferredColumn)
+                else F.col(c._alias)
+                if isinstance(c, Generator)
+                else c
+                for c in cols
+            ]
             return df.select(
                 *[f.to_spark() if isinstance(f, TypedColumn) else f for f in final_cols]
             )
