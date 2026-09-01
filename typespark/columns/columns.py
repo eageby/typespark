@@ -74,7 +74,7 @@ class TypedColumn[T: DataType]:
         self._name = name
         return self
 
-    def to_spark(self):
+    def to_spark(self) -> pyspark.sql.Column:
         return self._col
 
     @classmethod
