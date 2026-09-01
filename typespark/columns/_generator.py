@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Any, Union
 
 import attrs
 from pyspark.sql import Column
@@ -15,18 +15,117 @@ if TYPE_CHECKING:
 LiteralType = Union[str, int, float, bool]
 
 
-@attrs.define()
+def _operand(other):
+    """Unwrap a DeferredColumn operand so operators see the underlying column."""
+    return other.col if isinstance(other, DeferredColumn) else other
+
+
+@attrs.define(eq=False)
 class DeferredColumn:
-    parent: Generator
-    col: Column
+    parent: "Generator"
+    col: "Column | TypedColumn"
 
     def alias(self, alias: str):
         self.col = self.col.alias(alias)
         return self
 
     def cast(self, data_type: DataType):
-        self.col = self.col.cast(data_type)
+        self.col = self._c.cast(data_type)
         return self
+
+    @property
+    def _c(self) -> Any:
+        """The wrapped column, untyped — Column and TypedColumn share the API."""
+        return self.col
+
+    def _defer(self, col) -> "DeferredColumn":
+        """Keep an operation deferred so the generator still materializes first."""
+        return DeferredColumn(self.parent, col)
+
+    # delegate unknown attributes/methods to the wrapped column, staying deferred
+    def __getattr__(self, name: str):
+        from typespark.columns.columns import TypedColumn as _TypedColumn
+
+        if name.startswith("_") or name in ("col", "parent"):
+            raise AttributeError(name)
+
+        attr = getattr(self.col, name)
+        if isinstance(attr, (Column, _TypedColumn)):
+            return self._defer(attr)
+        if callable(attr):
+
+            def wrapped(*args, **kwargs):
+                result = attr(
+                    *[_operand(a) for a in args],
+                    **{k: _operand(v) for k, v in kwargs.items()},
+                )
+                if isinstance(result, (Column, _TypedColumn)):
+                    return self._defer(result)
+                return result
+
+            return wrapped
+        return attr
+
+    # Operators — mirror TypedColumn's set, wrapping results as deferred.
+    def __eq__(self, other) -> "DeferredColumn":  # type: ignore[override]
+        return self._defer(self.col == _operand(other))
+
+    def __ne__(self, other) -> "DeferredColumn":  # type: ignore[override]
+        return self._defer(self.col != _operand(other))
+
+    def __lt__(self, other) -> "DeferredColumn":
+        return self._defer(self.col < _operand(other))
+
+    def __le__(self, other) -> "DeferredColumn":
+        return self._defer(self.col <= _operand(other))
+
+    def __gt__(self, other) -> "DeferredColumn":
+        return self._defer(self.col > _operand(other))
+
+    def __ge__(self, other) -> "DeferredColumn":
+        return self._defer(self.col >= _operand(other))
+
+    def __add__(self, other) -> "DeferredColumn":
+        return self._defer(self.col + _operand(other))
+
+    def __radd__(self, other) -> "DeferredColumn":
+        return self._defer(_operand(other) + self.col)
+
+    def __sub__(self, other) -> "DeferredColumn":
+        return self._defer(self.col - _operand(other))
+
+    def __rsub__(self, other) -> "DeferredColumn":
+        return self._defer(_operand(other) - self.col)
+
+    def __mul__(self, other) -> "DeferredColumn":
+        return self._defer(self.col * _operand(other))
+
+    def __rmul__(self, other) -> "DeferredColumn":
+        return self._defer(_operand(other) * self.col)
+
+    def __truediv__(self, other) -> "DeferredColumn":
+        return self._defer(self.col / _operand(other))
+
+    def __rtruediv__(self, other) -> "DeferredColumn":
+        return self._defer(_operand(other) / self.col)
+
+    def __mod__(self, other) -> "DeferredColumn":
+        return self._defer(self.col % _operand(other))
+
+    def __pow__(self, other) -> "DeferredColumn":
+        return self._defer(self.col ** _operand(other))
+
+    def __neg__(self) -> "DeferredColumn":
+        return self._defer(-self.col)
+
+    def __and__(self, other) -> "DeferredColumn":
+        return self._defer(self.col & _operand(other))
+
+    def __or__(self, other) -> "DeferredColumn":
+        return self._defer(self.col | _operand(other))
+
+    def __invert__(self) -> "DeferredColumn":
+        return self._defer(~self._c)
 
 
 class Generator[T: TypedColumn](ABC):
