@@ -28,6 +28,8 @@ from typespark.functions.aggregates import (
     stddev_pop,
     stddev_samp,
     sum,
+    sumDistinct,
+    sum_distinct,
 )
 
 
@@ -158,6 +160,66 @@ def test_sum_integer_spark_type(num_frame: NumFrame) -> None:
     col = sum(num_frame.age)
     actual = type(num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType)
     assert actual is LongType
+
+
+# ---------------------------------------------------------------------------
+# sum_distinct overloads
+# ---------------------------------------------------------------------------
+
+
+def test_sum_distinct_integer_returns_long(num_frame: NumFrame) -> None:
+    result = sum_distinct(num_frame.age)
+    assert isinstance(result, Long)
+    assert not isinstance(result, Integer)
+
+
+def test_sum_distinct_long_returns_long(num_frame: NumFrame) -> None:
+    class LFrame(BaseDataFrame):
+        v: ts.Long
+
+    spark = num_frame.to_df().sparkSession
+    lf = LFrame.from_df(spark.createDataFrame([Row(v=1)]))
+    result = sum_distinct(lf.v)
+    assert isinstance(result, Long)
+
+
+def test_sum_distinct_double_preserves_type(num_frame: NumFrame) -> None:
+    result = sum_distinct(num_frame.score)
+    assert isinstance(result, Double)
+    assert not isinstance(result, Long)
+
+
+def test_sum_distinct_integer_spark_type(num_frame: NumFrame) -> None:
+    col = sum_distinct(num_frame.age)
+    actual = type(num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType)
+    assert actual is LongType
+
+
+def test_sum_distinct_dedups_values(num_frame: NumFrame) -> None:
+    spark = num_frame.to_df().sparkSession
+    dup = NumFrame.from_df(
+        spark.createDataFrame(
+            [
+                Row(name="Alice", age=10, score=1.0),
+                Row(name="Alice", age=10, score=1.0),
+                Row(name="Bob", age=5, score=2.0),
+            ]
+        )
+    )
+    row = (
+        dup.to_df()
+        .agg(
+            sum(dup.age).to_spark().alias("total"),
+            sum_distinct(dup.age).to_spark().alias("distinct_total"),
+        )
+        .collect()[0]
+    )
+    assert row["total"] == 25
+    assert row["distinct_total"] == 15
+
+
+def test_sumDistinct_is_sum_distinct() -> None:
+    assert sumDistinct is sum_distinct
 
 
 # ---------------------------------------------------------------------------

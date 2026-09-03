@@ -6,7 +6,7 @@ Pass aggregate columns alongside ``.group()`` columns when constructing a typed
 Implemented
 -----------
 count, count_distinct, count_if, countDistinct, approx_count_distinct,
-sum (with Integer/Long → Long overloads),
+sum / sum_distinct / sumDistinct (with Integer/Long → Long overloads),
 avg, mean, stddev, stddev_samp, stddev_pop,
 corr, covar_pop, covar_samp,
 collect_list, collect_set,
@@ -23,7 +23,6 @@ percentile_approx              — (TypedColumn, percentage, accuracy) → Doubl
 bit_and / bit_or / bit_xor     — C → C  (integer columns)
 nth_value                      — (C, offset) → C
 any_value                      — C → C
-sumDistinct                    — same overloads as sum
 """
 from typing import TypeVar, overload
 
@@ -112,6 +111,26 @@ def sum(col: C) -> C: ...
 def sum(col: TypedColumn) -> TypedColumn:
     target = Long if isinstance(col, (Integer, Long)) else type(col)
     return _make_aggregate(target, F.sum(col.to_spark()))  # type: ignore[return-value]
+
+
+@overload
+def sum_distinct(col: Integer) -> Long: ...
+
+
+@overload
+def sum_distinct(col: Long) -> Long: ...
+
+
+@overload
+def sum_distinct(col: C) -> C: ...
+
+
+def sum_distinct(col: TypedColumn) -> TypedColumn:
+    target = Long if isinstance(col, (Integer, Long)) else type(col)
+    return _make_aggregate(target, F.sum_distinct(col.to_spark()))  # type: ignore[return-value]
+
+
+sumDistinct = sum_distinct
 
 
 # ---------------------------------------------------------------------------

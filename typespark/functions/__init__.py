@@ -11,6 +11,8 @@ __all__ = [
     "countDistinct",
     "approx_count_distinct",
     "sum",
+    "sum_distinct",
+    "sumDistinct",
     "avg",
     "mean",
     "stddev",
@@ -457,4 +459,6 @@ from .aggregates import (
     stddev_pop,
     stddev_samp,
     sum,
+    sumDistinct,
+    sum_distinct,
 )
