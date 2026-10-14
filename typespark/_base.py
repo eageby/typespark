@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import (
     TYPE_CHECKING,
+    Any,
     Self,
     dataclass_transform,
 )
@@ -121,6 +122,13 @@ class _Base:
                 )
             elif f.default is not attrs.NOTHING:
                 default = f.default
+                if isinstance(default, attrs.Factory):  # type: ignore[arg-type]
+                    factory: Any = default
+                    default = (
+                        factory.factory(new)
+                        if factory.takes_self
+                        else factory.factory()
+                    )
                 if not isinstance(default, TypedColumn):
                     raise InvalidDefaultColumnError(
                         model=cls,

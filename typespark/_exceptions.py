@@ -73,6 +73,7 @@ class InvalidDefaultColumnError(TypeError):
             f"Default for {model.__name__}.{field_name} must be a "
             f"{TypedColumn.__name__}. "
             f"Got {type(default_value).__name__}: {default_value!r}. "
-            f"Field alias: {field_alias!r}."
+            f"Field alias: {field_alias!r}. "
+            f"Use factory=lambda: <TypedColumn>(...) for a lazy default."
         )
         super().__init__(msg)
