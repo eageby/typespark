@@ -1,4 +1,6 @@
 import datetime
+import subprocess
+import sys
 
 import pytest
 from pyspark.sql import SparkSession
@@ -7,7 +9,7 @@ from tests.conftest import Id, Person, Range
 from tests.utils import collect_column, collect_values
 from typespark import DataFrame, Int, String, Timestamp
 from typespark.dataframe import BaseDataFrame
-from typespark import MissingColumnError
+from typespark import InvalidDefaultColumnError, MissingColumnError
 from typespark.metadata import field
 
 
@@ -264,6 +266,68 @@ def test_from_df_default_any_order(dataframe):
     assert set(df.to_df().columns) == {"name", "surname", "age"}
     assert collect_column(df, "surname") == ["Doe", "Doe"]
     assert collect_column(df, "age") == [30, 25]
+
+
+def test_from_df_missing_col_with_factory_default(dataframe):
+    class ExtendedPerson(BaseDataFrame):
+        name: String
+        age: Int
+        surname: String = field(factory=lambda: String("Doe"))
+
+    df = ExtendedPerson.from_df(dataframe)
+
+    assert df.to_df().columns == ["name", "age", "surname"]
+    assert collect_column(df, "surname") == ["Doe", "Doe"]
+
+
+def test_factory_default_not_used_when_column_exists(dataframe):
+    calls = []
+
+    def default_name() -> String:
+        calls.append(1)
+        return String("Doe")
+
+    class P(BaseDataFrame):
+        name: String = field(factory=default_name)
+        age: Int
+
+    df = P.from_df(dataframe)
+
+    assert collect_column(df, "name") == ["Alice", "Bob"]
+    assert calls == []
+
+
+def test_default_not_used_when_column_exists(dataframe):
+    class P(BaseDataFrame):
+        name: String = field(default=String("Doe"))
+        age: Int
+
+    df = P.from_df(dataframe)
+
+    assert collect_column(df, "name") == ["Alice", "Bob"]
+
+
+def test_factory_default_must_return_typed_column(dataframe):
+    class ExtendedPerson(BaseDataFrame):
+        name: String
+        age: Int
+        surname: String = field(factory=lambda: "Doe")
+
+    with pytest.raises(InvalidDefaultColumnError):
+        ExtendedPerson.from_df(dataframe)
+
+
+def test_factory_default_needs_no_spark_session_at_definition():
+    """Defining a class with a factory default must not touch Spark."""
+    code = (
+        "from typespark import BaseDataFrame, String, field\n"
+        "class P(BaseDataFrame):\n"
+        "    surname: String = field(factory=lambda: String('Doe'))\n"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_drop_duplicates_no_subset(spark: SparkSession):
