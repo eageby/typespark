@@ -122,3 +122,20 @@ def test_explode_unnamed_raises():
     col = ArrayOf(String)(F.col("tags"))
     with pytest.raises(UnnamedColumnError, match="explode"):
         col.explode()
+
+
+# ── Cooperative __init_subclass__ ─────────────────────────────────────────────
+
+
+def test_dataframe_subclass_runs_mixin_init_subclass():
+    from typespark.dataframe import BaseDataFrame
+
+    class Hooked:
+        def __init_subclass__(cls, **kwargs):
+            super().__init_subclass__(**kwargs)
+            cls.hooked = True
+
+    class Frame(BaseDataFrame, Hooked):
+        a: String
+
+    assert Frame.hooked is True  # type: ignore[attr-defined]

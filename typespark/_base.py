@@ -44,8 +44,9 @@ class _Base:
 
     @classmethod
     def __init_subclass__(
-        cls, field_transformers: list[FieldTransformer] | None = None
+        cls, field_transformers: list[FieldTransformer] | None = None, **kwargs: Any
     ):
+        super().__init_subclass__(**kwargs)
         define(cls, field_transformers=field_transformers)
 
     @classmethod
