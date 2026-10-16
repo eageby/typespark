@@ -12,8 +12,10 @@ __all__ = [
     "Float",
     "Int",
     "Integer",
+    "IntOf",
     "Long",
     "String",
+    "StringOf",
     "Timestamp",
     "is_typed_column_type",
 ]
@@ -29,9 +31,11 @@ from .primitives import (
     Float,
     Int,
     Integer,
+    IntOf,
     Long,
     Short,
     String,
+    StringOf,
     Timestamp,
 )
 from .utils import is_typed_column_type

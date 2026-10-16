@@ -11,9 +11,11 @@ __all__ = [
     "Column",
     "DataFrame",
     "String",
+    "StringOf",
     "Binary",
     "Short",
     "Integer",
+    "IntOf",
     "Int",
     "Long",
     "Float",
@@ -46,9 +48,11 @@ from typespark.columns.primitives import (
     Double,
     Float,
     Integer,
+    IntOf,
     Long,
     Short,
     String,
+    StringOf,
     Timestamp,
 )
 from typespark.columns.struct import Struct

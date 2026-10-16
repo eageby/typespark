@@ -333,6 +333,25 @@ class String(_StringOpsMixin, TypedColumn[StringType]):
     _data_type = StringType
 
 
+class StringOf[T: str](String):
+    """String column restricted to the literal values in ``T``.
+
+    Use with ``Literal``, e.g. ``StringOf[Literal["open", "closed"]]``.
+    The restriction is static only; values are not validated at runtime.
+    """
+
+    __hash__ = String.__hash__
+
+    def __eq__(self, other: "T | StringOf[T]") -> Bool:  # type: ignore[override]
+        return super().__eq__(other)
+
+    def __ne__(self, other: "T | StringOf[T]") -> Bool:  # type: ignore[override]
+        return super().__ne__(other)
+
+    def isin(self, *cols: "T | StringOf[T]") -> Bool:  # type: ignore[override]
+        return Bool.wrap(self._col.isin(*(_unwrap(c) for c in cols)))
+
+
 class Decimal(_DecimalOpsMixin, TypedColumn[DecimalType]):
     _data_type = DecimalType
 
@@ -373,6 +392,41 @@ class Short(_IntOpsMixin, TypedColumn[ShortType]):
 
 class Integer(_IntOpsMixin, TypedColumn[IntegerType]):
     _data_type = IntegerType
+
+
+class IntOf[T: int](Integer):
+    """Integer column restricted to the literal values in ``T``.
+
+    Use with ``Literal``, e.g. ``IntOf[Literal[1, 2, 3]]``.
+    The restriction is static only; values are not validated at runtime.
+    Arithmetic results fall back to plain ``Integer``.
+    """
+
+    __hash__ = Integer.__hash__
+
+    def __eq__(self, other: "T | IntOf[T]") -> Bool:  # type: ignore[override]
+        return super().__eq__(other)
+
+    def __ne__(self, other: "T | IntOf[T]") -> Bool:  # type: ignore[override]
+        return super().__ne__(other)
+
+    def isin(self, *cols: "T | IntOf[T]") -> Bool:  # type: ignore[override]
+        return Bool.wrap(self._col.isin(*(_unwrap(c) for c in cols)))
+
+    def __add__(self, other: "Integer | int") -> Integer:  # type: ignore[override]
+        return Integer.wrap(self._col.__add__(_unwrap(other)))
+
+    def __sub__(self, other: "Integer | int") -> Integer:  # type: ignore[override]
+        return Integer.wrap(self._col.__sub__(_unwrap(other)))
+
+    def __mul__(self, other: "Integer | int") -> Integer:  # type: ignore[override]
+        return Integer.wrap(self._col.__mul__(_unwrap(other)))
+
+    def __mod__(self, other: "Integer | int") -> Integer:  # type: ignore[override]
+        return Integer.wrap(self._col.__mod__(_unwrap(other)))
+
+    def __neg__(self) -> Integer:  # type: ignore[override]
+        return Integer.wrap(self._col.__neg__())
 
 
 class Long(_IntOpsMixin, TypedColumn[LongType]):
