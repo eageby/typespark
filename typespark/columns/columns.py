@@ -45,8 +45,10 @@ class TypedColumn[T: DataType]:
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        if cls._data_type is not None:
-            _concrete_registry[cls._data_type] = cls
+        # Only register classes that declare _data_type themselves, so
+        # subclasses of concrete primitives don't hijack cast() targets.
+        if cls.__dict__.get("_data_type") is not None:
+            _concrete_registry[cls._data_type] = cls  # type: ignore[index]
 
     @classmethod
     def _cast_schema(cls) -> DataType | None:
