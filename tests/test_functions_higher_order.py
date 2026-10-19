@@ -49,6 +49,20 @@ def test_transform(spark: SparkSession):
     assert isinstance(tsf.transform(df.a, lambda x: x * ts.Integer(2)), TypedArrayType)
 
 
+def test_transform_binary_function(spark: SparkSession):
+    class Data(ts.DataFrame):
+        a: ts.Array[ts.Int]
+
+    df = Data.from_df(
+        spark.createDataFrame([([1, 2, 3],)], schema=Data.generate_schema())
+    )
+
+    result = df.select(tsf.transform(df.a, lambda x, i: x + (i * 10)).alias("v"))
+
+    assert collect_column(result, "v") == [[1, 12, 23]]
+    assert isinstance(tsf.transform(df.a, lambda x, i: x + i), TypedArrayType)
+
+
 def test_transform_changes_type(spark: SparkSession):
     class Data(ts.DataFrame):
         a: ts.Array[ts.Int]

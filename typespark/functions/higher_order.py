@@ -1,4 +1,5 @@
-from typing import Callable
+import inspect
+from typing import Callable, cast, overload
 
 import typespark as ts
 from pyspark.sql import Column
@@ -37,19 +38,55 @@ def aggregate[T: ts.Column, I: ts.Column](
     )
 
 
+@overload
 def transform[I: ts.Column, O: ts.Column](
     col: ts.Array[I], f: Callable[[I], O]
+) -> ts.Array[O]: ...
+
+
+@overload
+def transform[I: ts.Column, O: ts.Column](
+    col: ts.Array[I], f: Callable[[I, ts.Integer], O]
+) -> ts.Array[O]: ...
+
+
+def transform[I: ts.Column, O: ts.Column](
+    col: ts.Array[I], f: Callable[[I], O] | Callable[[I, ts.Integer], O]
 ) -> ts.Array[O]:
     """Applies `f` to each element of array `col` and returns a new array of the results.
+
+    `f` takes either the element, or the element and its 0-based index
+    (``ts.Integer``).
 
     Wrapper for :func:`pyspark.sql.functions.transform`.
     """
     elem_type = col._require_elem_type()
-    output_elem_type = type(f(elem_type.wrap(F.col("__probe__"))))
+    spark_function: Callable[..., Column]
 
-    def _spark_compatible_function(x: Column) -> Column:
-        return f(elem_type.wrap(x)).to_spark()
+    if len(inspect.signature(f).parameters) == 2:
+        f2 = cast(Callable[[I, ts.Integer], O], f)
+
+        output_elem_type = type(
+            f2(
+                elem_type.wrap(F.col("__probe__")),
+                ts.Integer.wrap(F.col("__probe_i__")),
+            )
+        )
+
+        def _with_index(x: Column, i: Column) -> Column:
+            return f2(elem_type.wrap(x), ts.Integer.wrap(i)).to_spark()
+
+        spark_function = _with_index
+
+    else:
+        f1 = cast(Callable[[I], O], f)
+        output_elem_type = type(f1(elem_type.wrap(F.col("__probe__"))))
+
+        def _without_index(x: Column) -> Column:
+            return f1(elem_type.wrap(x)).to_spark()
+
+        spark_function = _without_index
 
     return ts.ArrayOf(output_elem_type).wrap(
-        F.transform(col.to_spark(), _spark_compatible_function)
+        F.transform(col.to_spark(), spark_function)
     )
