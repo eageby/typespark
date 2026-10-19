@@ -222,9 +222,13 @@ __all__ = [
     "upper",
     "url_decode",
     "url_encode",
+    "cume_dist",
     "dense_rank",
     "lag",
     "lead",
+    "nth_value",
+    "ntile",
+    "percent_rank",
     "rank",
     "row_number",
 ]
@@ -434,7 +438,17 @@ from .string import (
     url_decode,
     url_encode,
 )
-from .window_functions import dense_rank, lag, lead, rank, row_number
+from .window_functions import (
+    cume_dist,
+    dense_rank,
+    lag,
+    lead,
+    nth_value,
+    ntile,
+    percent_rank,
+    rank,
+    row_number,
+)
 from .higher_order import aggregate, filter, transform
 from .aggregates import (
     approx_count_distinct,

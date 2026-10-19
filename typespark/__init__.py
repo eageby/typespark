@@ -5,6 +5,8 @@ __all__ = [
     "ArrayOf",
     "Struct",
     "BaseDataFrame",
+    "Window",
+    "WindowSpec",
     # Type aliases
     "Array",
     "Bool",
@@ -64,6 +66,7 @@ from typespark._exceptions import (
     UnnamedColumnError,
 )
 from typespark.metadata import decimal, field, foreign_key, primary_key
+from typespark.window import Window, WindowSpec
 
 from .literals import bool_literal, int_literal, string_literal
 

@@ -27,6 +27,7 @@ dev = [
     "prettyprinter>=0.18.0,<0.19",
     "devtools>=0.12.2,<0.13",
     "pyspark>=3.5.2,<4.1",
+    "pyright>=1.1.414",
 ]
 datacontract = [
     "black>=25.1.0,<26",
