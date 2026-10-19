@@ -291,7 +291,7 @@ def flatten[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.flatten`.
     """
-    inner = col._elem_type
+    inner = col._require_elem_type()
     elem = inner._elem_type if issubclass(inner, _TAT) else None
     result_cls = ArrayOf(elem) if elem is not None else typespark.TypedArrayType
     return result_cls.wrap(F.flatten(col.to_spark()))  # type: ignore
