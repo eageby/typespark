@@ -2,9 +2,10 @@ import math
 
 import pytest
 from pyspark.sql import SparkSession
-from pyspark.sql.types import DoubleType, IntegerType, LongType
+from pyspark.sql.types import DecimalType, DoubleType, FloatType, IntegerType, LongType
 
-from typespark import DataFrame, Double, Float, Int, Integer
+import typespark as ts
+from typespark import DataFrame, Decimal, Double, Float, Int, Integer, Long
 from typespark import functions as tsf
 
 from .utils import collect_column
@@ -444,3 +445,46 @@ def test_width_bucket(spark: SparkSession):
     vals = collect_column(result, "bucket")
     assert vals == [1, 2, 3]
     assert isinstance(result.to_spark().schema["bucket"].dataType, LongType)
+
+
+class AllNums(DataFrame):
+    i: Integer
+    lg: Long
+    f: Float
+    d: Double
+    dec: Decimal = ts.decimal(12, 2)
+
+
+@pytest.fixture(scope="module")
+def all_nums(spark: SparkSession) -> AllNums:
+    return AllNums.from_df(
+        spark.sql(
+            "select 1 i, cast(1 as bigint) lg, cast(1.5 as float) f,"
+            " cast(1.5 as double) d, cast(1.5 as decimal(12, 2)) dec"
+        )
+    )
+
+
+@pytest.mark.parametrize(
+    "field, func, expected, spark_type",
+    [
+        ("i", lambda c: tsf.round(c, 1), Integer, IntegerType),
+        ("lg", lambda c: tsf.round(c, 1), Long, LongType),
+        ("f", lambda c: tsf.round(c, 1), Float, FloatType),
+        ("d", lambda c: tsf.round(c, 1), Double, DoubleType),
+        ("dec", lambda c: tsf.round(c, 1), Decimal, DecimalType),
+        ("i", tsf.ceil, Long, LongType),
+        ("d", tsf.ceil, Long, LongType),
+        ("dec", tsf.ceil, Decimal, DecimalType),
+        ("d", lambda c: tsf.ceil(c, 1), Decimal, DecimalType),
+        ("i", tsf.floor, Long, LongType),
+        ("f", tsf.floor, Long, LongType),
+        ("dec", tsf.floor, Decimal, DecimalType),
+        ("d", lambda c: tsf.floor(c, 1), Decimal, DecimalType),
+    ],
+)
+def test_rounding_return_types(all_nums: AllNums, field, func, expected, spark_type):
+    result = func(getattr(all_nums, field))
+    assert type(result) is expected
+    actual = all_nums.to_df().select(result.to_spark().alias("v")).schema["v"].dataType
+    assert isinstance(actual, spark_type)

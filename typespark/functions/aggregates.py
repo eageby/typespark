@@ -6,7 +6,7 @@ Pass aggregate columns alongside ``.group()`` columns when constructing a typed
 Implemented
 -----------
 count, count_distinct, count_if, countDistinct, approx_count_distinct,
-sum / sum_distinct / sumDistinct (with Integer/Long → Long overloads),
+sum / sum_distinct / sumDistinct (integral → Long, Float/Double → Double),
 avg, mean, stddev, stddev_samp, stddev_pop,
 corr, covar_pop, covar_samp,
 collect_list, collect_set,
@@ -32,7 +32,7 @@ from typespark.columns import TypedColumn
 from typespark.columns.array import ArrayOf, TypedArrayType
 from typespark.columns._groups import _make_aggregate
 from typespark.columns.columns import Bool
-from typespark.columns.primitives import Double, Integer, Long
+from typespark.columns.primitives import Double, Float, Integer, Long, Short
 
 C = TypeVar("C", bound=TypedColumn)
 
@@ -92,16 +92,24 @@ def count_if(col: Bool) -> Long:
 
 
 # ---------------------------------------------------------------------------
-# sum — Integer|Long → Long, everything else preserved
+# sum — integral → Long, Float|Double → Double, everything else preserved
 # ---------------------------------------------------------------------------
 
 
-@overload
-def sum(col: Integer) -> Long: ...
+def _sum_type(col: TypedColumn) -> type[TypedColumn]:
+    if isinstance(col, (Short, Integer, Long)):
+        return Long
+    if isinstance(col, (Float, Double)):
+        return Double
+    return type(col)
 
 
 @overload
-def sum(col: Long) -> Long: ...
+def sum(col: Short | Integer | Long) -> Long: ...
+
+
+@overload
+def sum(col: Float | Double) -> Double: ...
 
 
 @overload
@@ -109,16 +117,16 @@ def sum(col: C) -> C: ...
 
 
 def sum(col: TypedColumn) -> TypedColumn:
-    target = Long if isinstance(col, (Integer, Long)) else type(col)
+    target = _sum_type(col)
     return _make_aggregate(target, F.sum(col.to_spark()))  # type: ignore[return-value]
 
 
 @overload
-def sum_distinct(col: Integer) -> Long: ...
+def sum_distinct(col: Short | Integer | Long) -> Long: ...
 
 
 @overload
-def sum_distinct(col: Long) -> Long: ...
+def sum_distinct(col: Float | Double) -> Double: ...
 
 
 @overload
@@ -126,7 +134,7 @@ def sum_distinct(col: C) -> C: ...
 
 
 def sum_distinct(col: TypedColumn) -> TypedColumn:
-    target = Long if isinstance(col, (Integer, Long)) else type(col)
+    target = _sum_type(col)
     return _make_aggregate(target, F.sum_distinct(col.to_spark()))  # type: ignore[return-value]
 
 

@@ -1,3 +1,5 @@
+from typing import overload
+
 import pyspark.sql.functions as F
 
 import typespark
@@ -101,12 +103,38 @@ def cbrt(col: Numeric) -> typespark.Double:
     return typespark.Double.wrap(F.cbrt(col.to_spark()))
 
 
-def ceil(col: Numeric, scale: typespark.Int | int | None = None) -> typespark.Column:
+@overload
+def ceil(
+    col: typespark.Decimal, scale: typespark.Int | int | None = None
+) -> typespark.Decimal: ...
+
+
+@overload
+def ceil(
+    col: typespark.Int | typespark.Long | typespark.Float | typespark.Double,
+    scale: None = None,
+) -> typespark.Long: ...
+
+
+@overload
+def ceil(col: Numeric, scale: typespark.Int | int) -> typespark.Decimal: ...
+
+
+def ceil(
+    col: Numeric, scale: typespark.Int | int | None = None
+) -> typespark.Long | typespark.Decimal:
     """Returns the smallest integer not less than `col`. With `scale`, rounds up to that many decimal places.
+
+    Returns `Long`, or `Decimal` when `col` is a Decimal or `scale` is given.
 
     Wrapper for :func:`pyspark.sql.functions.ceil`.
     """
-    return typespark.Column.wrap(
+    target = (
+        typespark.Decimal
+        if scale is not None or isinstance(col, typespark.Decimal)
+        else typespark.Long
+    )
+    return target.wrap(
         F.ceil(
             col.to_spark(),
             scale.to_spark() if isinstance(scale, typespark.Column) else scale,
@@ -186,12 +214,38 @@ def factorial(col: typespark.Integer) -> typespark.Long:
     return typespark.Long.wrap(F.factorial(col.to_spark()))
 
 
-def floor(col: Numeric, scale: typespark.Int | int | None = None) -> typespark.Column:
+@overload
+def floor(
+    col: typespark.Decimal, scale: typespark.Int | int | None = None
+) -> typespark.Decimal: ...
+
+
+@overload
+def floor(
+    col: typespark.Int | typespark.Long | typespark.Float | typespark.Double,
+    scale: None = None,
+) -> typespark.Long: ...
+
+
+@overload
+def floor(col: Numeric, scale: typespark.Int | int) -> typespark.Decimal: ...
+
+
+def floor(
+    col: Numeric, scale: typespark.Int | int | None = None
+) -> typespark.Long | typespark.Decimal:
     """Returns the largest integer not greater than `col`. With `scale`, rounds down to that many decimal places.
+
+    Returns `Long`, or `Decimal` when `col` is a Decimal or `scale` is given.
 
     Wrapper for :func:`pyspark.sql.functions.floor`.
     """
-    return typespark.Column.wrap(
+    target = (
+        typespark.Decimal
+        if scale is not None or isinstance(col, typespark.Decimal)
+        else typespark.Long
+    )
+    return target.wrap(
         F.floor(
             col.to_spark(),
             scale.to_spark() if isinstance(scale, typespark.Column) else scale,
@@ -326,12 +380,12 @@ def rint(col: Numeric) -> typespark.Double:
     return typespark.Double.wrap(F.rint(col.to_spark()))
 
 
-def round(col: Numeric, scale: int = 0) -> typespark.Column:
+def round[T: Numeric](col: T, scale: int = 0) -> T:
     """Returns `col` rounded to `scale` decimal places using HALF_UP rounding.
 
     Wrapper for :func:`pyspark.sql.functions.round`.
     """
-    return typespark.Column.wrap(F.round(col.to_spark(), scale))
+    return type(col).wrap(F.round(col.to_spark(), scale))
 
 
 def sec(col: Numeric) -> typespark.Double:
