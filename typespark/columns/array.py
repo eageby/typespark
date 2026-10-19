@@ -23,7 +23,7 @@ def _elem_data_type(elem: "type[TypedColumn]") -> "DataType":
     if attrs.has(elem):
         return elem.generate_schema()  # type: ignore[attr-defined]
     if issubclass(elem, TypedArrayType):
-        return ArrayType(_elem_data_type(elem._elem_type))
+        return ArrayType(_elem_data_type(elem._require_elem_type()))
     if elem._data_type is not None:
         return elem._data_type()
     raise ValueError(f"Cannot determine DataType for element type {elem!r}")
@@ -47,6 +47,14 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
     if not TYPE_CHECKING:
         def __class_getitem__(cls, item):
             return ArrayOf(item)
+
+    @classmethod
+    def _require_elem_type(cls) -> type[T]:
+        if cls._elem_type is None:
+            raise TypeError(
+                f"{cls.__name__} has no element type — use Array[ElemType]"
+            )
+        return cls._elem_type
 
     @classmethod
     def _cast_schema(cls) -> ArrayType | None:
@@ -84,7 +92,7 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
     def getItem(self, key: int) -> T:
         item = self._col.getItem(key)
         name = f"{self._name}[{key}]" if self._name else str(key)
-        return self._elem_type._set_column(item, name)
+        return self._require_elem_type()._set_column(item, name)
 
     def explode(self) -> T:
         if self._name is None:

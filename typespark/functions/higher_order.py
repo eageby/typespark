@@ -10,7 +10,7 @@ def filter[T: ts.Column](col: ts.Array[T], f: Callable[[T], ts.Bool]) -> ts.Arra
 
     Wrapper for :func:`pyspark.sql.functions.filter`.
     """
-    elem_type = col.__class__._elem_type
+    elem_type = col._require_elem_type()
 
     def _spark_compatible_function(x: Column) -> Column:
         return f(elem_type.wrap(x)).to_spark()
@@ -26,7 +26,7 @@ def aggregate[T: ts.Column, I: ts.Column](
 
     Wrapper for :func:`pyspark.sql.functions.aggregate`.
     """
-    elem_type: type[T] = col.__class__._elem_type
+    elem_type = col._require_elem_type()
     acc_type = type(init)
 
     def _spark_compatible_function(acc: Column, elem: Column) -> Column:
@@ -44,7 +44,7 @@ def transform[I: ts.Column, O: ts.Column](
 
     Wrapper for :func:`pyspark.sql.functions.transform`.
     """
-    elem_type = col.__class__._elem_type
+    elem_type = col._require_elem_type()
     output_elem_type = type(f(elem_type.wrap(F.col("__probe__"))))
 
     def _spark_compatible_function(x: Column) -> Column:
