@@ -1,7 +1,7 @@
 """Return-type and value tests for typespark.functions.aggregates."""
 import pytest
 from pyspark.sql import Row, SparkSession
-from pyspark.sql.types import ArrayType, DoubleType, LongType
+from pyspark.sql.types import ArrayType, DecimalType, DoubleType, LongType
 
 import typespark as ts
 from typespark import BaseDataFrame
@@ -160,6 +160,39 @@ def test_sum_integer_spark_type(num_frame: NumFrame) -> None:
     col = sum(num_frame.age)
     actual = type(num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType)
     assert actual is LongType
+
+
+@pytest.mark.parametrize("func", [sum, sum_distinct])
+@pytest.mark.parametrize(
+    "field, expected, spark_type",
+    [
+        ("s", Long, LongType),
+        ("i", Long, LongType),
+        ("lg", Long, LongType),
+        ("f", Double, DoubleType),
+        ("d", Double, DoubleType),
+        ("dec", ts.Decimal, DecimalType),
+    ],
+)
+def test_sum_return_types(spark: SparkSession, func, field, expected, spark_type) -> None:
+    class AllNums(BaseDataFrame):
+        s: ts.Short
+        i: ts.Integer
+        lg: ts.Long
+        f: ts.Float
+        d: ts.Double
+        dec: ts.Decimal = ts.decimal(12, 2)
+
+    nums = AllNums.from_df(
+        spark.sql(
+            "select cast(1 as short) s, 1 i, cast(1 as bigint) lg, cast(1.5 as float) f,"
+            " cast(1.5 as double) d, cast(1.5 as decimal(12, 2)) dec"
+        )
+    )
+    result = func(getattr(nums, field))
+    assert isinstance(result, expected)
+    actual = nums.to_df().agg(result.to_spark().alias("v")).schema["v"].dataType
+    assert isinstance(actual, spark_type)
 
 
 # ---------------------------------------------------------------------------
