@@ -11,6 +11,8 @@ from __future__ import annotations
 from typing import (
     Any,
     Callable,
+    Iterable,
+    Mapping,
     Optional,
     Self,
     Union,
@@ -28,16 +30,50 @@ from pyspark.sql.types import BooleanType, DataType, StructType, TimestampType
 
 from typespark._base import _Base
 from typespark._exceptions import LazyDataFrameError
-from typespark.columns import TypedColumn
+from typespark.columns import TypedColumn, is_typed_column_type
 from typespark.columns._generator import DeferredColumn, Generator
 from typespark.columns._groups import _AggregateMixin, _GroupColumn
 from typespark.metadata import decimal, field, foreign_key, primary_key
+from typespark.utils import get_field_name
 
 
 def _dataframe_converter(df: "BaseDataFrame | pyspark.sql.DataFrame"):
     if isinstance(df, pyspark.sql.DataFrame):
         return df
     return df.to_df()
+
+
+def _provided_columns(
+    cls: type[BaseDataFrame], rows: list[Any], all_columns: list[str]
+) -> list[str]:
+    """Spark column names present in ``rows`` (mappings or positional tuples)."""
+    if not rows:
+        return all_columns
+
+    if all(isinstance(r, Mapping) for r in rows):
+        keys = {k for r in rows for k in r}
+        return [c for c in all_columns if c in keys] + sorted(keys - set(all_columns))
+
+    if any(isinstance(r, Mapping) for r in rows):
+        raise ValueError(
+            f"Cannot mix mapping and positional rows when creating {cls.__name__}."
+        )
+
+    required = [
+        get_field_name(f)
+        for f in attrs.fields(cls)
+        if is_typed_column_type(f.type) and f.default is attrs.NOTHING
+    ]
+    lengths = {len(r) for r in rows}
+    if lengths == {len(all_columns)}:
+        return all_columns
+    if lengths == {len(required)}:
+        return required
+    raise ValueError(
+        f"Positional rows for {cls.__name__} must have {len(all_columns)} values "
+        f"(all columns: {all_columns}) or {len(required)} values "
+        f"(columns without defaults: {required}). Got lengths {sorted(lengths)}."
+    )
 
 
 _LAZY_CLASS_CACHE: dict[type, type] = {}
@@ -186,6 +222,64 @@ class BaseDataFrame(_DataFrameFields, _Base):
         new = _lazy_class(cls)._build(None, col_ref=col_ref)
         object.__setattr__(new, "_alias", alias)
         return new  # type: ignore[return-value]
+
+    @classmethod
+    def create(
+        cls,
+        data: Iterable[Any],
+        spark: pyspark.sql.SparkSession | None = None,
+    ) -> Self:
+        """Create a typed instance from local data.
+
+        Shorthand for ``cls.from_df(spark.createDataFrame(data, schema))`` where
+        the schema is derived from the class. ``data`` may be dicts / ``Row``s
+        (matched by Spark column name), tuples / lists (positional), or a pandas
+        DataFrame. ``spark`` defaults to the active session.
+
+        Defaults are Spark expressions, so they are applied by ``from_df`` for
+        columns absent from the data:
+
+        - dicts / Rows: a column is provided if any row has the key; rows
+          missing a key of a provided column get null, not the default.
+        - tuples: length must match either all columns (defaults overridden)
+          or only the columns without defaults, in declaration order.
+        """
+        if spark is None:
+            spark = (
+                pyspark.sql.SparkSession.getActiveSession()
+                or pyspark.sql.SparkSession.builder.getOrCreate()
+            )
+
+        full_schema = cls.generate_schema()
+        all_columns = full_schema.fieldNames()
+
+        is_pandas = hasattr(data, "columns") and not isinstance(data, (list, tuple))
+        if is_pandas:
+            # pandas DataFrame
+            provided = list(data.columns)  # type: ignore[attr-defined]
+        else:
+            data = [
+                r.asDict()
+                if isinstance(r, Row)
+                else dict(r)
+                if isinstance(r, Mapping)
+                else r
+                for r in data
+            ]
+            provided = _provided_columns(cls, data, all_columns)
+
+        unknown = [c for c in provided if c not in all_columns]
+        if unknown:
+            raise ValueError(
+                f"Unknown columns for {cls.__name__}: {unknown}. "
+                f"Expected a subset of {all_columns}."
+            )
+
+        schema = StructType([f for f in full_schema.fields if f.name in provided])
+        if is_pandas:
+            # Spark matches pandas columns to the schema by position, not name.
+            data = data[schema.fieldNames()]  # type: ignore[index]
+        return cls.from_df(spark.createDataFrame(data, schema))
 
     # ── Internal projection ─────────────────────────────────────────
 
