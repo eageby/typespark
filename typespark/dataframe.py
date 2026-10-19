@@ -440,10 +440,9 @@ class BaseDataFrame(_DataFrameFields, _Base):
         ``qualify`` materialises the boolean expression into a temporary column,
         filters on it, then drops it — so window-based predicates work in one call::
 
-            w = Window.partitionBy(F.col("x")).orderBy(F.col("y"))
-            frame.qualify(F.row_number().over(w) == 1)
+            w = ts.Window.partitionBy(frame.x).orderBy(frame.y)
+            frame.qualify(tsf.row_number().over(w) == 1)
 
-        The window part currently uses raw PySpark; only the outer predicate is typed.
         Schema is unchanged (the temporary column is dropped).
         """
         tmp = "__typespark_qualify__"

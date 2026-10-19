@@ -5,6 +5,7 @@ __all__ = ["TypedColumn", "AliasedTypedColumn", "Bool"]
 
 import pyspark.sql
 import pyspark.sql.functions
+import pyspark.sql.window
 from pyspark.sql.types import BooleanType, DataType
 
 from ._groups import _GroupColumn
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
         StringType,
         TimestampType,
     )
+    from typespark.window import WindowSpec
     from typespark.columns.primitives import (
         Binary,
         Date,
@@ -201,6 +203,16 @@ class TypedColumn[T: DataType]:
 
     def __neg__(self) -> "TypedColumn":
         return TypedColumn(self._col.__neg__())
+
+    def over(self, window: "WindowSpec | pyspark.sql.window.WindowSpec") -> "Self":
+        """Evaluate this column over a window, like :meth:`pyspark.sql.Column.over`.
+
+        An aggregate (``tsf.sum(col).over(w)``) becomes a plain column of the same
+        type, so the DataFrame constructor projects it instead of grouping.
+        """
+        spec = window if isinstance(window, pyspark.sql.window.WindowSpec) else window.to_spark()
+        cls = getattr(type(self), "_agg_base", type(self))
+        return cls.wrap(self._col.over(spec))
 
     def desc(self) -> "Self":
         return type(self).wrap(self._col.desc())

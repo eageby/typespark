@@ -56,3 +56,35 @@ def lead[C: TypedColumn](
     if default is not None:
         return type(col).wrap(F.lead(col.to_spark(), offset, default.to_spark()))
     return type(col).wrap(F.lead(col.to_spark(), offset))
+
+
+def ntile(n: int) -> typespark.Int:
+    """Returns the bucket number (1 to `n`) of each row within an ordered window partition.
+
+    Wrapper for :func:`pyspark.sql.functions.ntile`.
+    """
+    return typespark.Int.wrap(F.ntile(n))
+
+
+def percent_rank() -> typespark.Double:
+    """Returns the relative rank of rows within a window partition, from 0 to 1.
+
+    Wrapper for :func:`pyspark.sql.functions.percent_rank`.
+    """
+    return typespark.Double.wrap(F.percent_rank())
+
+
+def cume_dist() -> typespark.Double:
+    """Returns the cumulative distribution of rows within a window partition.
+
+    Wrapper for :func:`pyspark.sql.functions.cume_dist`.
+    """
+    return typespark.Double.wrap(F.cume_dist())
+
+
+def nth_value[C: TypedColumn](col: C, offset: int, ignoreNulls: bool = False) -> C:
+    """Returns the value of `col` at the `offset`-th row of the window frame (1-based).
+
+    Wrapper for :func:`pyspark.sql.functions.nth_value`.
+    """
+    return type(col).wrap(F.nth_value(col.to_spark(), offset, ignoreNulls))
