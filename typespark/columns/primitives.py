@@ -42,10 +42,20 @@ class _StringOpsMixin(TypedColumn):
             col = lit(col)
         super().__init__(col)
 
-    def __eq__(self, other: "Self | str") -> Bool:  # type: ignore[override]
+    # Comparing with a StringOf gives a plain `bool`, which filter()/when()
+    # reject: a plain String may hold values outside the literal set.
+    @overload  # type: ignore[override]
+    def __eq__(self, other: "StringOf[Any]") -> bool: ...  # type: ignore[overload-overlap]
+    @overload
+    def __eq__(self, other: "Self | str") -> Bool: ...
+    def __eq__(self, other: "Self | str") -> Bool:  # type: ignore[misc]
         return Bool.wrap(self._col.__eq__(_unwrap(other)))
 
-    def __ne__(self, other: "Self | str") -> Bool:  # type: ignore[override]
+    @overload  # type: ignore[override]
+    def __ne__(self, other: "StringOf[Any]") -> bool: ...  # type: ignore[overload-overlap]
+    @overload
+    def __ne__(self, other: "Self | str") -> Bool: ...
+    def __ne__(self, other: "Self | str") -> Bool:  # type: ignore[misc]
         return Bool.wrap(self._col.__ne__(_unwrap(other)))
 
     def __lt__(self, other: "Self | str") -> Bool:  # type: ignore[override]
@@ -163,10 +173,20 @@ class _IntOpsMixin(TypedColumn):
         super().__init__(col)
 
     # -- comparison --
-    def __eq__(self, other: "Self | int") -> Bool:  # type: ignore[override]
+    # Comparing with an IntOf gives a plain `bool`, which filter()/when()
+    # reject: a plain integer column may hold values outside the literal set.
+    @overload  # type: ignore[override]
+    def __eq__(self, other: "IntOf[Any]") -> bool: ...  # type: ignore[overload-overlap]
+    @overload
+    def __eq__(self, other: "Self | int") -> Bool: ...
+    def __eq__(self, other: "Self | int") -> Bool:  # type: ignore[misc]
         return Bool.wrap(self._col.__eq__(_unwrap(other)))
 
-    def __ne__(self, other: "Self | int") -> Bool:  # type: ignore[override]
+    @overload  # type: ignore[override]
+    def __ne__(self, other: "IntOf[Any]") -> bool: ...  # type: ignore[overload-overlap]
+    @overload
+    def __ne__(self, other: "Self | int") -> Bool: ...
+    def __ne__(self, other: "Self | int") -> Bool:  # type: ignore[misc]
         return Bool.wrap(self._col.__ne__(_unwrap(other)))
 
     def __lt__(self, other: "Self | int") -> Bool:  # type: ignore[override]

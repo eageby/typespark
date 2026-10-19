@@ -161,3 +161,62 @@ def test_int_of_mypy_rejects_values_outside_literal(tmp_path):
         """,
     )
     assert lines == [15, 16, 17, 18], stdout
+
+
+# ── Plain columns vs literal columns ──────────────────────────────────────────
+
+
+def test_wrap_plain_column_as_literal(spark: SparkSession):
+    class Raw(BaseDataFrame):
+        code: Integer
+        label: String
+
+    raw = Raw.from_df(
+        spark.createDataFrame([(1, "open"), (5, "bogus")], "code int, label string")
+    )
+    priority = IntOf[Literal[1, 2, 3]](raw.code)
+    status = StringOf[Literal["open", "closed"]](raw.label)
+
+    assert isinstance(priority, IntOf)
+    assert len(collect_values(raw.filter(priority == 1))) == 1
+    assert len(collect_values(raw.filter(status == "open"))) == 1
+
+
+def test_mypy_rejects_plain_vs_literal_comparison(tmp_path):
+    # Plain columns may hold values outside the literal set, so comparing them
+    # with a literal column yields `bool` (rejected by filter()). Wrapping the
+    # plain column is the explicit escape hatch.
+    lines, stdout = _mypy_error_lines(
+        tmp_path,
+        """
+        from typing import Literal
+        from typespark import Integer, IntOf, Long, String, StringOf
+        from typespark.dataframe import BaseDataFrame
+
+        class T(BaseDataFrame):
+            e: IntOf[Literal[1, 2]]
+            e2: IntOf[Literal[1, 2]]
+            other: IntOf[Literal[3]]
+            i: Integer
+            n: Long
+            s: StringOf[Literal["a"]]
+            p: String
+
+        def check(t: T) -> None:
+            t.filter(t.e == t.e2)
+            t.filter(t.i == t.i)
+            t.filter(t.p == t.p)
+            t.filter(t.e == IntOf[Literal[1, 2]](t.i))
+            t.filter(t.s == StringOf[Literal["a"]](t.p))
+            t.filter(t.e == t.i)
+            t.filter(t.i == t.e)
+            t.filter(t.e != t.i)
+            t.filter(t.i != t.e)
+            t.filter(t.n == t.e)
+            t.filter(t.e == t.other)
+            t.filter(t.s == t.p)
+            t.filter(t.p == t.s)
+            t.filter(t.p != t.s)
+        """,
+    )
+    assert lines == list(range(21, 30)), stdout
