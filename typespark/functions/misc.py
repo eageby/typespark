@@ -1,3 +1,4 @@
+from enum import IntEnum, StrEnum
 from typing import overload
 
 import pyspark.sql.functions as F
@@ -274,12 +275,79 @@ class WhenStatement[C: ts.Column](ts.Column):
         return type(value).wrap(self.to_spark().otherwise(value.to_spark()))  # type: ignore[return-value]
 
 
-def when[C: ts.Column](condition: ts.Bool, value: C) -> WhenStatement[C]:
+def _enum_value(value: StrEnum | IntEnum | ts.Column):
+    if isinstance(value, IntEnum):
+        return F.lit(value.value).cast(types.IntegerType())
+    if isinstance(value, StrEnum):
+        return F.lit(value.value)
+    return value.to_spark()
+
+
+class StrEnumWhen[E: StrEnum](ts.StringOf[E]):
+    """A `CASE WHEN` expression over the members of a `StrEnum`. Use `.when()` to add branches and `.otherwise()` for a default."""
+
+    def when(self, condition: ts.Bool, value: "E | ts.StringOf[E]") -> "StrEnumWhen[E]":
+        """Adds another `WHEN condition THEN value` branch to the expression.
+
+        Wrapper for :meth:`pyspark.sql.Column.when`.
+        """
+        return StrEnumWhen.wrap(
+            self.to_spark().when(condition.to_spark(), _enum_value(value))
+        )
+
+    def otherwise(self, value: "E | ts.StringOf[E]") -> ts.StringOf[E]:
+        """Adds a final `ELSE value` clause to the expression.
+
+        Wrapper for :meth:`pyspark.sql.Column.otherwise`.
+        """
+        return ts.StringOf.wrap(self.to_spark().otherwise(_enum_value(value)))
+
+
+class IntEnumWhen[E: IntEnum](ts.IntOf[E]):
+    """A `CASE WHEN` expression over the members of an `IntEnum`. Use `.when()` to add branches and `.otherwise()` for a default."""
+
+    def when(self, condition: ts.Bool, value: "E | ts.IntOf[E]") -> "IntEnumWhen[E]":
+        """Adds another `WHEN condition THEN value` branch to the expression.
+
+        Wrapper for :meth:`pyspark.sql.Column.when`.
+        """
+        return IntEnumWhen.wrap(
+            self.to_spark().when(condition.to_spark(), _enum_value(value))
+        )
+
+    def otherwise(self, value: "E | ts.IntOf[E]") -> ts.IntOf[E]:
+        """Adds a final `ELSE value` clause to the expression.
+
+        Wrapper for :meth:`pyspark.sql.Column.otherwise`.
+        """
+        return ts.IntOf.wrap(self.to_spark().otherwise(_enum_value(value)))
+
+
+@overload
+def when[E: StrEnum](condition: ts.Bool, value: E) -> StrEnumWhen[E]: ...
+
+
+@overload
+def when[E: IntEnum](condition: ts.Bool, value: E) -> IntEnumWhen[E]: ...
+
+
+@overload
+def when[C: ts.Column](condition: ts.Bool, value: C) -> WhenStatement[C]: ...
+
+
+def when(condition: ts.Bool, value: StrEnum | IntEnum | ts.Column) -> ts.Column:
     """Starts a `CASE WHEN condition THEN value` expression. Chain `.when()` and `.otherwise()` to complete it.
+
+    Passing a `StrEnum` or `IntEnum` member gives a `StringOf[E]` or `IntOf[E]` result.
 
     Wrapper for :func:`pyspark.sql.functions.when`.
     """
-    return WhenStatement.wrap(F.when(condition.to_spark(), value.to_spark()))  # type: ignore[return-value]
+    col = F.when(condition.to_spark(), _enum_value(value))
+    if isinstance(value, IntEnum):
+        return IntEnumWhen.wrap(col)
+    if isinstance(value, StrEnum):
+        return StrEnumWhen.wrap(col)
+    return WhenStatement.wrap(col)
 
 
 def xxhash64(*cols: ts.Column) -> ts.Long:
