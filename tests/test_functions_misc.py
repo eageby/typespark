@@ -1,4 +1,5 @@
 import json
+from enum import IntEnum, StrEnum
 
 import pytest
 from pyspark.sql import SparkSession
@@ -19,7 +20,9 @@ from typespark import (
     DataFrame,
     Double,
     Int,
+    IntOf,
     String,
+    StringOf,
 )
 from typespark import functions as tsf
 
@@ -67,7 +70,9 @@ def test_when(spark: SparkSession):
         (1, 1),
         (5, 4),
     ]
-    integers = IntTestData.from_df(spark.createDataFrame(data, schema=IntTestData.generate_schema()))
+    integers = IntTestData.from_df(
+        spark.createDataFrame(data, schema=IntTestData.generate_schema())
+    )
 
     a = tsf.when(integers.a > integers.b, String("A"))
     b = a.when(integers.a == integers.b, String("eq"))
@@ -83,8 +88,83 @@ def test_when(spark: SparkSession):
     assert isinstance(type, StringType)
 
 
+class Status(StrEnum):
+    OPEN = "open"
+    CLOSED = "closed"
+    EQUAL = "equal"
+
+
+class Priority(IntEnum):
+    LOW = 1
+    HIGH = 2
+
+
+class _IntPair(DataFrame):
+    a: Int
+    b: Int
+
+
+@pytest.fixture
+def int_pairs(spark: SparkSession) -> _IntPair:
+    data = [(1, 2), (1, 1), (5, 4)]
+    return _IntPair.from_df(
+        spark.createDataFrame(data, schema=_IntPair.generate_schema())
+    )
+
+
+def test_when_str_enum(int_pairs: _IntPair):
+    c = (
+        tsf.when(int_pairs.a > int_pairs.b, Status.CLOSED)
+        .when(int_pairs.a == int_pairs.b, Status.EQUAL)
+        .otherwise(Status.OPEN)
+    )
+    assert type(c) is StringOf
+
+    result = int_pairs.select(c.alias("when"))
+
+    assert collect_column(result, "when") == ["open", "equal", "closed"]
+    assert isinstance(result.to_spark().schema["when"].dataType, StringType)
+
+
+def test_when_int_enum(int_pairs: _IntPair):
+    c = tsf.when(int_pairs.a > int_pairs.b, Priority.HIGH).otherwise(Priority.LOW)
+    assert type(c) is IntOf
+
+    result = int_pairs.select(c.alias("when"))
+
+    assert collect_column(result, "when") == [1, 1, 2]
+    assert isinstance(result.to_spark().schema["when"].dataType, IntegerType)
+
+
+def test_when_enum_without_otherwise(int_pairs: _IntPair):
+    c = tsf.when(int_pairs.a > int_pairs.b, Status.CLOSED)
+    assert isinstance(c, StringOf)
+
+    result = int_pairs.select(c.alias("when"))
+
+    assert collect_column(result, "when") == [None, None, "closed"]
+
+
+def test_when_enum_otherwise_column(int_pairs: _IntPair):
+    prev = tsf.when(int_pairs.a == int_pairs.b, Status.EQUAL).otherwise(Status.OPEN)
+    c = tsf.when(int_pairs.a > int_pairs.b, Status.CLOSED).otherwise(prev)
+
+    result = int_pairs.select(c.alias("when"))
+
+    assert collect_column(result, "when") == ["open", "equal", "closed"]
+
+
+def test_when_enum_compare(int_pairs: _IntPair):
+    c = tsf.when(int_pairs.a > int_pairs.b, Status.CLOSED).otherwise(Status.OPEN)
+
+    result = int_pairs.filter(c == Status.CLOSED)
+
+    assert collect_column(result, "a") == [5]
+
+
 def test_from_json_with_struct_type(spark: SparkSession):
     """Test from_json overload with StructType schema."""
+
     class JsonData(DataFrame):
         json_str: String
 
@@ -100,7 +180,9 @@ def test_from_json_with_struct_type(spark: SparkSession):
         ]
     )
 
-    df = JsonData.from_df(spark.createDataFrame(data, schema=JsonData.generate_schema()))
+    df = JsonData.from_df(
+        spark.createDataFrame(data, schema=JsonData.generate_schema())
+    )
     parsed = df.select(tsf.from_json(df.json_str, schema).alias("parsed"))
 
     result = collect_column(parsed, "parsed")
@@ -118,7 +200,9 @@ def test_bitwise_not(spark: SparkSession):
     class Nums(DataFrame):
         x: Int
 
-    df = Nums.from_df(spark.createDataFrame([(0,), (1,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(0,), (1,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.bitwise_not(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals == [-1, -2]
@@ -129,7 +213,11 @@ def test_crc32(spark: SparkSession):
     class BinaryData(DataFrame):
         b: Binary
 
-    df = BinaryData.from_df(spark.createDataFrame([(bytearray(b"hello"),)], schema=BinaryData.generate_schema()))
+    df = BinaryData.from_df(
+        spark.createDataFrame(
+            [(bytearray(b"hello"),)], schema=BinaryData.generate_schema()
+        )
+    )
     result = df.select(tsf.crc32(df.b).alias("v"))
     vals = collect_column(result, "v")
     assert isinstance(vals[0], int)
@@ -141,7 +229,11 @@ def test_equal_null(spark: SparkSession):
         a: Int
         b: Int
 
-    df = Nums.from_df(spark.createDataFrame([(1, 1), (1, 2), (None, None)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame(
+            [(1, 1), (1, 2), (None, None)], schema=Nums.generate_schema()
+        )
+    )
     result = df.select(tsf.equal_null(df.a, df.b).alias("v"))
     assert collect_column(result, "v") == [True, False, True]
     assert isinstance(result.to_spark().schema["v"].dataType, BooleanType)
@@ -151,7 +243,11 @@ def test_isnan_isnull_isnotnull(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(float("nan"),), (None,), (1.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame(
+            [(float("nan"),), (None,), (1.0,)], schema=Nums.generate_schema()
+        )
+    )
     result = df.select(
         tsf.isnan(df.x).alias("nan"),
         tsf.isnull(df.x).alias("null"),
@@ -169,7 +265,9 @@ def test_monotonically_increasing_id(spark: SparkSession):
     class Dummy(DataFrame):
         x: Int
 
-    df = Dummy.from_df(spark.createDataFrame([(1,), (2,), (3,)], schema=Dummy.generate_schema()))
+    df = Dummy.from_df(
+        spark.createDataFrame([(1,), (2,), (3,)], schema=Dummy.generate_schema())
+    )
     result = df.select(tsf.monotonically_increasing_id().alias("v"))
     vals = collect_column(result, "v")
     assert len(vals) == 3
@@ -199,7 +297,9 @@ def test_nullif(spark: SparkSession):
         a: Int
         b: Int
 
-    df = Nums.from_df(spark.createDataFrame([(1, 1), (2, 3)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(1, 1), (2, 3)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.nullif(df.a, df.b).alias("v"))
     vals = collect_column(result, "v")
     assert vals == [None, 2]
@@ -211,7 +311,9 @@ def test_nvl(spark: SparkSession):
         a: Int
         b: Int
 
-    df = Nums.from_df(spark.createDataFrame([(None, 5), (3, 99)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(None, 5), (3, 99)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.nvl(df.a, df.b).alias("v"))
     assert collect_column(result, "v") == [5, 3]
     assert isinstance(result.to_spark().schema["v"].dataType, IntegerType)
@@ -223,7 +325,11 @@ def test_nvl2(spark: SparkSession):
         b: Int
         c: Int
 
-    df = Nums.from_df(spark.createDataFrame([(None, 1, 2), (5, 10, 20)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame(
+            [(None, 1, 2), (5, 10, 20)], schema=Nums.generate_schema()
+        )
+    )
     result = df.select(tsf.nvl2(df.a, df.b, df.c).alias("v"))
     # nvl2(null, 1, 2) = 2; nvl2(5, 10, 20) = 10
     assert collect_column(result, "v") == [2, 10]
@@ -267,7 +373,9 @@ def test_xxhash64(spark: SparkSession):
     class Nums(DataFrame):
         x: Int
 
-    df = Nums.from_df(spark.createDataFrame([(1,), (2,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(1,), (2,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.xxhash64(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert len(vals) == 2
