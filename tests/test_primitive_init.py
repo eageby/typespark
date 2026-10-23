@@ -13,6 +13,7 @@ from pyspark.sql.types import (
     IntegerType,
     LongType,
     StringType,
+    TimestampNTZType,
     TimestampType,
 )
 
@@ -25,6 +26,7 @@ from typespark.columns.primitives import (
     Long,
     String,
     Timestamp,
+    TimestampNTZ,
 )
 
 
@@ -181,6 +183,37 @@ def test_timestamp_from_datetime_literal(spark):
 def test_timestamp_casts_to_timestamp_type(spark):
     ts = datetime.datetime(2024, 1, 1)
     assert isinstance(schema_type(spark, Timestamp(ts)), TimestampType)
+
+
+# ---------------------------------------------------------------------------
+# TimestampNTZ
+# ---------------------------------------------------------------------------
+
+
+def test_timestamp_ntz_from_datetime_literal(spark):
+    # Wall-clock value must survive regardless of the session time zone.
+    spark.conf.set("spark.sql.session.timeZone", "America/New_York")
+    try:
+        ts = datetime.datetime(2024, 6, 15, 12, 30, 0)
+        assert collect_one(spark, TimestampNTZ(ts)) == ts
+    finally:
+        spark.conf.unset("spark.sql.session.timeZone")
+
+
+def test_timestamp_ntz_casts_to_timestamp_ntz_type(spark):
+    ts = datetime.datetime(2024, 1, 1)
+    assert isinstance(schema_type(spark, TimestampNTZ(ts)), TimestampNTZType)
+
+
+def test_timestamp_ntz_from_none(spark):
+    assert collect_one(spark, TimestampNTZ(None)) is None
+    assert isinstance(schema_type(spark, TimestampNTZ(None)), TimestampNTZType)
+
+
+def test_cast_to_timestamp_ntz(spark):
+    col = String("2024-01-01 12:00:00").cast(TimestampNTZType())
+    assert isinstance(col, TimestampNTZ)
+    assert collect_one(spark, col) == datetime.datetime(2024, 1, 1, 12, 0)
 
 
 # ---------------------------------------------------------------------------

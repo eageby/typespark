@@ -14,6 +14,7 @@ from pyspark.sql.types import (
     LongType,
     ShortType,
     StringType,
+    TimestampNTZType,
     TimestampType,
 )
 
@@ -115,33 +116,44 @@ class _TimestampOpsMixin(TypedColumn):
         self, col: "pyspark.sql.Column | TypedColumn[Any] | datetime.datetime | None"
     ):
         if not isinstance(col, (TypedColumn, pyspark.sql.Column)):
-            col = lit(col)
+            col = self._lit(col)
         super().__init__(col)
 
+    @staticmethod
+    def _lit(value: "datetime.datetime | None") -> pyspark.sql.Column:
+        return lit(value)
+
+    def _coerce(self, other: "Self | datetime.datetime") -> Any:
+        if isinstance(other, datetime.datetime):
+            return self._lit(other)
+        return _unwrap(other)
+
     def __eq__(self, other: "Self | datetime.datetime") -> Bool:  # type: ignore[override]
-        return Bool.wrap(self._col.__eq__(_unwrap(other)))
+        return Bool.wrap(self._col.__eq__(self._coerce(other)))
 
     def __ne__(self, other: "Self | datetime.datetime") -> Bool:  # type: ignore[override]
-        return Bool.wrap(self._col.__ne__(_unwrap(other)))
+        return Bool.wrap(self._col.__ne__(self._coerce(other)))
 
     def __lt__(self, other: "Self | datetime.datetime") -> Bool:  # type: ignore[override]
-        return Bool.wrap(self._col.__lt__(_unwrap(other)))
+        return Bool.wrap(self._col.__lt__(self._coerce(other)))
 
     def __le__(self, other: "Self | datetime.datetime") -> Bool:  # type: ignore[override]
-        return Bool.wrap(self._col.__le__(_unwrap(other)))
+        return Bool.wrap(self._col.__le__(self._coerce(other)))
 
     def __gt__(self, other: "Self | datetime.datetime") -> Bool:  # type: ignore[override]
-        return Bool.wrap(self._col.__gt__(_unwrap(other)))
+        return Bool.wrap(self._col.__gt__(self._coerce(other)))
 
     def __ge__(self, other: "Self | datetime.datetime") -> Bool:  # type: ignore[override]
-        return Bool.wrap(self._col.__ge__(_unwrap(other)))
+        return Bool.wrap(self._col.__ge__(self._coerce(other)))
 
     def between(  # type: ignore[override]
         self,
         lowerBound: "Self | datetime.datetime",
         upperBound: "Self | datetime.datetime",
     ) -> Bool:
-        return Bool.wrap(self._col.between(_unwrap(lowerBound), _unwrap(upperBound)))
+        return Bool.wrap(
+            self._col.between(self._coerce(lowerBound), self._coerce(upperBound))
+        )
 
 
 class _BinaryOpsMixin(TypedColumn):
@@ -463,6 +475,18 @@ class Double(_FloatOpsMixin, TypedColumn[DoubleType]):
 
 class Timestamp(_TimestampOpsMixin, TypedColumn[TimestampType]):
     _data_type = TimestampType
+
+
+class TimestampNTZ(_TimestampOpsMixin, TypedColumn[TimestampNTZType]):
+    _data_type = TimestampNTZType
+
+    @staticmethod
+    def _lit(value: "datetime.datetime | None") -> pyspark.sql.Column:
+        # lit(datetime) yields a session-tz TimestampType, and casting that to
+        # NTZ shifts the wall-clock value. Casting from a string does not.
+        if value is None:
+            return lit(None).cast(TimestampNTZType())
+        return lit(value.isoformat(sep=" ")).cast(TimestampNTZType())
 
 
 class Date(_DateOpsMixin, TypedColumn[DateType]):

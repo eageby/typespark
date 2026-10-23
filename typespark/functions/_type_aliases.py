@@ -7,7 +7,9 @@ from typespark import (
     Int,
     Long,
     Timestamp,
+    TimestampNTZ,
 )
 
 type Numeric = Int | Long | Float | Double | Decimal | Column
-type DateOrTimestamp = Date | Timestamp
+type AnyTimestamp = Timestamp | TimestampNTZ
+type DateOrTimestamp = Date | Timestamp | TimestampNTZ

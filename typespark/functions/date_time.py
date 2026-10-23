@@ -4,7 +4,7 @@ import pyspark.sql.functions as F
 
 import typespark
 
-from ._type_aliases import DateOrTimestamp
+from ._type_aliases import AnyTimestamp, DateOrTimestamp
 
 
 def add_months(
@@ -142,7 +142,7 @@ def from_utc_timestamp(
     )
 
 
-def hour(col: typespark.Timestamp) -> typespark.Int:
+def hour(col: AnyTimestamp) -> typespark.Int:
     """Returns the hour component of `col` (0-23).
 
     Wrapper for :func:`pyspark.sql.functions.hour`.
@@ -174,7 +174,7 @@ def make_date(
     return typespark.Date.wrap(F.make_date(_to_col(year), _to_col(month), _to_col(day)))
 
 
-def minute(col: typespark.Timestamp) -> typespark.Int:
+def minute(col: AnyTimestamp) -> typespark.Int:
     """Returns the minute component of `col` (0-59).
 
     Wrapper for :func:`pyspark.sql.functions.minute`.
@@ -229,7 +229,7 @@ def quarter(col: DateOrTimestamp) -> typespark.Int:
     return typespark.Int.wrap(F.quarter(col.to_spark()))
 
 
-def second(col: typespark.Timestamp) -> typespark.Int:
+def second(col: AnyTimestamp) -> typespark.Int:
     """Returns the second component of `col` (0-59).
 
     Wrapper for :func:`pyspark.sql.functions.second`.
@@ -237,16 +237,14 @@ def second(col: typespark.Timestamp) -> typespark.Int:
     return typespark.Int.wrap(F.second(col.to_spark()))
 
 
-def timestamp_add(
-    unit: str, quantity: typespark.Integer, ts: typespark.Timestamp
-) -> typespark.Timestamp:
+def timestamp_add[T: (typespark.Timestamp, typespark.TimestampNTZ)](
+    unit: str, quantity: typespark.Integer, ts: T
+) -> T:
     """Adds `quantity` units to `ts`. `unit` is a string such as 'YEAR', 'MONTH', 'DAY', 'HOUR', etc.
 
     Wrapper for :func:`pyspark.sql.functions.timestamp_add`.
     """
-    return typespark.Timestamp.wrap(
-        F.timestamp_add(unit, quantity.to_spark(), ts.to_spark())
-    )
+    return type(ts).wrap(F.timestamp_add(unit, quantity.to_spark(), ts.to_spark()))
 
 
 def timestamp_diff(
@@ -262,8 +260,8 @@ def timestamp_diff(
         "MILLISECOND",
         "MICROSECOND",
     ],
-    start: typespark.Timestamp,
-    end: typespark.Timestamp,
+    start: AnyTimestamp,
+    end: AnyTimestamp,
 ) -> typespark.Int:
     """Returns the difference between `end` and `start` expressed in the given `unit`.
 
@@ -314,6 +312,20 @@ def to_timestamp(
     if format is not None:
         return typespark.Timestamp.wrap(F.to_timestamp(col.to_spark(), format))
     return typespark.Timestamp.wrap(F.to_timestamp(col.to_spark()))
+
+
+def to_timestamp_ntz(
+    col: typespark.String, format: str | None = None
+) -> typespark.TimestampNTZ:
+    """Parses `col` as a timestamp without time zone using the optional `format` pattern.
+
+    Wrapper for :func:`pyspark.sql.functions.to_timestamp_ntz`.
+    """
+    if format is not None:
+        return typespark.TimestampNTZ.wrap(
+            F.to_timestamp_ntz(col.to_spark(), F.lit(format))
+        )
+    return typespark.TimestampNTZ.wrap(F.to_timestamp_ntz(col.to_spark()))
 
 
 def to_utc_timestamp(

@@ -19,6 +19,7 @@ from typespark.columns.primitives import (
     Long,
     String,
     Timestamp,
+    TimestampNTZ,
 )
 
 
@@ -51,6 +52,10 @@ class DateFrame(BaseDataFrame):
 
 class TsFrame(BaseDataFrame):
     ts: Timestamp
+
+
+class TsNtzFrame(BaseDataFrame):
+    ts: TimestampNTZ
 
 
 @pytest.fixture
@@ -327,6 +332,46 @@ def test_timestamp_lt_literal(timestamps: TsFrame):
 def test_timestamp_gt_literal(timestamps: TsFrame):
     result = collect_column(
         timestamps.filter(timestamps.ts > datetime.datetime(2024, 1, 1, 12, 0, 0)),
+        "ts",
+    )
+    assert len(result) == 1
+
+
+# ---------------------------------------------------------------------------
+# TimestampNTZ — comparison with datetime.datetime literal
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def ntz_timestamps(spark):
+    return TsNtzFrame.from_df(
+        spark.createDataFrame(
+            [
+                Row(ts=datetime.datetime(2024, 1, 1, 0, 0, 0)),
+                Row(ts=datetime.datetime(2024, 6, 1, 12, 0, 0)),
+            ],
+            schema="ts TIMESTAMP_NTZ",
+        )
+    )
+
+
+def test_timestamp_ntz_eq_literal(ntz_timestamps: TsNtzFrame):
+    result = collect_column(
+        ntz_timestamps.filter(
+            ntz_timestamps.ts == datetime.datetime(2024, 6, 1, 12, 0, 0)
+        ),
+        "ts",
+    )
+    assert result == [datetime.datetime(2024, 6, 1, 12, 0, 0)]
+
+
+def test_timestamp_ntz_between_literal(ntz_timestamps: TsNtzFrame):
+    result = collect_column(
+        ntz_timestamps.filter(
+            ntz_timestamps.ts.between(
+                datetime.datetime(2024, 5, 1), datetime.datetime(2024, 7, 1)
+            )
+        ),
         "ts",
     )
     assert len(result) == 1
