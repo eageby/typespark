@@ -588,3 +588,41 @@ def test_current_timestamp(spark: SparkSession):
     assert timestamp_before <= values[0] <= timestamp_after
 
     assert isinstance(results.to_spark().schema["date"].dataType, pyspark.sql.types.TimestampType)
+
+
+def test_timestamp_ntz_functions(spark: SparkSession):
+    class Timestamps(typespark.DataFrame):
+        ts: typespark.TimestampNTZ
+
+    df = Timestamps.from_df(
+        spark.createDataFrame(
+            [(datetime.datetime(2025, 1, 1, 13, 45, 30),)],
+            schema=Timestamps.generate_schema(),
+        )
+    )
+    result = df.select(
+        tsf.year(df.ts).alias("y"),
+        tsf.hour(df.ts).alias("h"),
+        tsf.timestamp_add("DAY", typespark.Integer(10), df.ts).alias("added"),
+    )
+    vals = collect_values(result)[0]
+    assert vals["y"] == 2025
+    assert vals["h"] == 13
+    assert vals["added"] == datetime.datetime(2025, 1, 11, 13, 45, 30)
+    schema = result.to_spark().schema
+    assert isinstance(schema["added"].dataType, pyspark.sql.types.TimestampNTZType)
+
+
+def test_to_timestamp_ntz(spark: SparkSession):
+    class Strings(typespark.DataFrame):
+        s: typespark.String
+
+    df = Strings.from_df(spark.createDataFrame([("15/03/2025 10:30",)], schema=Strings.generate_schema()))
+    result = df.select(
+        tsf.to_timestamp_ntz(df.s, "dd/MM/yyyy HH:mm").alias("v"),
+        tsf.to_timestamp_ntz(typespark.String("2025-03-15 10:30:00")).alias("w"),
+    )
+    vals = collect_values(result)[0]
+    assert vals["v"] == datetime.datetime(2025, 3, 15, 10, 30)
+    assert vals["w"] == datetime.datetime(2025, 3, 15, 10, 30)
+    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampNTZType)

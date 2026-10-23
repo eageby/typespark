@@ -17,6 +17,7 @@ from pyspark.sql.types import (
     LongType,
     ShortType,
     StringType,
+    TimestampNTZType,
     TimestampType,
 )
 from simple_parsing import docstring
@@ -44,6 +45,8 @@ def pyspark_type_to_contract(pyspark_type: DataType) -> str:
         return "bool"
     elif pyspark_type is TimestampType:
         return "timestamp"
+    elif pyspark_type is TimestampNTZType:
+        return "timestamp_ntz"
     elif pyspark_type is DateType:
         return "date"
     elif pyspark_type is BinaryType:

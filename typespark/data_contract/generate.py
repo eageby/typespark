@@ -34,7 +34,9 @@ def _contract_type_to_pyspark(contract_type: str) -> str:
         case "bool":
             return "Bool"
         case "timestamp":
-            return "TimeStamp"
+            return "Timestamp"
+        case "timestamp_ntz":
+            return "TimestampNTZ"
         case "date":
             return "Date"
         case "bytes":

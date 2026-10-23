@@ -17,6 +17,7 @@ __all__ = [
     "String",
     "StringOf",
     "Timestamp",
+    "TimestampNTZ",
     "is_typed_column_type",
 ]
 
@@ -37,5 +38,6 @@ from .primitives import (
     String,
     StringOf,
     Timestamp,
+    TimestampNTZ,
 )
 from .utils import is_typed_column_type

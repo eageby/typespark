@@ -25,6 +25,7 @@ __all__ = [
     "Decimal",
     "Date",
     "Timestamp",
+    "TimestampNTZ",
     # Metadata
     "field",
     "decimal",
@@ -56,6 +57,7 @@ from typespark.columns.primitives import (
     String,
     StringOf,
     Timestamp,
+    TimestampNTZ,
 )
 from typespark.columns.struct import Struct
 from typespark.dataframe import BaseDataFrame

@@ -21,6 +21,7 @@ if TYPE_CHECKING:
         LongType,
         ShortType,
         StringType,
+        TimestampNTZType,
         TimestampType,
     )
     from typespark.window import WindowSpec
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
         Short,
         String,
         Timestamp,
+        TimestampNTZ,
     )
 
 _concrete_registry: dict[type[DataType], "type[TypedColumn]"] = {}
@@ -136,6 +138,8 @@ class TypedColumn[T: DataType]:
         def cast(self, dataType: "StringType") -> "String": ...
         @overload
         def cast(self, dataType: "TimestampType") -> "Timestamp": ...
+        @overload
+        def cast(self, dataType: "TimestampNTZType") -> "TimestampNTZ": ...
 
     def cast[U: DataType](self, dataType: U) -> "TypedColumn[U]":
         target = _concrete_registry.get(type(dataType), TypedColumn)
