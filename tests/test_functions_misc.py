@@ -136,6 +136,26 @@ def test_when_int_enum(int_pairs: _IntPair):
     assert isinstance(result.to_spark().schema["when"].dataType, IntegerType)
 
 
+def test_isin_str_enum_class(int_pairs: _IntPair):
+    c = tsf.when(int_pairs.a > int_pairs.b, Status.CLOSED).otherwise(Status.OPEN)
+    result = int_pairs.select(
+        c.isin(Status).alias("cls"), c.isin(Status.CLOSED).alias("member")
+    )
+
+    assert collect_column(result, "cls") == [True, True, True]
+    assert collect_column(result, "member") == [False, False, True]
+
+
+def test_isin_int_enum_class(int_pairs: _IntPair):
+    c = tsf.when(int_pairs.a > int_pairs.b, Priority.HIGH).otherwise(Priority.LOW)
+    result = int_pairs.select(
+        c.isin(Priority).alias("cls"), c.isin(Priority.HIGH).alias("member")
+    )
+
+    assert collect_column(result, "cls") == [True, True, True]
+    assert collect_column(result, "member") == [False, False, True]
+
+
 def test_when_enum_without_otherwise(int_pairs: _IntPair):
     c = tsf.when(int_pairs.a > int_pairs.b, Status.CLOSED)
     assert isinstance(c, StringOf)

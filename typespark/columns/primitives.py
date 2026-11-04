@@ -1,5 +1,6 @@
 import datetime
 import decimal as _decimal
+from enum import Enum
 from typing import Any, Self, overload
 
 import pyspark.sql
@@ -28,6 +29,19 @@ from typespark.columns.columns import Bool, TypedColumn
 def _unwrap(other: object) -> Any:
     """Unwrap a TypedColumn to its PySpark Column, or pass through a literal."""
     return other._col if isinstance(other, TypedColumn) else other  # type: ignore[union-attr]
+
+
+def _expand_isin(cols: tuple[Any, ...]) -> list[Any]:
+    """Flatten ``isin`` args: an Enum class expands to its member values."""
+    out: list[Any] = []
+    for c in cols:
+        if isinstance(c, type) and issubclass(c, Enum):
+            out.extend(m.value for m in c)
+        elif isinstance(c, Enum):
+            out.append(c.value)
+        else:
+            out.append(_unwrap(c))
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -380,8 +394,9 @@ class StringOf[T: str](String):
     def __ne__(self, other: "T | StringOf[T]") -> Bool:  # type: ignore[override]
         return super().__ne__(other)
 
-    def isin(self, *cols: "T | StringOf[T]") -> Bool:  # type: ignore[override]
-        return Bool.wrap(self._col.isin(*(_unwrap(c) for c in cols)))
+    def isin(self, *cols: "T | StringOf[T] | type[T]") -> Bool:  # type: ignore[override]
+        """True where the value is in ``cols``. An Enum class expands to all its members."""
+        return Bool.wrap(self._col.isin(*_expand_isin(cols)))
 
 
 class Decimal(_DecimalOpsMixin, TypedColumn[DecimalType]):
@@ -442,8 +457,9 @@ class IntOf[T: int](Integer):
     def __ne__(self, other: "T | IntOf[T]") -> Bool:  # type: ignore[override]
         return super().__ne__(other)
 
-    def isin(self, *cols: "T | IntOf[T]") -> Bool:  # type: ignore[override]
-        return Bool.wrap(self._col.isin(*(_unwrap(c) for c in cols)))
+    def isin(self, *cols: "T | IntOf[T] | type[T]") -> Bool:  # type: ignore[override]
+        """True where the value is in ``cols``. An Enum class expands to all its members."""
+        return Bool.wrap(self._col.isin(*_expand_isin(cols)))
 
     def __add__(self, other: "Integer | int") -> Integer:  # type: ignore[override]
         return Integer.wrap(self._col.__add__(_unwrap(other)))
