@@ -64,3 +64,18 @@ def mixed_enums(t: Ticket) -> None:
 
 def str_into_int(t: Ticket) -> ts.IntOf[Priority]:
     return tsf.when(t.age > 10, Status.CLOSED)  # type: ignore
+
+
+def isin_enum_class(t: Ticket) -> ts.Bool:
+    status = tsf.when(t.age > 10, Status.CLOSED).otherwise(Status.OPEN)
+    return status.isin(Status) & status.isin(Status.OPEN, Status.CLOSED)
+
+
+def isin_int_enum_class(t: Ticket) -> ts.Bool:
+    priority = tsf.when(t.age > 5, Priority.HIGH).otherwise(Priority.LOW)
+    return priority.isin(Priority)
+
+
+def isin_wrong_enum_class(t: Ticket) -> ts.Bool:
+    status = tsf.when(t.age > 10, Status.CLOSED).otherwise(Status.OPEN)
+    return status.isin(Priority)  # type: ignore
