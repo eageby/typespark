@@ -4,6 +4,7 @@ from typing import Any, Callable, Optional
 
 import attrs
 import pyspark.sql.functions as F
+from pyspark.sql.types import ArrayType, DataType, DecimalType
 
 from typespark import metadata
 from typespark._exceptions import InvalidLiteralDefaultError
@@ -13,7 +14,6 @@ from typespark.columns import (
     TypedColumn,
     is_typed_column_type,
 )
-from typespark.columns.array import _innermost_elem
 from typespark.utils import get_field_name, unwrap_type
 
 FieldTransformer = Callable[[type, list[attrs.Attribute]], list[attrs.Attribute]]
@@ -71,18 +71,32 @@ def _literal_factory(
     if decimal is not None and _is_decimal(col_cls):
         precision, scale = decimal
         if issubclass(col_cls, TypedArrayType):
-            return lambda: col_cls(F.lit(None), precision=precision, scale=scale)  # type: ignore[call-arg]
+            schema = _with_decimal(col_cls, DecimalType(precision, scale))
+            return lambda: col_cls.wrap(F.lit(None).cast(schema))
         return lambda: col_cls(value, precision=precision, scale=scale)  # type: ignore[call-arg]
     if _is_container(col_cls):
         return col_cls.null  # type: ignore[attr-defined]
     return lambda: col_cls(value)
 
 
+def _innermost(col_cls: type) -> Optional[type]:
+    """The element type at the bottom of (possibly nested) arrays."""
+    while isinstance(col_cls, type) and issubclass(col_cls, TypedArrayType):
+        col_cls = col_cls._elem_type  # type: ignore[assignment]
+    return col_cls
+
+
 def _is_decimal(col_cls: type) -> bool:
     """A Decimal column, or an array (possibly nested) of Decimal."""
+    inner = _innermost(col_cls)
+    return isinstance(inner, type) and issubclass(inner, Decimal)
+
+
+def _with_decimal(col_cls: type, decimal_type: DecimalType) -> DataType:
+    """The array type of ``col_cls`` with its innermost Decimal set to ``decimal_type``."""
     if issubclass(col_cls, TypedArrayType):
-        col_cls = _innermost_elem(col_cls)
-    return issubclass(col_cls, Decimal)
+        return ArrayType(_with_decimal(col_cls._elem_type, decimal_type))  # type: ignore[arg-type]
+    return decimal_type
 
 
 def _decimal_metadata(field: attrs.Attribute) -> Optional[tuple[int, int]]:
