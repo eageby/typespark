@@ -30,6 +30,22 @@ if TYPE_CHECKING:
     pass
 
 
+def _convert(f: attrs.Attribute, value: Any, instance: Any) -> Any:
+    """Apply a field's converter like attrs' generated ``__init__`` does."""
+    conv = f.converter
+    if conv is None:
+        return value
+    if isinstance(conv, attrs.Converter):
+        # attrs' stubs don't expose these attributes.
+        args: list[Any] = [value]
+        if getattr(conv, "takes_self"):
+            args.append(instance)
+        if getattr(conv, "takes_field"):
+            args.append(f)
+        return getattr(conv, "converter")(*args)
+    return conv(value)
+
+
 @dataclass_transform(
     frozen_default=True,
 )
@@ -130,13 +146,24 @@ class _Base:
                         if factory.takes_self
                         else factory.factory()
                     )
+                # As in attrs' __init__, the default goes through the converter.
+                # Every column field has one (set_alias), so a non-column default
+                # usually fails inside it; report that as an invalid default.
+                raw_default = default
+                invalid = InvalidDefaultColumnError(
+                    model=cls,
+                    field_name=field_name,
+                    field_alias=field_alias,
+                    default_value=raw_default,
+                )
+                try:
+                    default = _convert(f, default, new)
+                except Exception as e:
+                    if isinstance(raw_default, TypedColumn):
+                        raise
+                    raise invalid from e
                 if not isinstance(default, TypedColumn):
-                    raise InvalidDefaultColumnError(
-                        model=cls,
-                        field_name=field_name,
-                        field_alias=field_alias,
-                        default_value=default,
-                    )
+                    raise invalid
                 object.__setattr__(
                     new,
                     field_name,

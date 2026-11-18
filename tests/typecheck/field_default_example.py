@@ -51,6 +51,23 @@ class Defaults(ts.DataFrame):
     prices: ts.Array[ts.Decimal] = ts.decimal(18, 4)
 
 
+def to_long(x: ts.Integer) -> ts.Long:
+    return ts.Long(x)
+
+
+class ConverterDefaults(ts.DataFrame):
+    """With a converter, a default is the converter's input (as in attrs)."""
+
+    plain: ts.Long = ts.field(converter=to_long)
+    literal: ts.Long = ts.field(converter=to_long, default=5)
+    null: ts.Long = ts.field(converter=to_long, default=None)
+    column: ts.Long = ts.field(converter=to_long, default=ts.Integer(None))
+    factory: ts.Long = ts.field(converter=to_long, factory=lambda: ts.Integer(None))
+    lam: ts.Integer = ts.field(converter=lambda x: x + 1, default=5)
+    aliased: ts.Integer = ts.field(converter=lambda x: x + 1, df_alias="raw")
+    dec: ts.Decimal = ts.decimal(18, 4, converter=lambda x: x, default=0)
+
+
 class InvalidDefaults(ts.DataFrame):
     a: ts.String = ts.field(default=5)  # pyright: ignore[reportAssignmentType]
     b: ts.Int = ts.field(default="x")  # pyright: ignore[reportAssignmentType]
@@ -64,3 +81,7 @@ class InvalidDefaults(ts.DataFrame):
     j: ts.String = ts.field(default=[1])  # pyright: ignore[reportCallIssue, reportArgumentType]
     k: ts.String = ts.decimal(18, 4, default=0)  # pyright: ignore[reportAssignmentType]
     m: ts.Decimal = ts.decimal(18, 4, default="0")  # pyright: ignore[reportCallIssue, reportArgumentType]
+    conv_a: ts.Long = ts.field(converter=to_long, default="x")  # pyright: ignore[reportCallIssue, reportArgumentType]
+    conv_b: ts.Long = ts.field(converter=to_long, factory=lambda: ts.String("x"))  # pyright: ignore[reportArgumentType]
+    conv_c: ts.String = ts.field(converter=to_long, default=5)  # pyright: ignore[reportAssignmentType, reportGeneralTypeIssues]
+    conv_d: ts.String = ts.field(converter=to_long)  # pyright: ignore[reportAssignmentType, reportGeneralTypeIssues]

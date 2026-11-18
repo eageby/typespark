@@ -1,3 +1,5 @@
+import inspect
+import typing
 from typing import Any, Callable, Optional
 
 import attrs
@@ -62,10 +64,37 @@ def _is_container(col_cls: type) -> bool:
     return issubclass(col_cls, (_Base, TypedArrayType))
 
 
+def _converter_input_type(converter: Any) -> Optional[type[TypedColumn]]:
+    """The column type a converter takes, from its first parameter's annotation.
+
+    ``None`` when it can't be resolved (a lambda, no hints, a non-column hint).
+    """
+    fn = (
+        getattr(converter, "converter")  # not exposed in attrs' stubs
+        if isinstance(converter, attrs.Converter)
+        else converter
+    )
+    try:
+        params = list(inspect.signature(fn).parameters)
+        hints = typing.get_type_hints(fn)
+    except (TypeError, ValueError, NameError):
+        return None
+    if not params or params[0] not in hints:
+        return None
+    tp = unwrap_type(hints[params[0]])
+    return tp if is_typed_column_type(tp) else None
+
+
 def resolve_literal_defaults(
     cls: type, fields: list[attrs.Attribute]
 ) -> list[attrs.Attribute]:
-    """Turn ``ts.field(default=<literal>)`` into a factory typed by the annotation."""
+    """Turn ``ts.field(default=<literal>)`` into a typed column factory.
+
+    Like attrs, a default is the value *before* the converter runs. With a
+    converter, the literal is built as the converter's input type (falling back
+    to the annotation when that can't be read, e.g. a lambda); without one, as
+    the annotated type.
+    """
     new_fields = []
     for field in fields:
         if not isinstance(field.default, metadata.LiteralDefault):
@@ -78,7 +107,11 @@ def resolve_literal_defaults(
             continue
 
         col_cls = unwrap_type(field.type)
-        if value is None and field.metadata.get(metadata.NULLABLE_COLUMN) is False:
+        # With a converter, a null default may be filled in, so the
+        # nullable=False check only applies without one.
+        if field.converter is not None:
+            col_cls = _converter_input_type(field.converter) or col_cls
+        elif value is None and field.metadata.get(metadata.NULLABLE_COLUMN) is False:
             raise InvalidLiteralDefaultError(
                 model=cls,
                 field_name=field.name,
