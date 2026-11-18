@@ -23,6 +23,13 @@ class Address(ts.Struct):
     zip: ts.String = ts.field(default=None)
 
 
+class Props(ts.Struct):
+    """All fields defaulted, so the struct can be built with no arguments."""
+
+    kind: ts.String = ts.field(default="property")
+    note: ts.String = ts.field(default=None)
+
+
 class Defaults(ts.DataFrame):
     name: ts.String = ts.field(default="x")
     color: ts.StringOf[Color] = ts.field(default=Color.RED)
@@ -39,6 +46,8 @@ class Defaults(ts.DataFrame):
     seen_ntz: ts.TimestampNTZ = ts.field(default=datetime.datetime(2000, 1, 1))
     tags: ts.Array[ts.String] = ts.field(default=None)
     address: Address = ts.field(default=None)
+    # Struct with literal defaults as a factory: wrap it in a lambda (see below).
+    props: Props = ts.field(factory=lambda: Props())
     nickname: ts.String = ts.field(default=None, df_alias="nick")
     legacy: ts.String = ts.field(default=ts.String("Doe"))
     created: ts.Date = ts.field(factory=lambda: ts.Date(ts.String("2000-01-01")))
@@ -85,3 +94,7 @@ class InvalidDefaults(ts.DataFrame):
     conv_b: ts.Long = ts.field(converter=to_long, factory=lambda: ts.String("x"))  # pyright: ignore[reportArgumentType]
     conv_c: ts.String = ts.field(converter=to_long, default=5)  # pyright: ignore[reportAssignmentType, reportGeneralTypeIssues]
     conv_d: ts.String = ts.field(converter=to_long)  # pyright: ignore[reportAssignmentType, reportGeneralTypeIssues]
+    # Pyright copies `default="property"` into Props.__init__ as the parameter
+    # default, and checks it against `String` when the class is used as a
+    # `() -> Props` callable. Use `factory=lambda: Props()` instead.
+    props_cls: Props = ts.field(factory=Props)  # pyright: ignore[reportCallIssue, reportArgumentType]

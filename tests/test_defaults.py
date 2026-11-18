@@ -273,3 +273,17 @@ def test_decimal_metadata_not_applied_to_converter_input(spark):
 
     df = Conv.from_df(spark.range(1))
     assert df.to_df().schema["amount"].dataType == DecimalType(13, 6)
+
+
+def test_struct_built_from_its_defaults_as_factory(spark):
+    class Props(ts.Struct):
+        kind: ts.String = ts.field(default="property")
+        note: ts.String = ts.field(default=None)
+
+    class Holder(ts.DataFrame):
+        id: ts.Long
+        props: Props = ts.field(factory=lambda: Props())
+
+    row = Holder.from_df(spark.range(1)).to_df().collect()[0]
+    assert row.props.kind == "property"
+    assert row.props.note is None
