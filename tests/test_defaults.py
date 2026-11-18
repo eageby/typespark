@@ -217,3 +217,59 @@ def test_none_default_with_converter_skips_nullable_check(spark):
         )
 
     assert Filled.from_df(spark.range(1)).to_df().collect()[0].name == "n/a"
+
+
+# --- ts.decimal: literal defaults use the declared precision/scale -----------
+
+
+class Money(ts.Struct):
+    amount: ts.Decimal = ts.decimal(13, 6, default=None)
+
+
+def _types(schema: StructType) -> dict[str, object]:
+    return {f.name: f.dataType for f in schema.fields}
+
+
+class Priced(ts.DataFrame):
+    id: ts.Long
+    price: ts.Decimal = ts.decimal(13, 6, default=None)
+    rate: ts.Decimal = ts.decimal(3, 1, default=1.5)
+    prices: ts.Array[ts.Decimal] = ts.decimal(18, 4, default=None)
+    money: Money = ts.field(default=None)
+
+
+def test_decimal_literal_default_matches_generated_schema(spark):
+    df = Priced.from_df(spark.range(1))
+
+    assert _types(df.to_df().schema) == _types(Priced.generate_schema())
+    assert df.to_df().schema["price"].dataType == DecimalType(13, 6)
+    assert df.to_df().schema["rate"].dataType == DecimalType(3, 1)
+    assert df.to_df().schema["prices"].dataType == ArrayType(DecimalType(18, 4))
+    assert df.to_df().collect()[0].rate == decimal.Decimal("1.5")
+
+
+def test_create_decimal_literal_default_matches_generated_schema(spark):
+    df = Priced.create([(0,)], spark=spark)
+
+    assert _types(df.to_df().schema) == _types(Priced.generate_schema())
+
+
+def test_struct_constructor_decimal_literal_default(spark):
+    row_schema = spark.range(1).select(Money().to_spark().alias("m")).schema
+
+    assert row_schema["m"].dataType == Money.generate_schema()
+
+
+def test_decimal_metadata_not_applied_to_converter_input(spark):
+    """With a typed converter, the literal is the converter's input type."""
+
+    def to_dec(x: ts.Integer) -> ts.Decimal:
+        assert type(x) is ts.Integer
+        return ts.Decimal(x, precision=13, scale=6)
+
+    class Conv(ts.DataFrame):
+        id: ts.Long
+        amount: ts.Decimal = ts.decimal(13, 6, converter=to_dec, default=2)
+
+    df = Conv.from_df(spark.range(1))
+    assert df.to_df().schema["amount"].dataType == DecimalType(13, 6)
