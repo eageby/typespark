@@ -3,10 +3,17 @@ import typing
 from typing import Any, Callable, Optional
 
 import attrs
+import pyspark.sql.functions as F
 
 from typespark import metadata
 from typespark._exceptions import InvalidLiteralDefaultError
-from typespark.columns import TypedArrayType, TypedColumn, is_typed_column_type
+from typespark.columns import (
+    Decimal,
+    TypedArrayType,
+    TypedColumn,
+    is_typed_column_type,
+)
+from typespark.columns.array import _innermost_elem
 from typespark.utils import get_field_name, unwrap_type
 
 FieldTransformer = Callable[[type, list[attrs.Attribute]], list[attrs.Attribute]]
@@ -46,16 +53,44 @@ def df_alias(func: Callable[[str], str]) -> FieldTransformer:
     return inner
 
 
-def _literal_factory(col_cls: type[TypedColumn], value: Any) -> Callable[[], Any]:
+def _literal_factory(
+    col_cls: type[TypedColumn],
+    value: Any,
+    decimal: Optional[tuple[int, int]] = None,
+) -> Callable[[], Any]:
     """Build the default via the column's own constructor.
 
     Primitive constructors take a literal (or ``None``) and handle any
     type-specific literal quirks (e.g. ``TimestampNTZ`` avoiding a session-tz
     shift). Structs and arrays only take ``None``, built with ``null()``.
+
+    ``decimal`` is the ``ts.decimal`` (precision, scale): a literal default has
+    no source data, so it is built as the declared type rather than the
+    ``DecimalType(10, 0)`` a bare ``Decimal`` defaults to.
     """
+    if decimal is not None and _is_decimal(col_cls):
+        precision, scale = decimal
+        if issubclass(col_cls, TypedArrayType):
+            return lambda: col_cls(F.lit(None), precision=precision, scale=scale)  # type: ignore[call-arg]
+        return lambda: col_cls(value, precision=precision, scale=scale)  # type: ignore[call-arg]
     if _is_container(col_cls):
         return col_cls.null  # type: ignore[attr-defined]
     return lambda: col_cls(value)
+
+
+def _is_decimal(col_cls: type) -> bool:
+    """A Decimal column, or an array (possibly nested) of Decimal."""
+    if issubclass(col_cls, TypedArrayType):
+        col_cls = _innermost_elem(col_cls)
+    return issubclass(col_cls, Decimal)
+
+
+def _decimal_metadata(field: attrs.Attribute) -> Optional[tuple[int, int]]:
+    precision = field.metadata.get(metadata.DECIMAL_TYPE_METADATA_PRECISION)
+    scale = field.metadata.get(metadata.DECIMAL_TYPE_METADATA_SCALE)
+    if precision is None or scale is None:
+        return None
+    return precision, scale
 
 
 def _is_container(col_cls: type) -> bool:
@@ -107,10 +142,15 @@ def resolve_literal_defaults(
             continue
 
         col_cls = unwrap_type(field.type)
+        # ts.decimal metadata describes the field (the converter's output), so
+        # it only applies while the literal is built as the annotated type.
+        decimal = _decimal_metadata(field)
         # With a converter, a null default may be filled in, so the
         # nullable=False check only applies without one.
         if field.converter is not None:
-            col_cls = _converter_input_type(field.converter) or col_cls
+            input_cls = _converter_input_type(field.converter)
+            if input_cls is not None:
+                col_cls, decimal = input_cls, None
         elif value is None and field.metadata.get(metadata.NULLABLE_COLUMN) is False:
             raise InvalidLiteralDefaultError(
                 model=cls,
@@ -129,7 +169,9 @@ def resolve_literal_defaults(
                 ),
             )
         new_fields.append(
-            field.evolve(default=attrs.Factory(_literal_factory(col_cls, value)))
+            field.evolve(
+                default=attrs.Factory(_literal_factory(col_cls, value, decimal))
+            )
         )
     return new_fields
 
