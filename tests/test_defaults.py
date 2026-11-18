@@ -4,6 +4,7 @@ import datetime
 import decimal
 
 import attrs
+import pyspark.sql.functions as F
 import pytest
 from pyspark.sql.types import (
     ArrayType,
@@ -145,3 +146,74 @@ def test_timestamp_ntz_default_keeps_wall_clock(spark):
         spark.conf.set("spark.sql.session.timeZone", previous)
 
     assert row.seen == datetime.datetime(2000, 1, 1, 12, 0)
+
+
+# --- converters: a default is the converter's input, as in attrs ---------------
+
+
+def to_long_plus_one(x: ts.Integer) -> ts.Long:
+    assert type(x) is ts.Integer, f"converter got {type(x).__name__}"
+    return ts.Long(x + 1)
+
+
+class Converted(ts.DataFrame):
+    id: ts.Long
+    total: ts.Long = ts.field(converter=to_long_plus_one, default=5)
+    bumped: ts.Integer = ts.field(converter=lambda x: x + 100, default=1)
+    from_factory: ts.Integer = ts.field(
+        converter=lambda x: x + 100, factory=lambda: ts.Integer(2)
+    )
+    raw: ts.Integer = ts.field(converter=lambda x: x + 1, df_alias="raw_n")
+
+
+def test_literal_default_built_as_converter_input_type(spark):
+    """to_long_plus_one asserts it receives an Integer, not the annotated Long."""
+    df = Converted.from_df(spark.range(1).selectExpr("id", "1 as raw_n"))
+
+    assert df.to_df().schema["total"].dataType == LongType()
+    assert df.to_df().collect()[0].total == 6
+
+
+def test_from_df_converts_defaults_not_read_columns(spark):
+    df = Converted.from_df(spark.range(1).selectExpr("id", "1 as raw_n"))
+
+    row = df.to_df().collect()[0]
+    assert (row.total, row.bumped, row.from_factory) == (6, 101, 102)
+    # Read columns are taken as already converted.
+    assert row.raw_n == 1
+
+
+def test_converted_default_is_not_reapplied_on_rewrap(spark):
+    df = Converted.from_df(spark.range(1).selectExpr("id", "1 as raw_n"))
+    rewrapped = Converted.from_df(df.to_df())
+    again = rewrapped.filter(rewrapped.id == 0)
+
+    row = again.to_df().collect()[0]
+    assert (row.total, row.bumped, row.from_factory) == (6, 101, 102)
+
+
+def test_create_converts_defaults(spark):
+    df = Converted.create([(0, 1)], spark=spark)
+
+    row = df.to_df().collect()[0]
+    assert (row.total, row.bumped, row.from_factory) == (6, 101, 102)
+
+
+def test_struct_constructor_converts_literal_default(spark):
+    class Box(ts.Struct):
+        size: ts.Long = ts.field(converter=to_long_plus_one, default=5)
+
+    row = spark.range(1).select(Box().to_spark().alias("b")).collect()[0]
+    assert row.b.size == 6
+
+
+def test_none_default_with_converter_skips_nullable_check(spark):
+    class Filled(ts.DataFrame):
+        id: ts.Long
+        name: ts.String = ts.field(
+            converter=lambda x: ts.String(F.coalesce(x.to_spark(), F.lit("n/a"))),
+            default=None,
+            nullable=False,
+        )
+
+    assert Filled.from_df(spark.range(1)).to_df().collect()[0].name == "n/a"

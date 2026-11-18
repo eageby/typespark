@@ -17,8 +17,8 @@ _LITERAL_TYPES = (str, int, float, _decimal.Decimal, datetime.date)
 class AttrsFieldKwargs(TypedDict, total=False):
     """``attrs.field`` options passed through by ``field``/``decimal``.
 
-    Excludes ``default``/``factory`` (explicit parameters) and ``metadata``, so
-    those are type checked rather than swallowed by ``**kwargs``.
+    Excludes ``default``/``factory``/``converter`` (explicit parameters) and
+    ``metadata``, so those are type checked rather than swallowed by ``**kwargs``.
     """
 
     validator: Any
@@ -26,7 +26,6 @@ class AttrsFieldKwargs(TypedDict, total=False):
     hash: Optional[bool]
     init: bool
     type: Optional[type]
-    converter: Any
     kw_only: bool
     eq: Any
     order: Any
@@ -77,6 +76,159 @@ def _default_kwargs(default: Any, factory: Any) -> dict[str, Any]:
     if default is None or isinstance(default, _LITERAL_TYPES):
         return {"default": LiteralDefault(default)}
     return {"default": default}
+
+
+@overload
+def field[C: "TypedColumn[Any]"](
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    is_primary_key: Optional[bool] = None,
+    is_foreign_key: Optional[type] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[Any], C]",
+    default: None,
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def field[C: "TypedColumn[Any]"](  # type: ignore[overload-overlap]  # pyright: ignore[reportOverlappingOverload]
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    is_primary_key: Optional[bool] = None,
+    is_foreign_key: Optional[type] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[_dt.BoolDefault], C]",
+    default: bool,
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def field[C: "TypedColumn[Any]"](
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    is_primary_key: Optional[bool] = None,
+    is_foreign_key: Optional[type] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[_dt.IntDefault], C]",
+    default: int,
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def field[C: "TypedColumn[Any]"](
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    is_primary_key: Optional[bool] = None,
+    is_foreign_key: Optional[type] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[_dt.FloatDefault], C]",
+    default: float,
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def field[C: "TypedColumn[Any]"](
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    is_primary_key: Optional[bool] = None,
+    is_foreign_key: Optional[type] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[DecimalColumn], C]",
+    default: _decimal.Decimal,
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def field[C: "TypedColumn[Any]"](
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    is_primary_key: Optional[bool] = None,
+    is_foreign_key: Optional[type] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[_dt.StrDefault], C]",
+    default: str,
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def field[C: "TypedColumn[Any]"](
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    is_primary_key: Optional[bool] = None,
+    is_foreign_key: Optional[type] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[_dt.DatetimeDefault], C]",
+    default: datetime.datetime,
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def field[C: "TypedColumn[Any]"](
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    is_primary_key: Optional[bool] = None,
+    is_foreign_key: Optional[type] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[Date], C]",
+    default: datetime.date,
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def field[I, C: "TypedColumn[Any]"](
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    is_primary_key: Optional[bool] = None,
+    is_foreign_key: Optional[type] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[I], C]",
+    default: "I",
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def field[I, C: "TypedColumn[Any]"](
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    is_primary_key: Optional[bool] = None,
+    is_foreign_key: Optional[type] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[I], C]",
+    factory: "Callable[[], I]",
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def field[C: "TypedColumn[Any]"](
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    is_primary_key: Optional[bool] = None,
+    is_foreign_key: Optional[type] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[Any], C]",
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
 
 
 @overload
@@ -242,6 +394,7 @@ def field(
     *,
     default: Any = attrs.NOTHING,
     factory: Any = None,
+    converter: Any = None,
     **kwargs: Unpack[AttrsFieldKwargs],
 ) -> Any:
     """Declare a column field.
@@ -258,7 +411,12 @@ def field(
         FOREIGN_KEY: is_foreign_key,
     } | dict(metadata)
 
-    return attrs.field(metadata=md, **_default_kwargs(default, factory), **kwargs)
+    return attrs.field(
+        metadata=md,
+        **_default_kwargs(default, factory),
+        converter=converter,
+        **kwargs,
+    )
 
 
 def primary_key(
@@ -284,6 +442,75 @@ def foreign_key(
     } | dict(metadata)
 
     return attrs.field(metadata=md)
+
+
+@overload
+def decimal[C: "TypedColumn[Any]"](
+    precision: int,
+    scale: int,
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[Any], C]",
+    default: None,
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def decimal[C: "TypedColumn[Any]"](
+    precision: int,
+    scale: int,
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[DecimalColumn], C]",
+    default: int | float | _decimal.Decimal,
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def decimal[I, C: "TypedColumn[Any]"](
+    precision: int,
+    scale: int,
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[I], C]",
+    default: "I",
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def decimal[I, C: "TypedColumn[Any]"](
+    precision: int,
+    scale: int,
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[I], C]",
+    factory: "Callable[[], I]",
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
+def decimal[C: "TypedColumn[Any]"](
+    precision: int,
+    scale: int,
+    df_alias: Optional[str] = None,
+    nullable: Optional[bool] = None,
+    metadata: Mapping[Any, Any] = {},  # noqa: B006
+    *,
+    converter: "Callable[[Any], C]",
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
 
 
 @overload
@@ -371,6 +598,7 @@ def decimal(
     *,
     default: Any = attrs.NOTHING,
     factory: Any = None,
+    converter: Any = None,
     **kwargs: Unpack[AttrsFieldKwargs],
 ) -> Any:
     md = {
@@ -379,7 +607,12 @@ def decimal(
         DECIMAL_TYPE_METADATA_SCALE: scale,
         NULLABLE_COLUMN: nullable,
     } | dict(metadata)
-    return attrs.field(metadata=md, **_default_kwargs(default, factory), **kwargs)
+    return attrs.field(
+        metadata=md,
+        **_default_kwargs(default, factory),
+        converter=converter,
+        **kwargs,
+    )
 
 
 @attrs.define(init=False)
