@@ -77,3 +77,13 @@ class InvalidDefaultColumnError(TypeError):
             f"Use factory=lambda: <TypedColumn>(...) for a lazy default."
         )
         super().__init__(msg)
+
+
+class InvalidLiteralDefaultError(ValueError):
+    def __init__(self, *, model: type, field_name: str, value: object, reason: str):
+        self.model = model
+        self.field_name = field_name
+        self.value = value
+
+        msg = f"Invalid default for {model.__name__}.{field_name}: {value!r}. {reason}"
+        super().__init__(msg)
