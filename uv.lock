@@ -718,16 +718,19 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+datacontract = [
+    { name = "black" },
+    { name = "click" },
+    { name = "datacontract-specification" },
+    { name = "pyspark" },
+]
 pyspark = [
     { name = "pyspark" },
 ]
 
 [package.dev-dependencies]
 datacontract = [
-    { name = "black" },
-    { name = "click" },
-    { name = "datacontract-specification" },
-    { name = "simple-parsing" },
+    { name = "typespark", extra = ["datacontract"] },
 ]
 dev = [
     { name = "devtools" },
@@ -743,20 +746,19 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "attrs", specifier = ">=25.1.0,<26" },
+    { name = "black", marker = "extra == 'datacontract'", specifier = ">=25.1.0,<26" },
+    { name = "click", marker = "extra == 'datacontract'", specifier = ">=8.2.1,<9" },
+    { name = "datacontract-specification", marker = "extra == 'datacontract'", specifier = ">=1.2.0,<2" },
+    { name = "pyspark", marker = "extra == 'datacontract'", specifier = ">=3.5.2,<4.1" },
     { name = "pyspark", marker = "extra == 'pyspark'", specifier = ">=3.5.2,<4.1" },
     { name = "pyyaml", specifier = ">=6.0.2,<7" },
     { name = "simple-parsing", specifier = ">=0.1.7,<0.2" },
     { name = "typing-extensions", specifier = ">=4.15.0" },
 ]
-provides-extras = ["pyspark"]
+provides-extras = ["datacontract", "pyspark"]
 
 [package.metadata.requires-dev]
-datacontract = [
-    { name = "black", specifier = ">=25.1.0,<26" },
-    { name = "click", specifier = ">=8.2.1,<9" },
-    { name = "datacontract-specification", specifier = ">=1.2.0,<2" },
-    { name = "simple-parsing", specifier = ">=0.1.7,<0.2" },
-]
+datacontract = [{ name = "typespark", extras = ["datacontract"] }]
 dev = [
     { name = "devtools", specifier = ">=0.12.2,<0.13" },
     { name = "mypy", specifier = ">=1.15.0,<2" },

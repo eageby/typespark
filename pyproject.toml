@@ -28,6 +28,12 @@ dependencies = [
 
 [project.optional-dependencies]
 pyspark = ["pyspark>=3.5.2,<4.1"]
+datacontract = [
+    "pyspark>=3.5.2,<4.1",
+    "black>=25.1.0,<26",
+    "datacontract-specification>=1.2.0,<2",
+    "click>=8.2.1,<9",
+]
 
 [project.urls]
 Repository = "https://github.com/eageby/typespark"
@@ -47,12 +53,7 @@ dev = [
     "pyspark>=3.5.2,<4.1",
     "pyright>=1.1.414",
 ]
-datacontract = [
-    "black>=25.1.0,<26",
-    "simple-parsing>=0.1.7,<0.2",
-    "datacontract-specification>=1.2.0,<2",
-    "click>=8.2.1,<9",
-]
+datacontract = ["typespark[datacontract]"]
 
 [tool.uv]
 default-groups = [
