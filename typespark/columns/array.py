@@ -1,32 +1,52 @@
-import attrs
 import warnings
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self, overload
 
-from pyspark.sql import Column
+import attrs
 import pyspark.sql.functions as F
+from pyspark.sql import Column
 from pyspark.sql.functions import from_json as _spark_from_json
-from pyspark.sql.types import ArrayType, StringType
+from pyspark.sql.types import ArrayType, DecimalType, StringType
 
 if TYPE_CHECKING:
     from pyspark.sql.types import DataType
 
-from typespark.columns.columns import TypedColumn
-from typespark.columns._generator import Exploded
 from typespark._exceptions import UnnamedColumnError
+from typespark.columns._generator import Exploded
+from typespark.columns.columns import TypedColumn, _concrete_registry
+from typespark.columns.primitives import Decimal
 
 _array_cache: dict[type, type] = {}
 
 
-def _elem_data_type(elem: "type[TypedColumn]") -> "DataType":
-    """Recursively resolve DataType for an array element type."""
-    from pyspark.sql.types import DataType
+def _elem_data_type(
+    elem: "type[TypedColumn]", decimal: DecimalType | None = None
+) -> "DataType":
+    """Recursively resolve DataType for an array element type.
+
+    ``decimal`` overrides the DataType of a (possibly nested) Decimal element.
+    """
     if attrs.has(elem):
         return elem.generate_schema()  # type: ignore[attr-defined]
     if issubclass(elem, TypedArrayType):
-        return ArrayType(_elem_data_type(elem._require_elem_type()))
+        return ArrayType(_elem_data_type(elem._require_elem_type(), decimal))
+    if decimal is not None and issubclass(elem, Decimal):
+        return decimal
     if elem._data_type is not None:
         return elem._data_type()
     raise ValueError(f"Cannot determine DataType for element type {elem!r}")
+
+
+def _innermost_elem(elem: "type[TypedColumn]") -> "type[TypedColumn]":
+    while issubclass(elem, TypedArrayType):
+        elem = elem._require_elem_type()
+    return elem
+
+
+def _column_class_for(data_type: "DataType") -> "type[TypedColumn]":
+    """Resolve the column class for a DataType, recursing into arrays."""
+    if isinstance(data_type, ArrayType):
+        return ArrayOf(_column_class_for(data_type.elementType))
+    return _concrete_registry.get(type(data_type), TypedColumn)
 
 
 def ArrayOf[T: TypedColumn](elem_type: type[T]) -> "type[TypedArrayType[T]]":
@@ -47,6 +67,35 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
     if not TYPE_CHECKING:
         def __class_getitem__(cls, item):
             return ArrayOf(item)
+
+    @overload
+    def __init__(self, c: "Column | TypedColumn[Any]") -> None:
+        """Wrap ``c``, casting to the array schema."""
+
+    @overload
+    def __init__(
+        self: "TypedArrayType[Decimal] | TypedArrayType[TypedArrayType[Decimal]]",
+        c: "Column | TypedColumn[Any]",
+        precision: int,
+        scale: int = 0,
+    ) -> None:
+        """Cast to an array of DecimalType(precision, scale), e.g.
+        ``Array[Decimal](col, precision=18, scale=4)``."""
+
+    def __init__(self, c, precision=None, scale=None):  # type: ignore[misc]
+        if precision is None and scale is None:
+            super().__init__(c)
+            return
+        elem = self._require_elem_type()
+        if not issubclass(_innermost_elem(elem), Decimal):
+            raise TypeError(
+                f"precision/scale only apply to Decimal elements, not {self.__class__.__name__}"
+            )
+        decimal = DecimalType(10 if precision is None else precision, 0 if scale is None else scale)
+        col = c.to_spark() if isinstance(c, TypedColumn) else c
+        self._col = col.cast(ArrayType(_elem_data_type(elem, decimal)))
+        if isinstance(c, TypedColumn):
+            self._name = c._name
 
     @classmethod
     def _require_elem_type(cls) -> type[T]:

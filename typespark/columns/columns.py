@@ -12,6 +12,7 @@ from ._groups import _GroupColumn
 
 if TYPE_CHECKING:
     from pyspark.sql.types import (
+        ArrayType,
         BinaryType,
         DateType,
         DecimalType,
@@ -24,7 +25,8 @@ if TYPE_CHECKING:
         TimestampNTZType,
         TimestampType,
     )
-    from typespark.window import WindowSpec
+
+    from typespark.columns.array import TypedArrayType
     from typespark.columns.primitives import (
         Binary,
         Date,
@@ -38,6 +40,7 @@ if TYPE_CHECKING:
         Timestamp,
         TimestampNTZ,
     )
+    from typespark.window import WindowSpec
 
 _concrete_registry: dict[type[DataType], "type[TypedColumn]"] = {}
 
@@ -140,9 +143,13 @@ class TypedColumn[T: DataType]:
         def cast(self, dataType: "TimestampType") -> "Timestamp": ...
         @overload
         def cast(self, dataType: "TimestampNTZType") -> "TimestampNTZ": ...
+        @overload
+        def cast(self, dataType: "ArrayType") -> "TypedArrayType[Any]": ...
 
     def cast[U: DataType](self, dataType: U) -> "TypedColumn[U]":
-        target = _concrete_registry.get(type(dataType), TypedColumn)
+        from typespark.columns.array import _column_class_for
+
+        target = _column_class_for(dataType)
         return target.wrap(self._col.cast(dataType))._set_name(self._name)  # type: ignore[return-value]
 
     def alias(self, alias: str, **kwargs) -> "Self":
