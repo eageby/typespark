@@ -1,11 +1,12 @@
 import warnings
 
 import pytest
-from pyspark.sql import Row, functions as F
-from pyspark.sql import types
-from pyspark.sql.types import StringType
+from pyspark.sql import Row, types
+from pyspark.sql import functions as F
+from pyspark.sql.types import ArrayType, DecimalType, StringType
 
-from tests.utils import collect_values
+import typespark as ts
+from tests.utils import collect_column, collect_values
 from typespark import Integer, String
 from typespark.columns.array import TypedArrayType
 from typespark.columns.struct import Struct
@@ -248,5 +249,88 @@ def test_bare_typed_array_type_no_error(spark):
         warnings.simplefilter("always")
         instance = TypedArrayType(col)
     assert instance is not None
-    assert any(issubclass(warning.category, UserWarning) for warning in w), \
+    assert any(issubclass(warning.category, UserWarning) for warning in w), (
         "Expected a UserWarning when constructing bare TypedArrayType"
+    )
+
+
+@pytest.fixture
+def decimal_strings(spark):
+    return spark.createDataFrame(
+        [(["1.2345", "2.5"], [["1.2345"], ["2.5"]])],
+        "flat array<string>, nested array<array<string>>",
+    )
+
+
+class _Raw(BaseDataFrame):
+    flat: ts.Array[ts.String]
+    nested: ts.Array[ts.Array[ts.String]]
+
+
+class _Amounts(BaseDataFrame):
+    amounts: ts.Array[ts.Decimal] = ts.decimal(18, 4)
+
+
+def test_array_decimal_default_precision(decimal_strings):
+    raw = _Raw.from_df(decimal_strings)
+    result = _Amounts(raw, amounts=ts.Array[ts.Decimal](raw.flat))
+
+    assert result.to_df().schema["amounts"].dataType == ArrayType(DecimalType(10, 0))
+
+
+def test_array_decimal_precision_scale_matches_target_schema(decimal_strings):
+    raw = _Raw.from_df(decimal_strings)
+    result = _Amounts(
+        raw, amounts=ts.Array[ts.Decimal](raw.flat, precision=18, scale=4)
+    )
+
+    assert result.to_df().schema == _Amounts.generate_schema()
+    assert [str(v) for v in collect_column(result, "amounts")[0]] == [
+        "1.2345",
+        "2.5000",
+    ]
+
+
+def test_nested_array_decimal_precision_scale(decimal_strings):
+    class Nested(BaseDataFrame):
+        nested: ts.Array[ts.Array[ts.Decimal]] = ts.decimal(18, 4)
+
+    raw = _Raw.from_df(decimal_strings)
+    result = Nested(
+        raw, nested=ts.Array[ts.Array[ts.Decimal]](raw.nested, precision=18, scale=4)
+    )
+
+    assert result.to_df().schema == Nested.generate_schema()
+
+
+def test_array_precision_on_non_decimal_raises():
+    with pytest.raises(TypeError):
+        ts.Array[ts.String](F.col("flat"), precision=18, scale=4)  # type: ignore[call-overload]
+
+
+def test_array_decimal_explode_and_get_item(decimal_strings):
+    class Amount(BaseDataFrame):
+        amount: ts.Decimal = ts.decimal(18, 4)
+
+    raw = _Raw.from_df(decimal_strings)
+    amounts = ts.Array[ts.Decimal](raw.flat, precision=18, scale=4)
+
+    first = amounts.getItem(0)
+    assert isinstance(first, ts.Decimal)
+    assert [str(v) for v in collect_column(Amount(raw, amount=first), "amount")] == [
+        "1.2345"
+    ]
+
+    exploded = raw.select(amounts.explode())
+    assert exploded.to_df().schema["flat"].dataType == DecimalType(18, 4)
+    assert [str(v) for v in collect_column(exploded, "flat")] == ["1.2345", "2.5000"]
+
+
+def test_cast_to_array_decimal_keeps_element_type(decimal_strings):
+    raw = _Raw.from_df(decimal_strings)
+    amounts = raw.flat.cast(ArrayType(DecimalType(18, 4)))
+
+    assert isinstance(amounts, TypedArrayType)
+    assert isinstance(amounts.getItem(0), ts.Decimal)
+    exploded = raw.select(amounts.explode())
+    assert [str(v) for v in collect_column(exploded, "flat")] == ["1.2345", "2.5000"]
