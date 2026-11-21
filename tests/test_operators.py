@@ -1,7 +1,6 @@
 """Tests for typed operator overloads on TypedColumn primitives."""
 
 import datetime
-import decimal
 
 import pytest
 from pyspark.sql import Row
@@ -9,19 +8,14 @@ from pyspark.sql import Row
 from tests.utils import collect_column
 from typespark import BaseDataFrame
 from typespark.columns.primitives import (
-    Binary,
     Bool,
     Date,
-    Decimal,
     Double,
-    Float,
     Integer,
-    Long,
     String,
     Timestamp,
     TimestampNTZ,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
