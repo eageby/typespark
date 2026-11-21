@@ -1,3 +1,11 @@
+import os
+import sys
+
+# Pin the Spark worker/driver to the interpreter running the tests. Without this,
+# Spark may pick a different system Python and fail with PYTHON_VERSION_MISMATCH.
+os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
+os.environ.setdefault("PYSPARK_DRIVER_PYTHON", sys.executable)
+
 import pytest
 from pyspark.sql import DataFrame, Row, SparkSession, types
 
