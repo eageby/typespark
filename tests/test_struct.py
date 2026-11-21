@@ -287,3 +287,25 @@ def test_struct_from_json(spark: SparkSession):
     result_values = collect_values(tf)
     assert result_values[0]["id"] == 1
     assert result_values[0]["n"] == "2"
+
+
+def test_missing_struct_subfield_error_points_at_struct_field(spark: SparkSession):
+    """Subfield defaults don't apply on read; the hint must not suggest one."""
+
+    class Address(Struct):
+        city: String
+        country: String = field(factory=lambda: String("SE"))
+
+    class Customer(BaseDataFrame):
+        name: String
+        address: Address
+
+    raw = spark.createDataFrame(
+        [("Ada", ("Lund",))], "name string, address struct<city:string>"
+    )
+    with pytest.raises(MissingColumnError) as exc:
+        Customer.from_df(raw)
+
+    msg = str(exc.value)
+    assert "set a default for 'country'" not in msg
+    assert "default on the struct field 'address'" in msg

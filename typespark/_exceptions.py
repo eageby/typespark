@@ -38,7 +38,14 @@ class MissingColumnError(ValueError):
         msg += ". "
         if available_columns is not None:
             msg += f"Available columns: {available_columns}. "
-        msg += f"To fix: provide the column, adjust aliases, or set a default for '{field_name}'."
+        if parent_field is None:
+            msg += f"To fix: provide the column, adjust aliases, or set a default for '{field_name}'."
+        else:
+            # Subfield defaults only apply when the struct is constructed, not on read.
+            msg += (
+                f"To fix: provide the subfield, adjust aliases, or set a default on the "
+                f"struct field '{parent_field}'."
+            )
         super().__init__(msg)
 
 
