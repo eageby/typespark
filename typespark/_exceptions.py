@@ -1,6 +1,3 @@
-from typespark.columns.columns import TypedColumn
-
-
 class UnnamedColumnError(ValueError):
     def __init__(self, *, column_type: type, operation: str):
         self.column_type = column_type
@@ -78,7 +75,7 @@ class InvalidDefaultColumnError(TypeError):
 
         msg = (
             f"Default for {model.__name__}.{field_name} must be a "
-            f"{TypedColumn.__name__}. "
+            "TypedColumn. "
             f"Got {type(default_value).__name__}: {default_value!r}. "
             f"Field alias: {field_alias!r}. "
             f"Use factory=lambda: <TypedColumn>(...) for a lazy default."
