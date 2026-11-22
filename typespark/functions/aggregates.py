@@ -31,7 +31,7 @@ from pyspark.sql import functions as F
 
 from typespark.columns import TypedColumn
 from typespark.columns._groups import _make_aggregate
-from typespark.columns.array import ArrayOf, TypedArrayType
+from typespark.columns.array import TypedArrayType, _array_of
 from typespark.columns.columns import Bool
 from typespark.columns.primitives import Double, Float, Integer, Long, Short
 
@@ -185,7 +185,7 @@ def collect_list[C: TypedColumn](col: C) -> "TypedArrayType[C]":
 
     Wrapper for :func:`pyspark.sql.functions.collect_list`.
     """
-    return _make_aggregate(ArrayOf(type(col)), F.collect_list(col.to_spark()))  # type: ignore[return-value]
+    return _make_aggregate(_array_of(type(col)), F.collect_list(col.to_spark()))  # type: ignore[return-value]
 
 
 def collect_set[C: TypedColumn](col: C) -> "TypedArrayType[C]":
@@ -193,4 +193,4 @@ def collect_set[C: TypedColumn](col: C) -> "TypedArrayType[C]":
 
     Wrapper for :func:`pyspark.sql.functions.collect_set`.
     """
-    return _make_aggregate(ArrayOf(type(col)), F.collect_set(col.to_spark()))  # type: ignore[return-value]
+    return _make_aggregate(_array_of(type(col)), F.collect_set(col.to_spark()))  # type: ignore[return-value]

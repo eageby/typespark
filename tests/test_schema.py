@@ -167,7 +167,7 @@ def test_array_of_struct_generate_schema():
     class Item(Struct):
         label: ts.String
 
-    schema = ts.ArrayOf(Item).generate_schema()
+    schema = ts.Array[Item].generate_schema()
 
     assert isinstance(schema, ArrayType)
     assert isinstance(schema.elementType, StructType)
@@ -175,7 +175,7 @@ def test_array_of_struct_generate_schema():
 
 
 def test_nested_array_generate_schema():
-    schema = ts.ArrayOf(ts.ArrayOf(ts.Integer)).generate_schema()
+    schema = ts.Array[ts.Array[ts.Integer]].generate_schema()
 
     assert isinstance(schema, ArrayType)
     assert isinstance(schema.elementType, ArrayType)
@@ -184,7 +184,7 @@ def test_nested_array_generate_schema():
 
 def test_nested_array_field_in_dataframe():
     class Data(ts.DataFrame):
-        matrix: ts.ArrayOf(ts.ArrayOf(ts.Integer))
+        matrix: ts.Array[ts.Array[ts.Integer]]
 
     schema = Data.generate_schema()
 

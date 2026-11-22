@@ -83,7 +83,7 @@ def from_json[T: ts.Struct](
     """Parses a JSON string column into a struct or array.
 
     - Pass a ``Struct`` subclass for a typed struct result.
-    - Pass an ``ArrayOf(X)`` class for a typed array result.
+    - Pass an ``Array[X]`` class for a typed array result.
     - Pass a PySpark ``StructType`` for an untyped Column.
 
     Wrapper for :func:`pyspark.sql.functions.from_json`.

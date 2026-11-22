@@ -1,8 +1,8 @@
 import pyspark.sql.functions as F
 
 import typespark
-from typespark.columns.array import ArrayOf
 from typespark.columns.array import TypedArrayType as _TAT
+from typespark.columns.array import _array_of
 
 
 def array[C: typespark.Column](
@@ -15,9 +15,9 @@ def array[C: typespark.Column](
     if not cols:
         raise TypeError(
             "array() requires at least one column to infer element type. "
-            "For an empty typed array use ArrayOf(ElemType).empty()."
+            "For an empty typed array use Array[ElemType].empty()."
         )
-    return ArrayOf(cols[0].__class__).wrap(F.array([c.to_spark() for c in cols]))
+    return _array_of(cols[0].__class__).wrap(F.array([c.to_spark() for c in cols]))
 
 
 def array_append[T: typespark.Column](
@@ -158,7 +158,7 @@ def array_repeat[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.array_repeat`.
     """
-    return ArrayOf(col.__class__).wrap(
+    return _array_of(col.__class__).wrap(
         F.array_repeat(
             col.to_spark(),
             count.to_spark() if isinstance(count, typespark.TypedColumn) else count,
@@ -278,7 +278,7 @@ def flatten[T: typespark.TypedColumn](
     """
     inner = col._require_elem_type()
     elem = inner._elem_type if issubclass(inner, _TAT) else None
-    result_cls = ArrayOf(elem) if elem is not None else typespark.TypedArrayType
+    result_cls = _array_of(elem) if elem is not None else typespark.TypedArrayType
     return result_cls.wrap(F.flatten(col.to_spark()))  # type: ignore
 
 
@@ -289,7 +289,7 @@ def sequence[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.sequence`.
     """
-    return ArrayOf(start.__class__).wrap(
+    return _array_of(start.__class__).wrap(
         F.sequence(
             start.to_spark(),
             stop.to_spark(),

@@ -179,7 +179,7 @@ def test_array_of_struct_from_json(spark: SparkSession):
 
     import typespark as ts
 
-    parsed = ts.ArrayOf(Item).from_json(df.data)
+    parsed = ts.Array[Item].from_json(df.data)
     first = parsed.getItem(0)
 
     result = Normalized(df, first_id=first.id, first_name=first.name_)

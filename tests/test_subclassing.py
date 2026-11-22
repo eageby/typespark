@@ -1,11 +1,12 @@
-"""Tests for class-based column types: explicit subclasses, ArrayOf caching, and casting."""
+"""Tests for class-based column types: explicit subclasses, Array[T] caching, and casting."""
 
 import pyspark.sql.functions as F
 import pytest
 from pyspark.sql.types import IntegerType, LongType, StringType
 
+import typespark as ts
 from typespark import UnnamedColumnError
-from typespark.columns.array import ArrayOf, TypedArrayType
+from typespark.columns.array import TypedArrayType
 from typespark.columns.columns import TypedColumn
 from typespark.columns.primitives import Integer, String
 
@@ -39,32 +40,36 @@ def test_explicit_subclass_with_override():
     assert issubclass(MyInteger, Integer)
 
 
-# ── ArrayOf factory and caching ───────────────────────────────────────────────
+# ── Array[T] class caching ────────────────────────────────────────────────────
+
+
+def test_array_of_is_deprecated_alias_of_array():
+    with pytest.warns(DeprecationWarning, match=r"use ts\.Array\[T\]"):
+        cls = ts.ArrayOf(String)
+    assert cls is ts.Array[String]
 
 
 def test_array_of_sets_elem_type():
-    assert ArrayOf(String)._elem_type is String
+    assert ts.Array[String]._elem_type is String
 
 
 def test_array_of_is_cached():
-    assert ArrayOf(String) is ArrayOf(String)
-    assert ArrayOf(Integer) is ArrayOf(Integer)
+    assert ts.Array[String] is ts.Array[String]
+    assert ts.Array[Integer] is ts.Array[Integer]
 
 
 def test_array_class_getitem_delegates_to_array_of():
-    import typespark as ts
-
-    assert ts.Array[String] is ArrayOf(String)
-    assert ts.Array[Integer] is ArrayOf(Integer)
+    assert ts.Array[String] is ts.Array[String]
+    assert ts.Array[Integer] is ts.Array[Integer]
 
 
 def test_array_of_different_types_are_distinct():
-    assert ArrayOf(String) is not ArrayOf(Integer)
+    assert ts.Array[String] is not ts.Array[Integer]
 
 
 def test_array_of_is_subclass_of_typed_array_type():
-    assert issubclass(ArrayOf(String), TypedArrayType)
-    assert issubclass(ArrayOf(String), TypedColumn)
+    assert issubclass(ts.Array[String], TypedArrayType)
+    assert issubclass(ts.Array[String], TypedColumn)
 
 
 # ── __init__ casting and wrap ─────────────────────────────────────────────────
@@ -118,7 +123,7 @@ def test_unnamed_column_alias_sets_name():
 
 
 def test_explode_unnamed_raises():
-    col = ArrayOf(String)(F.col("tags"))
+    col = ts.Array[String](F.col("tags"))
     with pytest.raises(UnnamedColumnError, match="explode"):
         col.explode()
 

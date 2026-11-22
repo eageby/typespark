@@ -6,6 +6,7 @@ import pyspark.sql.functions as F
 from pyspark.sql import Column
 from pyspark.sql.functions import from_json as _spark_from_json
 from pyspark.sql.types import ArrayType, DecimalType, StringType
+from typing_extensions import deprecated
 
 if TYPE_CHECKING:
     from pyspark.sql.types import DataType
@@ -45,11 +46,11 @@ def _innermost_elem(elem: "type[TypedColumn]") -> "type[TypedColumn]":
 def _column_class_for(data_type: "DataType") -> "type[TypedColumn]":
     """Resolve the column class for a DataType, recursing into arrays."""
     if isinstance(data_type, ArrayType):
-        return ArrayOf(_column_class_for(data_type.elementType))
+        return _array_of(_column_class_for(data_type.elementType))
     return _concrete_registry.get(type(data_type), TypedColumn)
 
 
-def ArrayOf[T: TypedColumn](elem_type: type[T]) -> "type[TypedArrayType[T]]":
+def _array_of[T: TypedColumn](elem_type: type[T]) -> "type[TypedArrayType[T]]":
     if elem_type in _array_cache:
         return _array_cache[elem_type]
     cls = type(
@@ -61,13 +62,19 @@ def ArrayOf[T: TypedColumn](elem_type: type[T]) -> "type[TypedArrayType[T]]":
     return cls
 
 
+@deprecated("ArrayOf(T) is removed in 2.0; use ts.Array[T], which is the same class.")
+def ArrayOf[T: TypedColumn](elem_type: type[T]) -> "type[TypedArrayType[T]]":
+    """Deprecated alias of ``Array[T]``."""
+    return _array_of(elem_type)
+
+
 class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
     _elem_type: ClassVar[type[T] | None] = None
 
     if not TYPE_CHECKING:
 
         def __class_getitem__(cls, item):
-            return ArrayOf(item)
+            return _array_of(item)
 
     @overload
     def __init__(self, c: "Column | TypedColumn[Any]") -> None:

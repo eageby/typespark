@@ -287,10 +287,10 @@ def regexp_extract_all(
 
     Wrapper for :func:`pyspark.sql.functions.regexp_extract_all`.
     """
-    from typespark.columns.array import ArrayOf
+    from typespark.columns.array import _array_of
 
     pat = pattern.to_spark() if isinstance(pattern, Column) else F.lit(pattern)
-    return ArrayOf(String).wrap(F.regexp_extract_all(string.to_spark(), pat, idx))
+    return _array_of(String).wrap(F.regexp_extract_all(string.to_spark(), pat, idx))
 
 
 def regexp_replace(

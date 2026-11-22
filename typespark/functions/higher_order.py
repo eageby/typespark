@@ -6,6 +6,7 @@ from pyspark.sql import Column
 from pyspark.sql import functions as F
 
 import typespark as ts
+from typespark.columns.array import _array_of
 
 
 def filter[T: ts.Column](col: ts.Array[T], f: Callable[[T], ts.Bool]) -> ts.Array[T]:
@@ -89,6 +90,4 @@ def transform[I: ts.Column, O: ts.Column](
 
         spark_function = _without_index
 
-    return ts.ArrayOf(output_elem_type).wrap(
-        F.transform(col.to_spark(), spark_function)
-    )
+    return _array_of(output_elem_type).wrap(F.transform(col.to_spark(), spark_function))

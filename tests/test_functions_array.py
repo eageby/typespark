@@ -35,7 +35,7 @@ def test_array_empty(spark: SparkSession):
 def test_array_empty_raises_without_cols(spark: SparkSession):
     import pytest
 
-    with pytest.raises(TypeError, match="ArrayOf"):
+    with pytest.raises(TypeError, match=r"Array\[ElemType\]\.empty"):
         tsf.array()
 
 
