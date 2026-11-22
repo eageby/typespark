@@ -1,7 +1,7 @@
 # pyright: reportUnnecessaryTypeIgnoreComment=true
 """ts.field defaults: valid ones must type check, invalid ones must error.
 
-Each invalid default carries a ``# pyright: ignore[...]``. With unnecessary
+Each invalid default carries a ``# type: ignore``. With unnecessary
 ignores reported as errors, a default that stops erroring fails the check.
 """
 
@@ -12,6 +12,10 @@ from enum import StrEnum
 import attrs
 
 import typespark as ts
+
+
+def _int_to_dec(x: ts.Integer) -> ts.Decimal:
+    return ts.Decimal(x, precision=18, scale=4)
 
 
 class Color(StrEnum):
@@ -75,26 +79,27 @@ class ConverterDefaults(ts.DataFrame):
     lam: ts.Integer = ts.field(converter=lambda x: x + 1, default=5)
     aliased: ts.Integer = ts.field(converter=lambda x: x + 1, df_alias="raw")
     dec: ts.Decimal = ts.decimal(18, 4, converter=lambda x: x, default=0)
+    dec_from_int: ts.Decimal = ts.decimal(18, 4, converter=_int_to_dec, default=2)
 
 
 class InvalidDefaults(ts.DataFrame):
-    a: ts.String = ts.field(default=5)  # pyright: ignore[reportAssignmentType]
-    b: ts.Int = ts.field(default="x")  # pyright: ignore[reportAssignmentType]
-    c: ts.Int = ts.field(default=1.5)  # pyright: ignore[reportAssignmentType]
-    d: ts.Bool = ts.field(default=1)  # pyright: ignore[reportAssignmentType]
-    e: ts.Date = ts.field(default="2000-01-01")  # pyright: ignore[reportAssignmentType]
-    f: ts.Timestamp = ts.field(default=datetime.date(2000, 1, 1))  # pyright: ignore[reportAssignmentType]
-    g: ts.String = ts.field(default=ts.Int(ts.Long(None)))  # pyright: ignore[reportAssignmentType]
-    h: ts.Date = ts.field(factory=lambda: ts.String("x"))  # pyright: ignore[reportAssignmentType]
-    i: ts.String = ts.field(factory=lambda: "x")  # pyright: ignore[reportCallIssue, reportArgumentType]
-    j: ts.String = ts.field(default=[1])  # pyright: ignore[reportCallIssue, reportArgumentType]
-    k: ts.String = ts.decimal(18, 4, default=0)  # pyright: ignore[reportAssignmentType]
-    m: ts.Decimal = ts.decimal(18, 4, default="0")  # pyright: ignore[reportCallIssue, reportArgumentType]
-    conv_a: ts.Long = ts.field(converter=to_long, default="x")  # pyright: ignore[reportCallIssue, reportArgumentType]
-    conv_b: ts.Long = ts.field(converter=to_long, factory=lambda: ts.String("x"))  # pyright: ignore[reportArgumentType]
-    conv_c: ts.String = ts.field(converter=to_long, default=5)  # pyright: ignore[reportAssignmentType, reportGeneralTypeIssues]
-    conv_d: ts.String = ts.field(converter=to_long)  # pyright: ignore[reportAssignmentType, reportGeneralTypeIssues]
+    a: ts.String = ts.field(default=5)  # type: ignore
+    b: ts.Int = ts.field(default="x")  # type: ignore
+    c: ts.Int = ts.field(default=1.5)  # type: ignore
+    d: ts.Bool = ts.field(default=1)  # type: ignore
+    e: ts.Date = ts.field(default="2000-01-01")  # type: ignore
+    f: ts.Timestamp = ts.field(default=datetime.date(2000, 1, 1))  # type: ignore
+    g: ts.String = ts.field(default=ts.Int(ts.Long(None)))  # type: ignore
+    h: ts.Date = ts.field(factory=lambda: ts.String("x"))  # type: ignore
+    i: ts.String = ts.field(factory=lambda: "x")  # type: ignore
+    j: ts.String = ts.field(default=[1])  # type: ignore
+    k: ts.String = ts.decimal(18, 4, default=0)  # type: ignore
+    m: ts.Decimal = ts.decimal(18, 4, default="0")  # type: ignore
+    conv_a: ts.Long = ts.field(converter=to_long, default="x")  # type: ignore
+    conv_b: ts.Long = ts.field(converter=to_long, factory=lambda: ts.String("x"))  # type: ignore
+    conv_c: ts.String = ts.field(converter=to_long, default=5)  # type: ignore
+    conv_d: ts.String = ts.field(converter=to_long)  # type: ignore
     # Pyright copies `default="property"` into Props.__init__ as the parameter
     # default, and checks it against `String` when the class is used as a
     # `() -> Props` callable. Use `factory=lambda: Props()` instead.
-    props_cls: Props = ts.field(factory=Props)  # pyright: ignore[reportCallIssue, reportArgumentType]
+    props_cls: Props = ts.field(factory=Props)  # type: ignore

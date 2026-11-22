@@ -462,6 +462,20 @@ def decimal[C: "TypedColumn[Any]"](
 
 
 @overload
+def decimal[C: "TypedColumn[Any]"](  # type: ignore[overload-overlap]  # pyright: ignore[reportOverlappingOverload]
+    precision: int,
+    scale: int,
+    df_alias: str | None = None,
+    nullable: bool | None = None,
+    metadata: Mapping[Any, Any] = {},
+    *,
+    converter: "Callable[[_dt.IntDefault], C]",
+    default: int,
+    **kwargs: Unpack[AttrsFieldKwargs],
+) -> "C": ...
+
+
+@overload
 def decimal[C: "TypedColumn[Any]"](
     precision: int,
     scale: int,
