@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Mapping
 from typing import (
+    TYPE_CHECKING,
     Any,
     Self,
     cast,
@@ -99,18 +100,32 @@ def _lazy_class[T](cls: type[T]) -> type[T]:
     return lazy_cls
 
 
-@attrs.define(frozen=True)
-class _DataFrameFields:
-    """Internal attrs base holding DataFrame-specific fields.
+if TYPE_CHECKING:
+    # Type checkers only. mypy doesn't carry attrs-plugin fields into
+    # dataclass_transform subclasses, so it would drop the positional `df`
+    # parameter; this dataclass_transform view gives both mypy and pyright the
+    # same signature. Runtime uses the attrs class below.
+    from dataclasses import InitVar
 
-    NOT decorated with @dataclass_transform so Pylance won't include
-    these fields in subclass __init__ signatures.
-    """
+    def _spec(*, init: bool = True, default: Any = ...) -> Any: ...
 
-    _dataframe: pyspark.sql.DataFrame = attrs.field(
-        converter=_dataframe_converter, alias="df"
-    )
-    _alias: str | None = attrs.field(init=False, default=None)
+    @dataclass_transform(frozen_default=True, field_specifiers=(_spec,))
+    class _FieldsModel: ...
+
+    class _DataFrameFields(_FieldsModel):
+        df: InitVar[pyspark.sql.DataFrame | BaseDataFrame]
+        _dataframe: pyspark.sql.DataFrame = _spec(init=False)
+        _alias: str | None = _spec(init=False, default=None)
+else:
+
+    @attrs.define(frozen=True)
+    class _DataFrameFields:
+        """Internal attrs base holding DataFrame-specific fields."""
+
+        _dataframe: pyspark.sql.DataFrame = attrs.field(
+            converter=_dataframe_converter, alias="df"
+        )
+        _alias: str | None = attrs.field(init=False, default=None)
 
 
 @dataclass_transform(
