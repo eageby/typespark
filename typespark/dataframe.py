@@ -24,7 +24,7 @@ import pyspark.sql
 import pyspark.sql.streaming.readwriter
 from pyspark.sql import Row
 from pyspark.sql import functions as F
-from pyspark.sql.types import BooleanType, DataType, StructType, TimestampType
+from pyspark.sql.types import BooleanType, StructType, TimestampType
 
 from typespark._base import _Base
 from typespark._exceptions import LazyDataFrameError
@@ -300,7 +300,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
     # ── Internal projection ─────────────────────────────────────────
 
     def _project(
-        self, *cols: str | pyspark.sql.Column | TypedColumn[DataType]
+        self, *cols: str | pyspark.sql.Column | TypedColumn[Any]
     ) -> pyspark.sql.DataFrame:
         """Pure column projection: convert TypedColumns to Spark columns and select.
 
@@ -312,7 +312,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
         )
 
     def _resolve(
-        self, *cols: str | pyspark.sql.Column | TypedColumn[DataType]
+        self, *cols: str | pyspark.sql.Column | TypedColumn[Any]
     ) -> pyspark.sql.DataFrame:
         """Resolve columns (including groups, deferred) into a raw Spark DataFrame.
 
@@ -382,7 +382,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
     # ── User-facing select ───────────────────────────────────────────
 
     def select(
-        self, *cols: str | pyspark.sql.Column | TypedColumn[DataType]
+        self, *cols: str | pyspark.sql.Column | TypedColumn[Any]
     ) -> BaseDataFrame:
         """Project a set of columns, returning a new untyped ``BaseDataFrame``.
 
@@ -472,14 +472,12 @@ class BaseDataFrame(_DataFrameFields, _Base):
         )
 
     def orderBy(
-        self, *cols: TypedColumn[DataType] | pyspark.sql.Column, **kwargs: Any
+        self, *cols: TypedColumn[Any] | pyspark.sql.Column, **kwargs: Any
     ) -> Self:
         spark_cols = [c.to_spark() if isinstance(c, TypedColumn) else c for c in cols]
         return self.__class__._wrap(self._dataframe.orderBy(*spark_cols, **kwargs))
 
-    def sort(
-        self, *cols: TypedColumn[DataType] | pyspark.sql.Column, **kwargs: Any
-    ) -> Self:
+    def sort(self, *cols: TypedColumn[Any] | pyspark.sql.Column, **kwargs: Any) -> Self:
         spark_cols = [c.to_spark() if isinstance(c, TypedColumn) else c for c in cols]
         return self.__class__._wrap(self._dataframe.sort(*spark_cols, **kwargs))
 
@@ -490,7 +488,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
         return self.__class__._wrap(self._dataframe.coalesce(numPartitions))
 
     def repartition(
-        self, numPartitions: int, *cols: TypedColumn[DataType] | pyspark.sql.Column
+        self, numPartitions: int, *cols: TypedColumn[Any] | pyspark.sql.Column
     ) -> Self:
         spark_cols = [c.to_spark() if isinstance(c, TypedColumn) else c for c in cols]
         return self.__class__._wrap(
