@@ -389,10 +389,10 @@ class StringOf[T: str](String):
     __hash__ = String.__hash__
 
     def __eq__(self, other: "T | StringOf[T]") -> Bool:  # type: ignore[override]
-        return super().__eq__(other)
+        return Bool.wrap(self._col.__eq__(_unwrap(other)))
 
     def __ne__(self, other: "T | StringOf[T]") -> Bool:  # type: ignore[override]
-        return super().__ne__(other)
+        return Bool.wrap(self._col.__ne__(_unwrap(other)))
 
     def isin(self, *cols: "T | StringOf[T] | type[T]") -> Bool:  # type: ignore[override]
         """True where the value is in ``cols``. An Enum class expands to all its members."""
@@ -450,10 +450,10 @@ class IntOf[T: int](Integer):
     __hash__ = Integer.__hash__
 
     def __eq__(self, other: "T | IntOf[T]") -> Bool:  # type: ignore[override]
-        return super().__eq__(other)
+        return Bool.wrap(self._col.__eq__(_unwrap(other)))
 
     def __ne__(self, other: "T | IntOf[T]") -> Bool:  # type: ignore[override]
-        return super().__ne__(other)
+        return Bool.wrap(self._col.__ne__(_unwrap(other)))
 
     def isin(self, *cols: "T | IntOf[T] | type[T]") -> Bool:  # type: ignore[override]
         """True where the value is in ``cols``. An Enum class expands to all its members."""

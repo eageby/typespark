@@ -61,3 +61,7 @@ jobs:
       - name: mypy
         if: always()
         run: uv run mypy typespark/
+
+      - name: pyright
+        if: always()
+        run: uv run pyright typespark/

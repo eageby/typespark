@@ -1,5 +1,5 @@
 import warnings
-from typing import TYPE_CHECKING, Any, ClassVar, Self, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, overload
 
 import attrs
 import pyspark.sql.functions as F
@@ -69,7 +69,8 @@ def ArrayOf[T: TypedColumn](elem_type: type[T]) -> "type[TypedArrayType[T]]":
 
 
 class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
-    _elem_type: ClassVar[type[T] | None] = None
+    # ClassVar can't hold a type variable; _require_elem_type() restores T.
+    _elem_type: ClassVar[type[TypedColumn[Any]] | None] = None
 
     if not TYPE_CHECKING:
 
@@ -111,7 +112,7 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
     def _require_elem_type(cls) -> type[T]:
         if cls._elem_type is None:
             raise TypeError(f"{cls.__name__} has no element type — use Array[ElemType]")
-        return cls._elem_type
+        return cast("type[T]", cls._elem_type)
 
     @classmethod
     def _cast_schema(cls) -> ArrayType | None:
