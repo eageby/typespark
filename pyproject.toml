@@ -52,6 +52,7 @@ dev = [
     "devtools>=0.12.2,<0.13",
     "pyspark>=3.5.2,<4.1",
     "pyright>=1.1.414",
+    "ruff>=0.17,<0.18",
 ]
 datacontract = ["typespark[datacontract]"]
 
