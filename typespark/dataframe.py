@@ -194,15 +194,15 @@ class BaseDataFrame(_DataFrameFields, _Base):
 
         new = cls._build(df, col_ref=col_ref)
 
-        object.__setattr__(new, "_alias", alias)
-
         spark_columns = [c.to_spark() for c in new.columns]
         if disable_select:
             extra = set(df.columns) - set(cls._column_aliases())
             spark_columns.extend([F.col(c) for c in extra])
-        object.__setattr__(new, "_dataframe", df.select(*spark_columns))
 
-        return new
+        # Rebind every field to its column in the selected frame, as the
+        # constructor does; otherwise a defaulted field keeps its default
+        # expression and re-inlines it wherever it's used.
+        return cls._wrap(df.select(*spark_columns), alias)
 
     @classmethod
     def lazy(cls, alias: str | None = None) -> Self:

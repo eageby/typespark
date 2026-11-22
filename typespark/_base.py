@@ -172,10 +172,8 @@ class _Base:
                 object.__setattr__(
                     new,
                     field_name,
-                    unwrap_type(f.type)._set_column(
-                        default.to_spark().alias(field_alias),
-                        field_alias,
-                    ),
+                    # The converter pipeline ends in set_alias, so it's aliased.
+                    unwrap_type(f.type)._set_column(default.to_spark(), field_alias),
                 )
             else:
                 raise MissingColumnError(

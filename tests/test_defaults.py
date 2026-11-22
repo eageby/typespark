@@ -17,6 +17,7 @@ from pyspark.sql.types import (
 )
 
 import typespark as ts
+import typespark.functions as tsf
 from typespark import InvalidLiteralDefaultError
 
 
@@ -287,3 +288,65 @@ def test_struct_built_from_its_defaults_as_factory(spark):
     row = Holder.from_df(spark.range(1)).to_df().collect()[0]
     assert row.props.kind == "property"
     assert row.props.note is None
+
+
+# ── Defaulted columns become references after wrapping ───────────────────────
+
+
+def _running(self: "_Ledger") -> ts.Long:
+    return tsf.sum(self.amount).over(ts.Window().orderBy(self.day))
+
+
+class _Ledger(ts.DataFrame):
+    day: ts.Integer
+    amount: ts.Integer
+    running: ts.Long = ts.field(default=attrs.Factory(_running, takes_self=True))
+
+
+def _previous(ledger: _Ledger) -> list:
+    prev = tsf.lag(ledger.running).over(ts.Window().orderBy(ledger.day))
+    return [r[0] for r in ledger.to_df().select(prev.to_spark()).collect()]
+
+
+def test_create_default_is_reference(spark):
+    """Regression: a defaulted column stayed an expression, so a window over it nested."""
+    ledger = _Ledger.create([(1, 10), (2, 20), (3, 5)], spark)
+
+    assert str(ledger.running.to_spark()) == "Column<'running'>"
+    assert _previous(ledger) == [None, 10, 30]
+
+
+def test_from_df_default_is_reference(spark):
+    raw = spark.createDataFrame([(1, 10), (2, 20)], ["day", "amount"])
+    ledger = _Ledger.from_df(raw)
+
+    assert str(ledger.running.to_spark()) == "Column<'running'>"
+    assert _previous(ledger) == [None, 10]
+
+
+def test_from_df_aliased_default_is_reference(spark):
+    raw = spark.createDataFrame([(1, 10), (2, 20)], ["day", "amount"])
+    ledger = _Ledger.from_df(raw, alias="l")
+
+    assert str(ledger.running.to_spark()) == "Column<'l.running'>"
+    assert _previous(ledger) == [None, 10]
+
+
+def test_constructor_default_is_reference(spark):
+    class Raw(ts.DataFrame):
+        day: ts.Integer
+        amount: ts.Integer
+
+    raw = Raw.create([(1, 10), (2, 20)], spark)
+    ledger = _Ledger(raw, day=raw.day, amount=raw.amount)
+
+    assert str(ledger.running.to_spark()) == "Column<'running'>"
+    assert _previous(ledger) == [None, 10]
+
+
+def test_from_df_read_column_unaffected(spark):
+    raw = spark.createDataFrame([(1, 10, 99)], ["day", "amount", "running"])
+    ledger = _Ledger.from_df(raw)
+
+    assert str(ledger.running.to_spark()) == "Column<'running'>"
+    assert [r["running"] for r in ledger.to_df().collect()] == [99]
