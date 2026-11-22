@@ -9,7 +9,7 @@ class Aliasable:
 
 def alias(name: str | None = None):
     def decorator(cls: type) -> type:
-        cls.__serialization_alias__ = name
+        cls.__serialization_alias__ = name  # type: ignore[attr-defined]
         return cls
 
     return decorator

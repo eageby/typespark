@@ -9,7 +9,7 @@ import attrs
 from typespark.metadata import DF_ALIAS, MetaData
 
 
-def get_field_name(field: attrs.Attribute):
+def get_field_name(field: attrs.Attribute) -> str:
     return field.metadata.get(DF_ALIAS, None) or field.name
 
 

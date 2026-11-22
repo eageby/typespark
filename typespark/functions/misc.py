@@ -8,6 +8,7 @@ import typespark as ts
 from typespark.literals import LiteralType
 
 from ._type_aliases import Numeric
+from ._utils import _rewrap
 
 
 def bitwise_not[T: Numeric](col: T) -> T:
@@ -15,7 +16,7 @@ def bitwise_not[T: Numeric](col: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.bitwise_not`.
     """
-    return type(col).wrap(F.bitwise_not(col.to_spark()))
+    return _rewrap(col, F.bitwise_not(col.to_spark()))
 
 
 def crc32(col: ts.Binary) -> ts.Long:
@@ -196,7 +197,7 @@ def nanvl[T: Numeric](col1: T, col2: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.nanvl`.
     """
-    return type(col1).wrap(F.nanvl(col1.to_spark(), col2.to_spark()))
+    return _rewrap(col1, F.nanvl(col1.to_spark(), col2.to_spark()))
 
 
 def nullif[C: ts.Column](col1: C, col2: C) -> C:

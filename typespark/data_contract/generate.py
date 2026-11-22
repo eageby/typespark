@@ -108,13 +108,13 @@ def _field_metadata_ast(field: Field):
 
 def generate_field_ast(name: str, field: Field):
     if field.type is not None:
-        annotation = ast.Name(id=_contract_type_to_pyspark(field.type), ctx=ast.Load())
+        type_name = ast.Name(id=_contract_type_to_pyspark(field.type), ctx=ast.Load())
     else:
         raise ValueError
 
     annotation = ast.AnnAssign(
         target=ast.Name(id=name, ctx=ast.Store()),
-        annotation=annotation,
+        annotation=type_name,
         value=_field_metadata_ast(field),
         simple=1,
     )
@@ -126,6 +126,7 @@ def generate_field_ast(name: str, field: Field):
 
 
 def generate_class_ast(name: str, model: Model):
+    docstring: tuple[ast.Expr, ...]
     if model.description:
         docstring = (ast.Expr(value=ast.Constant(value=model.description)),)
     else:
@@ -212,7 +213,7 @@ def _get_class_dependencies(class_node: ast.ClassDef) -> set[str]:
 
 def _topological_sort_classes(class_defs: list[ast.ClassDef]) -> list[ast.ClassDef]:
     name_to_node = {cls.name: cls for cls in class_defs}
-    graph = defaultdict(set)
+    graph: defaultdict[str, set[str]] = defaultdict(set)
 
     for cls in class_defs:
         deps = _get_class_dependencies(cls)
@@ -241,7 +242,7 @@ def _reorder_classes_in_module(module: ast.Module):
     others = [node for node in module.body if not isinstance(node, ast.ClassDef)]
 
     sorted_classes = _topological_sort_classes(class_defs)
-    module.body = others + sorted_classes
+    module.body = [*others, *sorted_classes]
 
 
 def replace_single_with_triple_quotes(code: str) -> str:

@@ -6,6 +6,7 @@ import typespark
 from typespark.columns.columns import TypedColumn
 
 from ._type_aliases import Numeric
+from ._utils import _rewrap
 
 
 def abs[T: Numeric](col: T) -> T:
@@ -13,7 +14,7 @@ def abs[T: Numeric](col: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.abs`.
     """
-    return type(col).wrap(F.abs(col.to_spark()))
+    return _rewrap(col, F.abs(col.to_spark()))
 
 
 def acos(col: Numeric) -> typespark.Double:
@@ -308,7 +309,7 @@ def negate[T: Numeric](col: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.negate`.
     """
-    return type(col).wrap(F.negate(col.to_spark()))
+    return _rewrap(col, F.negate(col.to_spark()))
 
 
 def pi() -> typespark.Double:
@@ -324,7 +325,7 @@ def pmod[T: Numeric](dividend: T, divisor: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.pmod`.
     """
-    return type(dividend).wrap(F.pmod(dividend.to_spark(), divisor.to_spark()))
+    return _rewrap(dividend, F.pmod(dividend.to_spark(), divisor.to_spark()))
 
 
 def positive[T: Numeric](col: T) -> T:
@@ -332,7 +333,7 @@ def positive[T: Numeric](col: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.positive`.
     """
-    return type(col).wrap(F.positive(col.to_spark()))
+    return _rewrap(col, F.positive(col.to_spark()))
 
 
 def pow(col: Numeric, other: Numeric | float) -> typespark.Double:
@@ -385,7 +386,7 @@ def round[T: Numeric](col: T, scale: int = 0) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.round`.
     """
-    return type(col).wrap(F.round(col.to_spark(), scale))
+    return _rewrap(col, F.round(col.to_spark(), scale))
 
 
 def sec(col: Numeric) -> typespark.Double:
@@ -401,7 +402,7 @@ def sign[T: Numeric](col: T) -> T:
 
     Wrapper for :func:`pyspark.sql.functions.sign`.
     """
-    return type(col).wrap(F.sign(col.to_spark()))
+    return _rewrap(col, F.sign(col.to_spark()))
 
 
 def sin(col: Numeric) -> typespark.Double:

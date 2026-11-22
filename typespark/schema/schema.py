@@ -137,7 +137,7 @@ def _get_type(field: attrs.Attribute):
     return field.type
 
 
-def generate_schema(cls: type[BaseDataFrame | TypedColumn | _Base]):
+def generate_schema(cls: type[_Base]) -> StructType:
     return StructType(
         [
             _construct_struct_field(cls, f)

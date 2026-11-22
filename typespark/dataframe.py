@@ -75,7 +75,7 @@ def _provided_columns(
 _LAZY_CLASS_CACHE: dict[type, type] = {}
 
 
-def _lazy_class(cls: type) -> type:
+def _lazy_class[T](cls: type[T]) -> type[T]:
     """Return (creating once, then caching) a subclass of ``cls`` whose
     ``_dataframe`` access raises ``LazyDataFrameError``.
 
@@ -129,10 +129,10 @@ class BaseDataFrame(_DataFrameFields, _Base):
             }
         )
 
-    def to_spark(self):
+    def to_spark(self) -> pyspark.sql.DataFrame:
         return self._dataframe
 
-    def to_df(self):
+    def to_df(self) -> pyspark.sql.DataFrame:
         return self._dataframe
 
     @classmethod
@@ -392,11 +392,11 @@ class BaseDataFrame(_DataFrameFields, _Base):
 
     def drop_duplicates(self, subset: list[TypedColumn] | None = None) -> Self:
         cols = [c._name for c in subset] if subset is not None else None
-        return self.__class__._wrap(self._dataframe.drop_duplicates(cols))
+        return self.__class__._wrap(self._dataframe.drop_duplicates(cols))  # type: ignore[arg-type]
 
     def dropDuplicates(self, subset: list[TypedColumn] | None = None) -> Self:
         cols = [c._name for c in subset] if subset is not None else None
-        return self.__class__._wrap(self._dataframe.dropDuplicates(cols))
+        return self.__class__._wrap(self._dataframe.dropDuplicates(cols))  # type: ignore[arg-type]
 
     def distinct(self) -> Self:
         return self.__class__._wrap(self._dataframe.distinct())
@@ -416,6 +416,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
         | TypedColumn[BooleanType]
         | Callable[[Self], TypedColumn[BooleanType]],
     ) -> Self:
+        c: pyspark.sql.Column | str
         if callable(condition):
             c = condition(self).to_spark()
         else:
@@ -613,7 +614,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
         self, eventTime: TypedColumn[TimestampType], delayThreshold: str
     ) -> Self:
         return self.__class__._wrap(
-            self.to_spark().withWatermark(eventTime._name, delayThreshold)
+            self.to_spark().withWatermark(eventTime._name, delayThreshold)  # type: ignore[arg-type]
         )
 
     def show(self, n: int = 20, truncate: bool = True, vertical: bool = False) -> None:

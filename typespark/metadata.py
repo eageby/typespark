@@ -1,3 +1,6 @@
+# attrs' mypy plugin requires literal ``alias=`` strings; MetaData uses the
+# metadata key constants instead.
+# mypy: disable-error-code="literal-required"
 import datetime
 import decimal as _decimal
 from collections.abc import Callable, Mapping

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import pyspark.sql
 from pyspark.sql.types import DataType
 
 if TYPE_CHECKING:
+    # Type-only: columns.py imports this module, so a runtime import is circular.
     from typespark.columns import TypedColumn
 
 
@@ -85,7 +86,7 @@ class _AggregateMixin:
     def alias(self, alias: str, **kwargs):
         inst = object.__new__(type(self))
         inst._col = self._col.alias(alias, **kwargs)  # type: ignore[attr-defined]
-        inst._name = alias
+        inst._name = alias  # type: ignore[attr-defined]
         return inst
 
     def cast(self, dataType):
@@ -98,7 +99,7 @@ class _AggregateMixin:
         return super().to_spark()  # type: ignore[misc]
 
 
-_agg_cls_cache: dict[type, type] = {}
+_agg_cls_cache: dict[type, type[TypedColumn[Any]]] = {}
 
 
 def _make_aggregate(target_cls: type, spark_col: pyspark.sql.Column):
@@ -109,10 +110,13 @@ def _make_aggregate(target_cls: type, spark_col: pyspark.sql.Column):
     expression already carries the right type.
     """
     if target_cls not in _agg_cls_cache:
-        _agg_cls_cache[target_cls] = type(
-            f"_Agg{target_cls.__name__}",
-            (_AggregateMixin, target_cls),
-            {"_data_type": None, "_agg_base": target_cls},
+        _agg_cls_cache[target_cls] = cast(
+            "type[TypedColumn[Any]]",
+            type(
+                f"_Agg{target_cls.__name__}",
+                (_AggregateMixin, target_cls),
+                {"_data_type": None, "_agg_base": target_cls},
+            ),
         )
     agg_cls = _agg_cls_cache[target_cls]
     return agg_cls.wrap(spark_col)

@@ -8,8 +8,11 @@ It knows about attrs fields and TypedColumns but NOT about DataFrames.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import (
+    TYPE_CHECKING,
     Any,
+    ClassVar,
     Self,
     dataclass_transform,
 )
@@ -46,6 +49,12 @@ def _convert(f: attrs.Attribute, value: Any, instance: Any) -> Any:
     frozen_default=True,
 )
 class _Base:
+    # Set by attrs at runtime; declared so mypy treats subclasses as
+    # AttrsInstance. ClassVar[Any] matches attrs' own protocol, so it
+    # doesn't clash with attrs classes like _DataFrameFields.
+    if TYPE_CHECKING:
+        __attrs_attrs__: ClassVar[Any]
+
     @property
     def columns(self) -> list[TypedColumn]:
         return [
@@ -62,7 +71,7 @@ class _Base:
         define(cls, field_transformers=field_transformers)
 
     @classmethod
-    def _column_aliases(cls):
+    def _column_aliases(cls) -> Iterator[str]:
         yield from [
             get_field_name(field)
             for field in attrs.fields(cls)
