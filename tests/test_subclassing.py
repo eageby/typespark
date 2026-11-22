@@ -1,14 +1,13 @@
 """Tests for class-based column types: explicit subclasses, ArrayOf caching, and casting."""
 
-import pytest
 import pyspark.sql.functions as F
+import pytest
 from pyspark.sql.types import IntegerType, LongType, StringType
 
+from typespark import UnnamedColumnError
 from typespark.columns.array import ArrayOf, TypedArrayType
 from typespark.columns.columns import TypedColumn
 from typespark.columns.primitives import Integer, String
-from typespark import UnnamedColumnError
-
 
 # ── Primitive subclassing ─────────────────────────────────────────────────────
 

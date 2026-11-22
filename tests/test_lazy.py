@@ -4,7 +4,6 @@ Pure expression building needs no Spark session.
 """
 
 import pytest
-
 from pyspark.sql import Row
 
 from tests.conftest import Person
@@ -63,7 +62,7 @@ def test_multi_key_condition():
 
 def test_on_callable_pattern():
     """The consuming sink pattern: on=lambda t, s: t.id == s.id."""
-    on = lambda t, s: t.name == s.name  # noqa: E731
+    on = lambda t, s: t.name == s.name
     cond = on(Person.lazy("t"), Person.lazy("s"))
     assert str(cond.to_spark()) == "Column<'=(t.name, s.name)'>"
 

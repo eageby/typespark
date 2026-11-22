@@ -405,7 +405,6 @@ class Decimal(_DecimalOpsMixin, TypedColumn[DecimalType]):
     @overload
     def __init__(self, c: "Decimal") -> None:
         """Wrap an existing Decimal column without casting."""
-        ...
 
     @overload
     def __init__(
@@ -415,7 +414,6 @@ class Decimal(_DecimalOpsMixin, TypedColumn[DecimalType]):
         scale: int = 0,
     ) -> None:
         """Cast to DecimalType(precision, scale). Accepts columns or Python literals."""
-        ...
 
     def __init__(self, c, precision=None, scale=None):  # type: ignore[misc]
         if isinstance(c, (int, float, _decimal.Decimal)) or c is None:

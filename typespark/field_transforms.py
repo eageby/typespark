@@ -1,6 +1,7 @@
 import inspect
 import typing
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 import attrs
 import pyspark.sql.functions as F
@@ -56,7 +57,7 @@ def df_alias(func: Callable[[str], str]) -> FieldTransformer:
 def _literal_factory(
     col_cls: type[TypedColumn],
     value: Any,
-    decimal: Optional[tuple[int, int]] = None,
+    decimal: tuple[int, int] | None = None,
 ) -> Callable[[], Any]:
     """Build the default via the column's own constructor.
 
@@ -79,7 +80,7 @@ def _literal_factory(
     return lambda: col_cls(value)
 
 
-def _innermost(col_cls: type) -> Optional[type]:
+def _innermost(col_cls: type) -> type | None:
     """The element type at the bottom of (possibly nested) arrays."""
     while isinstance(col_cls, type) and issubclass(col_cls, TypedArrayType):
         col_cls = col_cls._elem_type  # type: ignore[assignment]
@@ -99,7 +100,7 @@ def _with_decimal(col_cls: type, decimal_type: DecimalType) -> DataType:
     return decimal_type
 
 
-def _decimal_metadata(field: attrs.Attribute) -> Optional[tuple[int, int]]:
+def _decimal_metadata(field: attrs.Attribute) -> tuple[int, int] | None:
     precision = field.metadata.get(metadata.DECIMAL_TYPE_METADATA_PRECISION)
     scale = field.metadata.get(metadata.DECIMAL_TYPE_METADATA_SCALE)
     if precision is None or scale is None:
@@ -113,13 +114,13 @@ def _is_container(col_cls: type) -> bool:
     return issubclass(col_cls, (_Base, TypedArrayType))
 
 
-def _converter_input_type(converter: Any) -> Optional[type[TypedColumn]]:
+def _converter_input_type(converter: Any) -> type[TypedColumn] | None:
     """The column type a converter takes, from its first parameter's annotation.
 
     ``None`` when it can't be resolved (a lambda, no hints, a non-column hint).
     """
     fn = (
-        getattr(converter, "converter")  # not exposed in attrs' stubs
+        getattr(converter, "converter")  # noqa: B009 — not exposed in attrs' stubs
         if isinstance(converter, attrs.Converter)
         else converter
     )
@@ -201,7 +202,7 @@ def converter[T](
 
 def to_transformer(
     converter: Callable[[attrs.Attribute], Callable[[Any], Any]],
-    predicate: Optional[Callable[[attrs.Attribute], bool]] = None,
+    predicate: Callable[[attrs.Attribute], bool] | None = None,
 ) -> FieldTransformer:
     def field_transformer(
         _: type, fields: list[attrs.Attribute]

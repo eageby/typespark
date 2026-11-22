@@ -1,4 +1,4 @@
-__all__ = ["serialize_product", "generate_types"]
+__all__ = ["generate_types", "serialize_product"]
 
 try:
     import datacontract_specification
@@ -8,5 +8,5 @@ except ImportError as e:
         "Please install it with `pip install typespark[datacontract]`."
     ) from e
 
-from .serialize import serialize_product
 from .generate import generate_types
+from .serialize import serialize_product

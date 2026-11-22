@@ -29,7 +29,6 @@ from typespark.columns.primitives import (
     TimestampNTZ,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -223,7 +222,7 @@ def test_cast_to_timestamp_ntz(spark):
 
 def test_decimal_from_int_literal_default_precision(spark):
     result = collect_one(spark, Decimal(42))
-    assert result == decimal.Decimal("42")
+    assert result == decimal.Decimal(42)
 
 
 def test_decimal_from_int_literal_default_schema(spark):

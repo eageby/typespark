@@ -1,7 +1,7 @@
 import functools
 from typing import TYPE_CHECKING, Any, ClassVar, Self, overload
 
-__all__ = ["TypedColumn", "AliasedTypedColumn", "Bool"]
+__all__ = ["AliasedTypedColumn", "Bool", "TypedColumn"]
 
 import pyspark.sql
 import pyspark.sql.functions

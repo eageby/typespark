@@ -7,9 +7,15 @@ from pyspark.sql import SparkSession
 
 from tests.conftest import Id, Person, Range
 from tests.utils import collect_column, collect_values
-from typespark import DataFrame, Int, String, Timestamp
+from typespark import (
+    DataFrame,
+    Int,
+    InvalidDefaultColumnError,
+    MissingColumnError,
+    String,
+    Timestamp,
+)
 from typespark.dataframe import BaseDataFrame
-from typespark import InvalidDefaultColumnError, MissingColumnError
 from typespark.metadata import field
 
 

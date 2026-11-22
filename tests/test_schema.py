@@ -1,5 +1,12 @@
 from pyspark.sql import types
-from pyspark.sql.types import ArrayType, IntegerType, NullType, ShortType, StringType, StructType
+from pyspark.sql.types import (
+    ArrayType,
+    IntegerType,
+    NullType,
+    ShortType,
+    StringType,
+    StructType,
+)
 
 import typespark as ts
 from typespark.columns.struct import Struct

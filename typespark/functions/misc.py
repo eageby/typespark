@@ -2,7 +2,7 @@ from enum import IntEnum, StrEnum
 from typing import overload
 
 import pyspark.sql.functions as F
-import pyspark.sql.types as types
+from pyspark.sql import types
 
 import typespark as ts
 from typespark.literals import LiteralType

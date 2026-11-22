@@ -7,7 +7,6 @@ import typespark as ts
 from typespark import BaseDataFrame
 from typespark.columns.array import TypedArrayType
 from typespark.columns.primitives import Double, Integer, Long, String
-from typespark.columns.columns import Bool
 from typespark.functions.aggregates import (
     approx_count_distinct,
     avg,
@@ -28,10 +27,9 @@ from typespark.functions.aggregates import (
     stddev_pop,
     stddev_samp,
     sum,
-    sumDistinct,
     sum_distinct,
+    sumDistinct,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

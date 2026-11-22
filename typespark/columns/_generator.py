@@ -29,14 +29,14 @@ def _operand(other: OperandType) -> Column | LiteralType:
 
 @attrs.define(eq=False)
 class DeferredColumn:
-    parent: "Generator[Any]"
-    col: "Column | TypedColumn[Any]"
+    parent: Generator[Any]
+    col: Column | TypedColumn[Any]
 
-    def alias(self, alias: str) -> "DeferredColumn":
+    def alias(self, alias: str) -> DeferredColumn:
         self.col = self.to_spark().alias(alias)
         return self
 
-    def cast(self, data_type: DataType) -> "DeferredColumn":
+    def cast(self, data_type: DataType) -> DeferredColumn:
         self.col = self.to_spark().cast(data_type)
         return self
 
@@ -46,7 +46,7 @@ class DeferredColumn:
 
         return self.col.to_spark() if isinstance(self.col, _TypedColumn) else self.col
 
-    def _defer(self, col: "Column | TypedColumn[Any]") -> "DeferredColumn":
+    def _defer(self, col: Column | TypedColumn[Any]) -> DeferredColumn:
         """Keep an operation deferred so the generator still materializes first."""
         return DeferredColumn(self.parent, col)
 
@@ -75,64 +75,64 @@ class DeferredColumn:
         return attr
 
     # Operators — mirror TypedColumn's set, wrapping results as deferred.
-    def __eq__(self, other: OperandType) -> "DeferredColumn":  # type: ignore[override]
+    def __eq__(self, other: OperandType) -> DeferredColumn:  # type: ignore[override]
         return self._defer(self.to_spark() == _operand(other))
 
-    def __ne__(self, other: OperandType) -> "DeferredColumn":  # type: ignore[override]
+    def __ne__(self, other: OperandType) -> DeferredColumn:  # type: ignore[override]
         return self._defer(self.to_spark() != _operand(other))
 
-    def __lt__(self, other: OperandType) -> "DeferredColumn":
+    def __lt__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() < _operand(other))
 
-    def __le__(self, other: OperandType) -> "DeferredColumn":
+    def __le__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() <= _operand(other))
 
-    def __gt__(self, other: OperandType) -> "DeferredColumn":
+    def __gt__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() > _operand(other))
 
-    def __ge__(self, other: OperandType) -> "DeferredColumn":
+    def __ge__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() >= _operand(other))
 
-    def __add__(self, other: OperandType) -> "DeferredColumn":
+    def __add__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() + _operand(other))
 
-    def __radd__(self, other: OperandType) -> "DeferredColumn":
+    def __radd__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark().__radd__(_operand(other)))
 
-    def __sub__(self, other: OperandType) -> "DeferredColumn":
+    def __sub__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() - _operand(other))
 
-    def __rsub__(self, other: OperandType) -> "DeferredColumn":
+    def __rsub__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark().__rsub__(_operand(other)))
 
-    def __mul__(self, other: OperandType) -> "DeferredColumn":
+    def __mul__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() * _operand(other))
 
-    def __rmul__(self, other: OperandType) -> "DeferredColumn":
+    def __rmul__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark().__rmul__(_operand(other)))
 
-    def __truediv__(self, other: OperandType) -> "DeferredColumn":
+    def __truediv__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() / _operand(other))
 
-    def __rtruediv__(self, other: OperandType) -> "DeferredColumn":
+    def __rtruediv__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark().__rtruediv__(_operand(other)))
 
-    def __mod__(self, other: OperandType) -> "DeferredColumn":
+    def __mod__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() % _operand(other))
 
-    def __pow__(self, other: OperandType) -> "DeferredColumn":
+    def __pow__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() ** _operand(other))
 
-    def __neg__(self) -> "DeferredColumn":
+    def __neg__(self) -> DeferredColumn:
         return self._defer(-self.to_spark())
 
-    def __and__(self, other: OperandType) -> "DeferredColumn":
+    def __and__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() & _operand(other))
 
-    def __or__(self, other: OperandType) -> "DeferredColumn":
+    def __or__(self, other: OperandType) -> DeferredColumn:
         return self._defer(self.to_spark() | _operand(other))
 
-    def __invert__(self) -> "DeferredColumn":
+    def __invert__(self) -> DeferredColumn:
         return self._defer(~self.to_spark())
 
 
@@ -156,7 +156,7 @@ class Generator[T: TypedColumn[Any]](ABC):
         return self._elem_type._set_column(col(self._alias), self._alias)
 
     # delegate all unknown attributes/methods to materialized Column
-    def __getattr__(self, name: str) -> "DeferredColumn | Any":
+    def __getattr__(self, name: str) -> DeferredColumn | Any:
         from typespark.columns.columns import TypedColumn as _TypedColumn
 
         materialized = self._materialize()

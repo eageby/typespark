@@ -1,7 +1,8 @@
 import pyspark.sql.functions as F
 
 import typespark
-from typespark.columns.array import ArrayOf, TypedArrayType as _TAT
+from typespark.columns.array import ArrayOf
+from typespark.columns.array import TypedArrayType as _TAT
 
 
 def array[C: typespark.Column](

@@ -1,6 +1,6 @@
 import inspect
 from types import ModuleType
-from typing import List, Optional, Type, get_args, get_origin
+from typing import get_args, get_origin
 
 import attr
 from datacontract_specification.model import DataContractSpecification, Field, Model
@@ -77,7 +77,7 @@ def resolve_pk(t: type[BaseDataFrame]):
         )
 
 
-def foreign_key(t: Optional[type[BaseDataFrame]]):
+def foreign_key(t: type[BaseDataFrame] | None):
     if t is None:
         return None
     pk = resolve_pk(t)
@@ -116,7 +116,7 @@ def serialize_class_metadata(cls: type[BaseDataFrame]):
     return name, Model(description=cls.__doc__, fields=fields, type="table")
 
 
-def find_exposed_subclasses(pkg: ModuleType, base_cls: Type) -> List[Type]:
+def find_exposed_subclasses(pkg: ModuleType, base_cls: type) -> list[type]:
     subclasses = []
 
     for name in getattr(pkg, "__all__", dir(pkg)):

@@ -267,7 +267,7 @@ def test_bool_invert(bools: BoolFrame):
 
 
 def test_bool_eq_literal(bools: BoolFrame):
-    result = collect_column(bools.filter(bools.flag == True), "flag")  # noqa: E712
+    result = collect_column(bools.filter(bools.flag == True), "flag")
     assert result == [True]
 
 

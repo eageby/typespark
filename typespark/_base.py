@@ -9,7 +9,6 @@ It knows about attrs fields and TypedColumns but NOT about DataFrames.
 from __future__ import annotations
 
 from typing import (
-    TYPE_CHECKING,
     Any,
     Self,
     dataclass_transform,
@@ -26,9 +25,6 @@ from typespark.utils import get_field_name, unwrap_type
 from ._define import define
 from .field_transforms import FieldTransformer
 
-if TYPE_CHECKING:
-    pass
-
 
 def _convert(f: attrs.Attribute, value: Any, instance: Any) -> Any:
     """Apply a field's converter like attrs' generated ``__init__`` does."""
@@ -38,11 +34,11 @@ def _convert(f: attrs.Attribute, value: Any, instance: Any) -> Any:
     if isinstance(conv, attrs.Converter):
         # attrs' stubs don't expose these attributes.
         args: list[Any] = [value]
-        if getattr(conv, "takes_self"):
+        if getattr(conv, "takes_self"):  # noqa: B009
             args.append(instance)
-        if getattr(conv, "takes_field"):
+        if getattr(conv, "takes_field"):  # noqa: B009
             args.append(f)
-        return getattr(conv, "converter")(*args)
+        return getattr(conv, "converter")(*args)  # noqa: B009
     return conv(value)
 
 

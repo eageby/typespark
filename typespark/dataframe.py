@@ -8,14 +8,10 @@ For operations not wrapped here, use .to_df() to access the underlying DataFrame
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable, Mapping
 from typing import (
     Any,
-    Callable,
-    Iterable,
-    Mapping,
-    Optional,
     Self,
-    Union,
     dataclass_transform,
     overload,
 )
@@ -37,7 +33,7 @@ from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.utils import get_field_name
 
 
-def _dataframe_converter(df: "BaseDataFrame | pyspark.sql.DataFrame"):
+def _dataframe_converter(df: BaseDataFrame | pyspark.sql.DataFrame):
     if isinstance(df, pyspark.sql.DataFrame):
         return df
     return df.to_df()
@@ -109,7 +105,7 @@ class _DataFrameFields:
     _dataframe: pyspark.sql.DataFrame = attrs.field(
         converter=_dataframe_converter, alias="df"
     )
-    _alias: Optional[str] = attrs.field(init=False, default=None)
+    _alias: str | None = attrs.field(init=False, default=None)
 
 
 @dataclass_transform(
@@ -394,11 +390,11 @@ class BaseDataFrame(_DataFrameFields, _Base):
         spark_cols = [c.to_spark() if isinstance(c, TypedColumn) else c for c in cols]
         return BaseDataFrame._wrap(self._dataframe.drop(*spark_cols))
 
-    def drop_duplicates(self, subset: "list[TypedColumn] | None" = None) -> Self:
+    def drop_duplicates(self, subset: list[TypedColumn] | None = None) -> Self:
         cols = [c._name for c in subset] if subset is not None else None
         return self.__class__._wrap(self._dataframe.drop_duplicates(cols))
 
-    def dropDuplicates(self, subset: "list[TypedColumn] | None" = None) -> Self:
+    def dropDuplicates(self, subset: list[TypedColumn] | None = None) -> Self:
         cols = [c._name for c in subset] if subset is not None else None
         return self.__class__._wrap(self._dataframe.dropDuplicates(cols))
 
@@ -415,10 +411,7 @@ class BaseDataFrame(_DataFrameFields, _Base):
 
     def filter(
         self,
-        condition: Union[
-            str | pyspark.sql.Column | TypedColumn[BooleanType],
-            Callable[[Self], TypedColumn[BooleanType]],
-        ],
+        condition: str | pyspark.sql.Column | TypedColumn[BooleanType] | Callable[[Self], TypedColumn[BooleanType]],
     ) -> Self:
         if callable(condition):
             c = condition(self).to_spark()

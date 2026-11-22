@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, Callable, Iterable, get_args
+from collections.abc import Callable, Iterable
+from typing import TYPE_CHECKING, get_args
 
 import attrs
 from attr import AttrsInstance
@@ -107,7 +108,7 @@ def get_type_instance(field: attrs.Attribute, m: MetaData) -> DataType:
 
 
 def _construct_struct_field(
-    cls: type[BaseDataFrame] | type[TypedColumn] | type[_Base], field: attrs.Attribute
+    cls: type[BaseDataFrame | TypedColumn | _Base], field: attrs.Attribute
 ):
     m = MetaData(**field.metadata)
     name = m.df_alias or field.name
@@ -134,7 +135,7 @@ def _get_type(field: attrs.Attribute):
     return field.type
 
 
-def generate_schema(cls: type[BaseDataFrame] | type[TypedColumn] | type[_Base]):
+def generate_schema(cls: type[BaseDataFrame | TypedColumn | _Base]):
     return StructType(
         [
             _construct_struct_field(cls, f)

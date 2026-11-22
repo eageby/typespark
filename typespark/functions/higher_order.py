@@ -1,9 +1,11 @@
 import inspect
-from typing import Callable, cast, overload
+from collections.abc import Callable
+from typing import cast, overload
 
-import typespark as ts
 from pyspark.sql import Column
 from pyspark.sql import functions as F
+
+import typespark as ts
 
 
 def filter[T: ts.Column](col: ts.Array[T], f: Callable[[T], ts.Bool]) -> ts.Array[T]:

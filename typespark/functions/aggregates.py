@@ -29,8 +29,8 @@ from typing import TypeVar, overload
 from pyspark.sql import functions as F
 
 from typespark.columns import TypedColumn
-from typespark.columns.array import ArrayOf, TypedArrayType
 from typespark.columns._groups import _make_aggregate
+from typespark.columns.array import ArrayOf, TypedArrayType
 from typespark.columns.columns import Bool
 from typespark.columns.primitives import Double, Float, Integer, Long, Short
 

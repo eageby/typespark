@@ -43,6 +43,13 @@ __all__ = [
     "LazyDataFrameError",
 ]
 
+from typespark._exceptions import (
+    InvalidDefaultColumnError,
+    InvalidLiteralDefaultError,
+    LazyDataFrameError,
+    MissingColumnError,
+    UnnamedColumnError,
+)
 from typespark.columns import ArrayOf, TypedArrayType, TypedColumn
 from typespark.columns.primitives import (
     Binary,
@@ -62,13 +69,6 @@ from typespark.columns.primitives import (
 )
 from typespark.columns.struct import Struct
 from typespark.dataframe import BaseDataFrame
-from typespark._exceptions import (
-    InvalidDefaultColumnError,
-    InvalidLiteralDefaultError,
-    LazyDataFrameError,
-    MissingColumnError,
-    UnnamedColumnError,
-)
 from typespark.metadata import decimal, field, foreign_key, primary_key
 from typespark.window import Window, WindowSpec
 
