@@ -27,9 +27,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-pyspark = ["pyspark>=3.5.2,<4.1"]
+pyspark = ["pyspark>=3.5.2,<4.4"]
 datacontract = [
-    "pyspark>=3.5.2,<4.1",
+    "pyspark>=3.5.2,<4.4",
     "black>=25.1.0,<26",
     "datacontract-specification>=1.2.0,<2",
     "click>=8.2.1,<9",
@@ -50,7 +50,7 @@ dev = [
     "pyarrow>=19.0.0,<20",
     "prettyprinter>=0.18.0,<0.19",
     "devtools>=0.12.2,<0.13",
-    "pyspark>=3.5.2,<4.1",
+    "pyspark>=3.5.2,<4.4",
     "pyright>=1.1.414",
     "ruff>=0.17,<0.18",
 ]

@@ -17,17 +17,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Both supported Spark lines; Spark 3.5 doesn't support Python 3.13.
-        # pyspark 3.5's pandas support imports distutils, which Python 3.12
-        # dropped, so that job also installs setuptools.
+        # Supported Spark/Python combinations, plus the latest Spark on the
+        # newest Python. pyspark 3.5's pandas support imports distutils, which
+        # Python 3.12 dropped, so that job also installs setuptools.
         include:
           - python-version: "3.12"
             pyspark: "3.5.*"
             extra: setuptools
           - python-version: "3.12"
             pyspark: "4.0.*"
+          - python-version: "3.12"
+            pyspark: "4.1.*"
           - python-version: "3.13"
-            pyspark: "4.0.*"
+            pyspark: "4.3.*"
     steps:
       - uses: actions/checkout@v4
         with:
