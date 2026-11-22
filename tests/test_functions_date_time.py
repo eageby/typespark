@@ -1,11 +1,14 @@
 import datetime
 
 import pyspark.errors
+import pyspark.sql.functions
 import pyspark.sql.types
 import pytest
+from py4j.protocol import Py4JJavaError
 from pyspark.sql import SparkSession
 
 import typespark
+from tests.conftest import requires_spark4
 from tests.utils import collect_column, collect_values
 from typespark import functions as tsf
 
@@ -447,6 +450,7 @@ def test_weekofyear(spark: SparkSession):
     )
 
 
+@requires_spark4
 def test_timestamp_add(spark: SparkSession):
     class Timestamps(typespark.DataFrame):
         ts: typespark.Timestamp
@@ -527,13 +531,23 @@ def test_to_date_error(spark: SparkSession):
         spark.createDataFrame(data, schema=DateString.generate_schema())
     )
 
-    result = df.select(
-        tsf.to_date(df.date_str, "yyyy:MM:dd").alias("parsed"),
-    )
-
-    # Should raise DateTimeException when parsing fails
-    with pytest.raises(pyspark.errors.DateTimeException):
-        collect_column(result, "parsed")
+    # Parse errors raise only in ANSI mode, which is on by default from Spark 4.0.
+    # Set it before building the query: Spark 3.5 fixes it when the plan is analyzed.
+    previous = spark.conf.get("spark.sql.ansi.enabled")
+    spark.conf.set("spark.sql.ansi.enabled", "true")
+    try:
+        result = df.select(
+            tsf.to_date(df.date_str, "yyyy:MM:dd").alias("parsed"),
+        )
+        # pyspark 4.0 raises DateTimeException; 3.5 surfaces the same Spark error
+        # as a Py4JJavaError.
+        with pytest.raises(
+            (pyspark.errors.DateTimeException, Py4JJavaError),
+            match="CANNOT_PARSE_TIMESTAMP",
+        ):
+            collect_column(result, "parsed")
+    finally:
+        spark.conf.set("spark.sql.ansi.enabled", previous)
 
 
 def test_year_dates(spark: SparkSession):
@@ -700,6 +714,7 @@ def test_current_timestamp(spark: SparkSession):
     )
 
 
+@requires_spark4
 def test_timestamp_ntz_functions(spark: SparkSession):
     class Timestamps(typespark.DataFrame):
         ts: typespark.TimestampNTZ

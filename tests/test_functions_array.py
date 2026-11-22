@@ -2,6 +2,7 @@ import pyspark.sql.types
 from pyspark.sql import Row, SparkSession
 
 import typespark as ts
+from tests.conftest import requires_spark4
 from tests.utils import collect_column, collect_values
 from typespark import functions as tsf
 
@@ -316,6 +317,7 @@ def test_array_max_min(spark: SparkSession):
     )
 
 
+@requires_spark4
 def test_array_position(spark: SparkSession):
     class Arrays(ts.DataFrame):
         a: ts.TypedArrayType[ts.Int]
@@ -341,6 +343,7 @@ def test_array_prepend(spark: SparkSession):
     assert collect_column(result, "v") == [[1, 2, 3]]
 
 
+@requires_spark4
 def test_array_remove(spark: SparkSession):
     class Arrays(ts.DataFrame):
         a: ts.TypedArrayType[ts.Int]

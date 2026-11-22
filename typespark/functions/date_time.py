@@ -3,6 +3,7 @@ from typing import Literal
 import pyspark.sql.functions as F
 
 import typespark
+from typespark.functions._utils import _require_spark
 
 from ._type_aliases import AnyTimestamp, DateOrTimestamp
 
@@ -242,8 +243,9 @@ def timestamp_add[T: (typespark.Timestamp, typespark.TimestampNTZ)](
 ) -> T:
     """Adds `quantity` units to `ts`. `unit` is a string such as 'YEAR', 'MONTH', 'DAY', 'HOUR', etc.
 
-    Wrapper for :func:`pyspark.sql.functions.timestamp_add`.
+    Wrapper for :func:`pyspark.sql.functions.timestamp_add`. Requires Spark 4.0+.
     """
+    _require_spark("4.0", "tsf.timestamp_add")
     return type(ts).wrap(F.timestamp_add(unit, quantity.to_spark(), ts.to_spark()))
 
 

@@ -8,6 +8,7 @@ from pyspark.sql.types import (
 )
 
 import typespark
+from tests.conftest import requires_spark4
 from tests.utils import collect_column
 from typespark import functions as tsf
 from typespark.columns.array import TypedArrayType
@@ -142,32 +143,42 @@ def test_ltrim(spark: SparkSession):
 
     df = Data.from_df(spark.createDataFrame(data, schema=Data.generate_schema()))
 
-    result = df.select(
-        tsf.ltrim(df.s).alias("default_trimmed"),
-        tsf.ltrim(df.s, df.trim).alias("trimmed"),
-    )
+    result = df.select(tsf.ltrim(df.s).alias("default_trimmed"))
 
-    default = collect_column(result, "default_trimmed")
-    trimmed = collect_column(result, "trimmed")
-
-    assert default == [
+    assert collect_column(result, "default_trimmed") == [
         "xxhello",
         "xyxworld  ",
         "both  ",
         "nochange",
     ]
+    assert isinstance(
+        result.to_spark().schema["default_trimmed"].dataType,
+        StringType,
+    )
 
-    assert trimmed == [
+
+@requires_spark4
+def test_ltrim_with_trim_characters(spark: SparkSession):
+    class Data(typespark.DataFrame):
+        s: typespark.String
+        trim: typespark.String
+
+    data = [
+        ("xxhello", "x"),
+        ("xyxworld  ", "xy"),
+        ("   both  ", " "),
+        ("nochange", "x"),
+    ]
+    df = Data.from_df(spark.createDataFrame(data, schema=Data.generate_schema()))
+
+    result = df.select(tsf.ltrim(df.s, df.trim).alias("trimmed"))
+
+    assert collect_column(result, "trimmed") == [
         "hello",
         "world  ",
         "both  ",
         "nochange",
     ]
-
-    assert isinstance(
-        result.to_spark().schema["default_trimmed"].dataType,
-        StringType,
-    )
     assert isinstance(
         result.to_spark().schema["trimmed"].dataType,
         StringType,
@@ -642,3 +653,17 @@ def test_regexp_extract_all_column_pattern(spark: SparkSession):
 
     result = df.select(tsf.regexp_extract_all(df.s, df.pat, 0).alias("v"))
     assert collect_column(result, "v") == [["foo", "bar"]]
+
+
+@requires_spark4
+def test_rtrim_with_trim_characters(spark: SparkSession):
+    class Strings(typespark.DataFrame):
+        s: typespark.String
+        trim: typespark.String
+
+    df = Strings.from_df(
+        spark.createDataFrame([("xyHELLOyx", "xy")], schema=Strings.generate_schema())
+    )
+    assert collect_column(df.select(tsf.rtrim(df.s, df.trim).alias("v")), "v") == [
+        "xyHELLO"
+    ]

@@ -13,6 +13,7 @@ from typespark import (
     TypedArrayType,
     TypedColumn,
 )
+from typespark.functions._utils import _require_spark
 
 from ._type_aliases import Numeric
 
@@ -235,7 +236,10 @@ def ltrim(col: String, trim: String | None = None) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.ltrim`.
     """
-    return String.wrap(F.ltrim(col.to_spark(), trim.to_spark() if trim else None))
+    if trim is None:
+        return String.wrap(F.ltrim(col.to_spark()))
+    _require_spark("4.0", "tsf.ltrim with trim")
+    return String.wrap(F.ltrim(col.to_spark(), trim.to_spark()))
 
 
 def octet_length(col: String | Binary) -> Int:
@@ -385,7 +389,10 @@ def rtrim(col: String, trim: String | None = None) -> String:
 
     Wrapper for :func:`pyspark.sql.functions.rtrim`.
     """
-    return String.wrap(F.rtrim(col.to_spark(), trim.to_spark() if trim else None))
+    if trim is None:
+        return String.wrap(F.rtrim(col.to_spark()))
+    _require_spark("4.0", "tsf.rtrim with trim")
+    return String.wrap(F.rtrim(col.to_spark(), trim.to_spark()))
 
 
 def sha1(col: Binary | String) -> String:

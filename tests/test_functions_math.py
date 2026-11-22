@@ -8,7 +8,8 @@ import typespark as ts
 from typespark import DataFrame, Decimal, Double, Float, Int, Integer, Long
 from typespark import functions as tsf
 
-from .utils import collect_column
+from .conftest import requires_spark4
+from .utils import collect_column, collect_values
 
 
 def test_atan2_float(spark: SparkSession):
@@ -530,11 +531,15 @@ def all_nums(spark: SparkSession) -> AllNums:
         ("i", tsf.ceil, Long, LongType),
         ("d", tsf.ceil, Long, LongType),
         ("dec", tsf.ceil, Decimal, DecimalType),
-        ("d", lambda c: tsf.ceil(c, 1), Decimal, DecimalType),
+        pytest.param(
+            "d", lambda c: tsf.ceil(c, 1), Decimal, DecimalType, marks=requires_spark4
+        ),
         ("i", tsf.floor, Long, LongType),
         ("f", tsf.floor, Long, LongType),
         ("dec", tsf.floor, Decimal, DecimalType),
-        ("d", lambda c: tsf.floor(c, 1), Decimal, DecimalType),
+        pytest.param(
+            "d", lambda c: tsf.floor(c, 1), Decimal, DecimalType, marks=requires_spark4
+        ),
     ],
 )
 def test_rounding_return_types(all_nums: AllNums, field, func, expected, spark_type):
@@ -542,3 +547,15 @@ def test_rounding_return_types(all_nums: AllNums, field, func, expected, spark_t
     assert type(result) is expected
     actual = all_nums.to_df().select(result.to_spark().alias("v")).schema["v"].dataType
     assert isinstance(actual, spark_type)
+
+
+@requires_spark4
+def test_ceil_floor_with_scale_values(spark: SparkSession):
+    class Nums(ts.DataFrame):
+        d: ts.Double
+
+    df = Nums.from_df(spark.createDataFrame([(1.234,)], schema=Nums.generate_schema()))
+    row = collect_values(
+        df.select(tsf.ceil(df.d, 1).alias("c"), tsf.floor(df.d, 1).alias("f"))
+    )[0]
+    assert (float(row["c"]), float(row["f"])) == (1.3, 1.2)

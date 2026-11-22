@@ -6,7 +6,7 @@ import typespark
 from typespark.columns.columns import TypedColumn
 
 from ._type_aliases import Numeric
-from ._utils import _rewrap
+from ._utils import _require_spark, _rewrap
 
 
 def abs[T: Numeric](col: T) -> T:
@@ -135,6 +135,9 @@ def ceil(
         if scale is not None or isinstance(col, typespark.Decimal)
         else typespark.Long
     )
+    if scale is None:
+        return target.wrap(F.ceil(col.to_spark()))
+    _require_spark("4.0", "tsf.ceil with scale")
     return target.wrap(
         F.ceil(
             col.to_spark(),
@@ -246,6 +249,9 @@ def floor(
         if scale is not None or isinstance(col, typespark.Decimal)
         else typespark.Long
     )
+    if scale is None:
+        return target.wrap(F.floor(col.to_spark()))
+    _require_spark("4.0", "tsf.floor with scale")
     return target.wrap(
         F.floor(
             col.to_spark(),

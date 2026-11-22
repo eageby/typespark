@@ -5,6 +5,7 @@ Pure expression building needs no Spark session.
 
 import pytest
 from pyspark.sql import Row
+from pyspark.sql import functions as F
 
 from tests.conftest import Person
 from typespark import BaseDataFrame, Int, LazyDataFrameError, String
@@ -50,21 +51,23 @@ def test_unaliased_column_renders_bare():
 def test_single_key_condition():
     t = Person.lazy("t")
     s = Person.lazy("s")
-    assert str((t.name == s.name).to_spark()) == "Column<'=(t.name, s.name)'>"
+    # Spark versions print expressions differently; compare against plain PySpark.
+    assert str((t.name == s.name).to_spark()) == str(F.col("t.name") == F.col("s.name"))
 
 
 def test_multi_key_condition():
     t = Person.lazy("t")
     s = Person.lazy("s")
     cond = (t.name == s.name) & (t.age == s.age)
-    assert str(cond.to_spark()) == "Column<'and(=(t.name, s.name), =(t.age, s.age))'>"
+    expected = (F.col("t.name") == F.col("s.name")) & (F.col("t.age") == F.col("s.age"))
+    assert str(cond.to_spark()) == str(expected)
 
 
 def test_on_callable_pattern():
     """The consuming sink pattern: on=lambda t, s: t.id == s.id."""
     on = lambda t, s: t.name == s.name
     cond = on(Person.lazy("t"), Person.lazy("s"))
-    assert str(cond.to_spark()) == "Column<'=(t.name, s.name)'>"
+    assert str(cond.to_spark()) == str(F.col("t.name") == F.col("s.name"))
 
 
 # ── Guardrails: data access raises ──────────────────────────────────────
@@ -130,20 +133,21 @@ def test_nested_struct_column():
 
 def test_nested_struct_subfield():
     t = _Cust.lazy("t")
-    assert str(t.address.city.to_spark()) == "Column<'t.address['city']'>"
+    assert str(t.address.city.to_spark()) == str(F.col("t.address")["city"])
 
 
 def test_nested_struct_condition():
     t = _Cust.lazy("t")
     s = _Cust.lazy("s")
     cond = t.address.city == s.address.city
-    assert str(cond.to_spark()) == "Column<'=(t.address['city'], s.address['city'])'>"
+    expected = F.col("t.address")["city"] == F.col("s.address")["city"]
+    assert str(cond.to_spark()) == str(expected)
 
 
 def test_nested_struct_df_alias():
     t = _AliasedCust.lazy("t")
-    assert str(t.address.to_spark()) == "Column<'t.addr_raw'>"
-    assert str(t.address.city.to_spark()) == "Column<'t.addr_raw['city_raw']'>"
+    assert str(t.address.to_spark()) == str(F.col("t.addr_raw"))
+    assert str(t.address.city.to_spark()) == str(F.col("t.addr_raw")["city_raw"])
 
 
 def test_lazy_subfield_matches_real_aliased_frame(spark):

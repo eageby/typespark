@@ -41,6 +41,7 @@ __all__ = [  # noqa: RUF022 — grouped by kind, see the comments
     "InvalidDefaultColumnError",
     "InvalidLiteralDefaultError",
     "LazyDataFrameError",
+    "UnsupportedSparkFeatureError",
 ]
 
 from typespark._exceptions import (
@@ -49,6 +50,7 @@ from typespark._exceptions import (
     LazyDataFrameError,
     MissingColumnError,
     UnnamedColumnError,
+    UnsupportedSparkFeatureError,
 )
 from typespark.columns import ArrayOf, TypedArrayType, TypedColumn
 from typespark.columns.primitives import (

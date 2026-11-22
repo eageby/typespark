@@ -6,11 +6,18 @@ import sys
 os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
 os.environ.setdefault("PYSPARK_DRIVER_PYTHON", sys.executable)
 
+import pyspark as _pyspark
 import pytest
 from pyspark.sql import DataFrame, Row, SparkSession, types
 
 from typespark import Int, String
 from typespark.dataframe import BaseDataFrame
+
+SPARK4 = int(_pyspark.__version__.split(".")[0]) >= 4
+
+# Features typespark only supports on Spark 4.0+ (they raise UnsupportedSparkFeatureError
+# on 3.5); see test_spark_version.py.
+requires_spark4 = pytest.mark.skipif(not SPARK4, reason="needs Spark >= 4.0")
 
 
 @pytest.fixture(scope="module")

@@ -91,3 +91,17 @@ class InvalidLiteralDefaultError(ValueError):
 
         msg = f"Invalid default for {model.__name__}.{field_name}: {value!r}. {reason}"
         super().__init__(msg)
+
+
+class UnsupportedSparkFeatureError(RuntimeError):
+    """A typespark function needs a newer Spark than the one installed."""
+
+    def __init__(self, feature: str, *, min_spark: str):
+        import pyspark
+
+        self.feature = feature
+        self.min_spark = min_spark
+        super().__init__(
+            f"{feature} requires Spark >= {min_spark} "
+            f"(pyspark {pyspark.__version__} is installed)."
+        )

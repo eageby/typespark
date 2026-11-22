@@ -3,6 +3,7 @@ import pyspark.sql.functions as F
 import typespark
 from typespark.columns.array import TypedArrayType as _TAT
 from typespark.columns.array import _array_of
+from typespark.functions._utils import _require_spark
 
 
 def array[C: typespark.Column](
@@ -128,6 +129,8 @@ def array_position[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.array_position`.
     """
+    # Passing a Column as the value needs Spark 4.0.
+    _require_spark("4.0", "tsf.array_position")
     return typespark.Long.wrap(F.array_position(col.to_spark(), value.to_spark()))
 
 
@@ -148,6 +151,8 @@ def array_remove[T: typespark.TypedColumn](
 
     Wrapper for :func:`pyspark.sql.functions.array_remove`.
     """
+    # Passing a Column as the element needs Spark 4.0.
+    _require_spark("4.0", "tsf.array_remove")
     return col.__class__.wrap(F.array_remove(col.to_spark(), element.to_spark()))  # type: ignore
 
 

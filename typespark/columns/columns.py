@@ -278,11 +278,12 @@ class Bool(TypedColumn[BooleanType]):
     def __ne__(self, other: "Bool | bool") -> "Bool":  # type: ignore[override]
         return Bool.wrap(self._col.__ne__(_unwrap(other)))
 
+    # Spark 3.5 rejects a bare Python bool here, so literals go through F.lit.
     def __and__(self, other: "Bool | bool") -> "Bool":
-        return Bool.wrap(self._col.__and__(_unwrap(other)))
+        return Bool.wrap(self._col.__and__(_lit_bool(other)))
 
     def __or__(self, other: "Bool | bool") -> "Bool":
-        return Bool.wrap(self._col.__or__(_unwrap(other)))
+        return Bool.wrap(self._col.__or__(_lit_bool(other)))
 
     def __invert__(self) -> "Bool":
         return Bool.wrap(self._col.__invert__())
@@ -290,3 +291,10 @@ class Bool(TypedColumn[BooleanType]):
 
 def _unwrap(other: object) -> Any:
     return other._col if isinstance(other, TypedColumn) else other  # type: ignore[union-attr]
+
+
+def _lit_bool(other: object) -> Any:
+    """Like _unwrap, but a Python bool becomes F.lit(bool) (Spark 3.5 needs it)."""
+    if isinstance(other, bool):
+        return pyspark.sql.functions.lit(other)
+    return _unwrap(other)
