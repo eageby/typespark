@@ -384,8 +384,11 @@ class BaseDataFrame(_DataFrameFields, _Base):
 
     # ── Transforms ───────────────────────────────────────────────────
 
-    def withColumn(self, colName: str, col: pyspark.sql.Column) -> BaseDataFrame:
-        return BaseDataFrame._wrap(self._dataframe.withColumn(colName, col))
+    def withColumn(
+        self, colName: str, col: pyspark.sql.Column | TypedColumn
+    ) -> BaseDataFrame:
+        spark_col = col.to_spark() if isinstance(col, TypedColumn) else col
+        return BaseDataFrame._wrap(self._dataframe.withColumn(colName, spark_col))
 
     def drop(self, *cols: str | TypedColumn | pyspark.sql.Column) -> BaseDataFrame:
         spark_cols = [c.to_spark() if isinstance(c, TypedColumn) else c for c in cols]

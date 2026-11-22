@@ -343,3 +343,15 @@ def test_drop_duplicates_with_subset(spark: SparkSession):
     result = df.drop_duplicates(subset=[df.name])
     assert len(collect_values(result)) == 2
     assert isinstance(result, Person)
+
+
+def test_with_column_accepts_typed_column(spark: SparkSession):
+    df = Person.from_df(spark.createDataFrame([("Alice", 30)], ["name", "age"]))
+    result = df.withColumn("age_next", df.age + 1)
+    assert collect_column(result, "age_next") == [31]
+
+
+def test_with_column_accepts_spark_column(spark: SparkSession):
+    df = Person.from_df(spark.createDataFrame([("Alice", 30)], ["name", "age"]))
+    result = df.withColumn("age_next", df.age.to_spark() + 1)
+    assert collect_column(result, "age_next") == [31]
