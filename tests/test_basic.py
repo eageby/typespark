@@ -317,7 +317,7 @@ def test_factory_default_must_return_typed_column(dataframe):
     class ExtendedPerson(BaseDataFrame):
         name: String
         age: Int
-        surname: String = field(factory=lambda: "Doe")
+        surname: String = field(factory=lambda: "Doe")  # type: ignore  # invalid on purpose
 
     with pytest.raises(InvalidDefaultColumnError):
         ExtendedPerson.from_df(dataframe)

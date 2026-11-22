@@ -67,8 +67,10 @@ def test_schema_element_type_equality():
 
     schema = Data.generate_schema()
 
-    assert schema["tags"].dataType.elementType == StringType()
-    assert schema["counts"].dataType.elementType == IntegerType()
+    tags, counts = schema["tags"].dataType, schema["counts"].dataType
+    assert isinstance(tags, ArrayType) and isinstance(counts, ArrayType)
+    assert tags.elementType == StringType()
+    assert counts.elementType == IntegerType()
 
 
 def test_schema_nested_struct():
@@ -89,7 +91,8 @@ def test_schema_nested_struct():
 
 def test_schema_array_of_struct():
     class Item(Struct):
-        name: ts.String
+        # `name` would shadow Column.name(); keep the Spark column via df_alias.
+        name_: ts.String = field(df_alias="name")
         count: ts.Integer
 
     class Data(ts.DataFrame):
@@ -157,7 +160,7 @@ def test_schema_bare_typed_column_instance():
     """Bare TypedColumn[T] with a DataType instance should be returned as-is."""
 
     class Data(ts.DataFrame):
-        a: ts.Column[NullType()]  # type: ignore[type-arg]
+        a: ts.Column[NullType()]  # type: ignore
 
     schema = Data.generate_schema()
     assert schema["a"].dataType == NullType()

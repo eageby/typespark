@@ -77,3 +77,9 @@ packages = ["typespark"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[[tool.mypy.overrides]]
+# pyright examples (checked by tests/test_typecheck.py); mypy doesn't model the
+# DataFrame(df, field=...) constructor, so its verdict on them doesn't apply.
+module = "tests.typecheck.*"
+ignore_errors = true

@@ -108,7 +108,7 @@ def test_factory_accepts_attrs_factory_with_takes_self(spark):
 
 def test_default_and_factory_are_exclusive():
     with pytest.raises(ValueError, match="exclusive"):
-        ts.field(default=None, factory=lambda: ts.String("x"))
+        ts.field(default=None, factory=lambda: ts.String("x"))  # type: ignore  # invalid on purpose
 
 
 def test_none_default_on_non_nullable_field_raises():
@@ -122,14 +122,14 @@ def test_non_none_literal_default_on_struct_raises():
     with pytest.raises(InvalidLiteralDefaultError, match="struct or array"):
 
         class Bad(ts.DataFrame):
-            address: Address = ts.field(default="Lund")
+            address: Address = ts.field(default="Lund")  # type: ignore  # invalid on purpose
 
 
 def test_non_none_literal_default_on_array_raises():
     with pytest.raises(InvalidLiteralDefaultError, match="struct or array"):
 
         class Bad(ts.DataFrame):
-            tags: ts.Array[ts.String] = ts.field(default="a")
+            tags: ts.Array[ts.String] = ts.field(default="a")  # type: ignore  # invalid on purpose
 
 
 def test_timestamp_ntz_default_keeps_wall_clock(spark):

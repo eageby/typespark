@@ -165,7 +165,8 @@ def id_array_struct_dataframe(spark):
 
 
 class _Nested(Struct):
-    name: String
+    # `name` would shadow Column.name(); keep the Spark column via df_alias.
+    name_: String = field(df_alias="name")
     age: Integer
 
 
@@ -305,7 +306,7 @@ def test_nested_array_decimal_precision_scale(decimal_strings):
 
 def test_array_precision_on_non_decimal_raises():
     with pytest.raises(TypeError):
-        ts.Array[ts.String](F.col("flat"), precision=18, scale=4)  # type: ignore[call-overload]
+        ts.Array[ts.String](F.col("flat"), precision=18, scale=4)  # type: ignore
 
 
 def test_array_decimal_explode_and_get_item(decimal_strings):

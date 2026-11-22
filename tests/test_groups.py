@@ -10,7 +10,7 @@ from typespark.functions.aggregates import count, sum
 def test_total(person: Person):
     class Aggregate(ts.DataFrame):
         name: ts.String
-        total: ts.Int
+        total: ts.Long
 
     df = person.union(person)
 
@@ -24,7 +24,7 @@ def test_total(person: Person):
 def test_count(person: Person):
     class Aggregate(ts.DataFrame):
         name: ts.String
-        n_rows: ts.Int
+        n_rows: ts.Long
 
     df = person.union(person)
     tf = Aggregate(df, name=df.name.group(), n_rows=count(df.age))
@@ -36,7 +36,7 @@ def test_count(person: Person):
 
 def test_no_group(person: Person):
     class Aggregate(ts.DataFrame):
-        n_rows: ts.Int
+        n_rows: ts.Long
 
     df = person.union(person)
     tf = Aggregate(df, n_rows=count(df.age))
@@ -46,8 +46,8 @@ def test_no_group(person: Person):
 
 def test_global_composite_aggregate(person: Person):
     class Aggregate(ts.DataFrame):
-        total: ts.Int
-        double_total: ts.Int
+        total: ts.Long
+        double_total: ts.Long
 
     df = person.union(person)
     tf = Aggregate(df, total=sum(df.age), double_total=sum(df.age) + sum(df.age))
@@ -70,7 +70,7 @@ def test_no_agg(person: Person):
 def test_rematerialization_type(person: Person):
     class Aggregate(ts.DataFrame):
         name: ts.String
-        total: ts.Int
+        total: ts.Long
 
     df = person.union(person)
     tf = Aggregate(df, name=df.name.group(), total=sum(df.age))
@@ -82,7 +82,7 @@ def test_rematerialization_type(person: Person):
 def test_rematerialization_arithmetic(person: Person):
     class Aggregate(ts.DataFrame):
         name: ts.String
-        total: ts.Int
+        total: ts.Long
 
     df = person.union(person)
     tf = Aggregate(df, name=df.name.group(), total=sum(df.age))
@@ -94,7 +94,7 @@ def test_rematerialization_arithmetic(person: Person):
 def test_composite_aggregate(person: Person):
     class Aggregate(ts.DataFrame):
         name: ts.String
-        double_total: ts.Int
+        double_total: ts.Long
 
     df = person.union(person)
     tf = Aggregate(df, name=df.name.group(), double_total=sum(df.age) + sum(df.age))

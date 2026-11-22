@@ -78,4 +78,4 @@ jobs:
 
       - name: pyright
         if: always()
-        run: uv run pyright typespark/
+        run: uv run pyright typespark/ tests/

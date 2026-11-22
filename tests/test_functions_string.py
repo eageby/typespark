@@ -52,7 +52,7 @@ def test_concat_arrays(spark: SparkSession):
     assert collect_column(result, "c") == [[1, 2, 3, 4], [5, 6, 7, 8]]
     schema = result.to_spark().schema["c"].dataType
     assert isinstance(schema, ArrayType)
-    assert isinstance(result.to_spark().schema["c"].dataType.elementType, IntegerType)
+    assert isinstance(schema.elementType, IntegerType)
 
     col = tsf.concat(df.a, df.b)
     assert isinstance(col, TypedArrayType)
@@ -638,8 +638,9 @@ def test_regexp_extract_all_str_pattern(spark: SparkSession):
 
     result = df.select(tsf.regexp_extract_all(df.s, r"(\w+)", 1).alias("v"))
     assert collect_column(result, "v") == [["hello", "world"]]
-    assert isinstance(result.to_spark().schema["v"].dataType, ArrayType)
-    assert isinstance(result.to_spark().schema["v"].dataType.elementType, StringType)
+    v_type = result.to_spark().schema["v"].dataType
+    assert isinstance(v_type, ArrayType)
+    assert isinstance(v_type.elementType, StringType)
 
 
 def test_regexp_extract_all_column_pattern(spark: SparkSession):
