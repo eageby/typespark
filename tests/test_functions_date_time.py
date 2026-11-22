@@ -533,7 +533,7 @@ def test_to_date_error(spark: SparkSession):
 
     # Parse errors raise only in ANSI mode, which is on by default from Spark 4.0.
     # Set it before building the query: Spark 3.5 fixes it when the plan is analyzed.
-    previous = spark.conf.get("spark.sql.ansi.enabled")
+    previous = spark.conf.get("spark.sql.ansi.enabled") or "false"
     spark.conf.set("spark.sql.ansi.enabled", "true")
     try:
         result = df.select(
