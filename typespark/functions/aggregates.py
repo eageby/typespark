@@ -24,6 +24,7 @@ bit_and / bit_or / bit_xor     — C → C  (integer columns)
 nth_value                      — (C, offset) → C
 any_value                      — C → C
 """
+
 from typing import overload
 
 from pyspark.sql import functions as F

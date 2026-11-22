@@ -22,7 +22,9 @@ def test_atan2_float(spark: SparkSession):
         (-1.0, 1.0),  # atan2(-1, 1) = -pi/4
     ]
 
-    trig = TrigTestData.from_df(spark.createDataFrame(data, schema=TrigTestData.generate_schema()))
+    trig = TrigTestData.from_df(
+        spark.createDataFrame(data, schema=TrigTestData.generate_schema())
+    )
 
     result = trig.select(tsf.atan2(trig.y, trig.x).alias("angle"))
 
@@ -51,7 +53,9 @@ def test_atan2_double(spark: SparkSession):
         (-1.0, 1.0),  # atan2(-1, 1) = -pi/4
     ]
 
-    trig = TrigTestData.from_df(spark.createDataFrame(data, schema=TrigTestData.generate_schema()))
+    trig = TrigTestData.from_df(
+        spark.createDataFrame(data, schema=TrigTestData.generate_schema())
+    )
 
     result = trig.select(tsf.atan2(trig.y, trig.x).alias("angle"))
 
@@ -134,7 +138,9 @@ def test_abs_positive(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(-3.5,), (2.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(-3.5,), (2.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.abs(df.x).alias("a"))
     assert collect_column(result, "a") == [pytest.approx(3.5), pytest.approx(2.0)]
     assert isinstance(result.to_spark().schema["a"].dataType, DoubleType)
@@ -144,7 +150,9 @@ def test_acos(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(1.0,), (0.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(1.0,), (0.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.acos(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0] == pytest.approx(0.0)
@@ -156,7 +164,9 @@ def test_asin(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(0.0,), (1.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(0.0,), (1.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.asin(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0] == pytest.approx(0.0)
@@ -168,7 +178,9 @@ def test_atan(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(0.0,), (1.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(0.0,), (1.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.atan(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0] == pytest.approx(0.0)
@@ -180,7 +192,9 @@ def test_bround(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(2.5,), (3.5,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(2.5,), (3.5,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.bround(df.x, 0).alias("v"))
     vals = collect_column(result, "v")
     # banker's rounding: 2.5 → 2, 3.5 → 4
@@ -192,7 +206,9 @@ def test_cbrt(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(27.0,), (-8.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(27.0,), (-8.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.cbrt(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0] == pytest.approx(3.0)
@@ -204,7 +220,9 @@ def test_ceil(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(1.2,), (-1.2,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(1.2,), (-1.2,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.ceil(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals == [2, -1]
@@ -225,7 +243,9 @@ def test_degrees(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(math.pi,), (0.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(math.pi,), (0.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.degrees(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0] == pytest.approx(180.0)
@@ -247,7 +267,9 @@ def test_exp(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(0.0,), (1.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(0.0,), (1.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.exp(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0] == pytest.approx(1.0)
@@ -259,7 +281,9 @@ def test_factorial(spark: SparkSession):
     class Nums(DataFrame):
         x: Int
 
-    df = Nums.from_df(spark.createDataFrame([(5,), (0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(5,), (0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.factorial(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals == [120, 1]
@@ -271,7 +295,9 @@ def test_hypot(spark: SparkSession):
         a: Double
         b: Double
 
-    df = Nums.from_df(spark.createDataFrame([(3.0, 4.0)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(3.0, 4.0)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.hypot(df.a, df.b).alias("v"))
     assert collect_column(result, "v")[0] == pytest.approx(5.0)
     assert isinstance(result.to_spark().schema["v"].dataType, DoubleType)
@@ -281,7 +307,9 @@ def test_ln(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(1.0,), (math.e,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(1.0,), (math.e,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.ln(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0] == pytest.approx(0.0)
@@ -293,7 +321,9 @@ def test_log_natural(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(1.0,), (math.e,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(1.0,), (math.e,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.log(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0] == pytest.approx(0.0)
@@ -305,7 +335,9 @@ def test_log_with_base(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(100.0,), (10.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(100.0,), (10.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.log(df.x, base=10.0).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0] == pytest.approx(2.0)
@@ -317,7 +349,9 @@ def test_log2(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(8.0,), (1.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(8.0,), (1.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.log2(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0] == pytest.approx(3.0)
@@ -339,7 +373,9 @@ def test_negate(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(3.0,), (-1.5,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(3.0,), (-1.5,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.negate(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals == [pytest.approx(-3.0), pytest.approx(1.5)]
@@ -361,7 +397,9 @@ def test_pmod(spark: SparkSession):
         a: Int
         b: Int
 
-    df = Nums.from_df(spark.createDataFrame([(-7, 3), (7, 3)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(-7, 3), (7, 3)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.pmod(df.a, df.b).alias("v"))
     vals = collect_column(result, "v")
     # pmod always returns non-negative: -7 % 3 = 2
@@ -373,7 +411,9 @@ def test_pow(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(2.0,), (3.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(2.0,), (3.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.pow(df.x, 3.0).alias("v"))
     vals = collect_column(result, "v")
     assert vals == [pytest.approx(8.0), pytest.approx(27.0)]
@@ -384,7 +424,9 @@ def test_radians(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(180.0,), (0.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(180.0,), (0.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.radians(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals[0] == pytest.approx(math.pi)
@@ -396,7 +438,9 @@ def test_rand(spark: SparkSession):
     class Dummy(DataFrame):
         x: Int
 
-    df = Dummy.from_df(spark.createDataFrame([(1,), (2,)], schema=Dummy.generate_schema()))
+    df = Dummy.from_df(
+        spark.createDataFrame([(1,), (2,)], schema=Dummy.generate_schema())
+    )
     result = df.select(tsf.rand(seed=42).alias("v"))
     vals = collect_column(result, "v")
     assert len(vals) == 2
@@ -408,7 +452,9 @@ def test_round(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(2.567,), (1.234,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(2.567,), (1.234,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.round(df.x, 2).alias("v"))
     vals = collect_column(result, "v")
     assert vals == [pytest.approx(2.57), pytest.approx(1.23)]
@@ -418,7 +464,9 @@ def test_sign(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(-5.0,), (0.0,), (3.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(-5.0,), (0.0,), (3.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.sign(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals == [pytest.approx(-1.0), pytest.approx(0.0), pytest.approx(1.0)]
@@ -429,7 +477,9 @@ def test_sqrt(spark: SparkSession):
     class Nums(DataFrame):
         x: Double
 
-    df = Nums.from_df(spark.createDataFrame([(4.0,), (9.0,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(4.0,), (9.0,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.sqrt(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals == [pytest.approx(2.0), pytest.approx(3.0)]
@@ -440,8 +490,12 @@ def test_width_bucket(spark: SparkSession):
     class Nums(DataFrame):
         v: Double
 
-    df = Nums.from_df(spark.createDataFrame([(0.5,), (1.5,), (2.5,)], schema=Nums.generate_schema()))
-    result = df.select(tsf.width_bucket(df.v, Integer(0), Integer(3), 3).alias("bucket"))
+    df = Nums.from_df(
+        spark.createDataFrame([(0.5,), (1.5,), (2.5,)], schema=Nums.generate_schema())
+    )
+    result = df.select(
+        tsf.width_bucket(df.v, Integer(0), Integer(3), 3).alias("bucket")
+    )
     vals = collect_column(result, "bucket")
     assert vals == [1, 2, 3]
     assert isinstance(result.to_spark().schema["bucket"].dataType, LongType)

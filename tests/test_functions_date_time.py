@@ -18,7 +18,9 @@ def test_add_months_with_literal(spark: SparkSession):
         (datetime.date(2020, 1, 31),),
         (datetime.date(2020, 2, 29),),
     ]
-    dates = DateTestData.from_df(spark.createDataFrame(data, schema=DateTestData.generate_schema()))
+    dates = DateTestData.from_df(
+        spark.createDataFrame(data, schema=DateTestData.generate_schema())
+    )
 
     col: typespark.Date = tsf.add_months(dates.d, 1)
 
@@ -31,7 +33,9 @@ def test_add_months_with_literal(spark: SparkSession):
         datetime.date(2020, 3, 29),
     ]
 
-    assert isinstance(result.to_spark().schema["added"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        result.to_spark().schema["added"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_add_months_with_col(spark: SparkSession):
@@ -42,7 +46,9 @@ def test_add_months_with_col(spark: SparkSession):
         (datetime.date(2020, 1, 31),),
         (datetime.date(2020, 2, 29),),
     ]
-    dates = DateTestData.from_df(spark.createDataFrame(data, schema=DateTestData.generate_schema()))
+    dates = DateTestData.from_df(
+        spark.createDataFrame(data, schema=DateTestData.generate_schema())
+    )
 
     col: typespark.Date = tsf.add_months(dates.d, typespark.Integer(1))
     result = dates.select(col.alias("added"))
@@ -54,7 +60,9 @@ def test_add_months_with_col(spark: SparkSession):
         datetime.date(2020, 3, 29),
     ]
 
-    assert isinstance(result.to_spark().schema["added"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        result.to_spark().schema["added"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_date_diff(spark: SparkSession):
@@ -70,17 +78,25 @@ def test_date_diff(spark: SparkSession):
     )
     result = df.select(tsf.date_diff(df.a, df.b).alias("v"))
     assert collect_column(result, "v") == [9]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.IntegerType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.IntegerType
+    )
 
 
 def test_date_format(spark: SparkSession):
     class Dates(typespark.DataFrame):
         d: typespark.Date
 
-    df = Dates.from_df(spark.createDataFrame([(datetime.date(2025, 3, 15),)], schema=Dates.generate_schema()))
+    df = Dates.from_df(
+        spark.createDataFrame(
+            [(datetime.date(2025, 3, 15),)], schema=Dates.generate_schema()
+        )
+    )
     result = df.select(tsf.date_format(df.d, "yyyy/MM/dd").alias("v"))
     assert collect_column(result, "v") == ["2025/03/15"]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.StringType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.StringType
+    )
 
 
 def test_date_from_unix_date(spark: SparkSession):
@@ -88,21 +104,31 @@ def test_date_from_unix_date(spark: SparkSession):
         x: typespark.Int
 
     # Unix date 0 is 1970-01-01
-    df = Nums.from_df(spark.createDataFrame([(0,), (1,)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(0,), (1,)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.date_from_unix_date(df.x).alias("v"))
     vals = collect_column(result, "v")
     assert vals == [datetime.date(1970, 1, 1), datetime.date(1970, 1, 2)]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_date_sub(spark: SparkSession):
     class Dates(typespark.DataFrame):
         d: typespark.Date
 
-    df = Dates.from_df(spark.createDataFrame([(datetime.date(2025, 1, 10),)], schema=Dates.generate_schema()))
+    df = Dates.from_df(
+        spark.createDataFrame(
+            [(datetime.date(2025, 1, 10),)], schema=Dates.generate_schema()
+        )
+    )
     result = df.select(tsf.date_sub(df.d, 5).alias("v"))
     assert collect_column(result, "v") == [datetime.date(2025, 1, 5)]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_date_trunc(spark: SparkSession):
@@ -121,7 +147,9 @@ def test_date_trunc(spark: SparkSession):
     assert vals[0].month == 3
     assert vals[0].day == 1
     assert vals[0].hour == 0
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampType
+    )
 
 
 def test_datediff(spark: SparkSession):
@@ -137,14 +165,20 @@ def test_datediff(spark: SparkSession):
     )
     result = df.select(tsf.datediff(df.a, df.b).alias("v"))
     assert collect_column(result, "v") == [10]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.IntegerType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.IntegerType
+    )
 
 
 def test_dayofmonth_dayofweek_dayofyear(spark: SparkSession):
     class Dates(typespark.DataFrame):
         d: typespark.Date
 
-    df = Dates.from_df(spark.createDataFrame([(datetime.date(2025, 3, 15),)], schema=Dates.generate_schema()))
+    df = Dates.from_df(
+        spark.createDataFrame(
+            [(datetime.date(2025, 3, 15),)], schema=Dates.generate_schema()
+        )
+    )
     result = df.select(
         tsf.dayofmonth(df.d).alias("dom"),
         tsf.dayofweek(df.d).alias("dow"),
@@ -157,7 +191,9 @@ def test_dayofmonth_dayofweek_dayofyear(spark: SparkSession):
     assert vals["doy"] == 74
     assert vals["day"] == 15
     for col in ["dom", "dow", "doy", "day"]:
-        assert isinstance(result.to_spark().schema[col].dataType, pyspark.sql.types.IntegerType)
+        assert isinstance(
+            result.to_spark().schema[col].dataType, pyspark.sql.types.IntegerType
+        )
 
 
 def test_from_unixtime(spark: SparkSession):
@@ -169,7 +205,9 @@ def test_from_unixtime(spark: SparkSession):
     vals = collect_column(result, "v")
     # epoch 0 in local time — we just check the format is a date string
     assert len(vals[0]) == 10
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.StringType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.StringType
+    )
 
 
 def test_hour_minute_second(spark: SparkSession):
@@ -192,7 +230,9 @@ def test_hour_minute_second(spark: SparkSession):
     assert vals["m"] == 45
     assert vals["s"] == 30
     for col in ["h", "m", "s"]:
-        assert isinstance(result.to_spark().schema[col].dataType, pyspark.sql.types.IntegerType)
+        assert isinstance(
+            result.to_spark().schema[col].dataType, pyspark.sql.types.IntegerType
+        )
 
 
 def test_last_day(spark: SparkSession):
@@ -210,7 +250,9 @@ def test_last_day(spark: SparkSession):
         datetime.date(2025, 2, 28),
         datetime.date(2025, 1, 31),
     ]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_make_date(spark: SparkSession):
@@ -219,10 +261,14 @@ def test_make_date(spark: SparkSession):
         m: typespark.Int
         d: typespark.Int
 
-    df = Nums.from_df(spark.createDataFrame([(2025, 6, 15)], schema=Nums.generate_schema()))
+    df = Nums.from_df(
+        spark.createDataFrame([(2025, 6, 15)], schema=Nums.generate_schema())
+    )
     result = df.select(tsf.make_date(df.y, df.m, df.d).alias("v"))
     assert collect_column(result, "v") == [datetime.date(2025, 6, 15)]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_months_between(spark: SparkSession):
@@ -238,17 +284,25 @@ def test_months_between(spark: SparkSession):
     )
     result = df.select(tsf.months_between(df.a, df.b).alias("v"))
     assert collect_column(result, "v")[0] == pytest.approx(2.0)
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.DoubleType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.DoubleType
+    )
 
 
 def test_next_day(spark: SparkSession):
     class Dates(typespark.DataFrame):
         d: typespark.Date
 
-    df = Dates.from_df(spark.createDataFrame([(datetime.date(2025, 4, 1),)], schema=Dates.generate_schema()))
+    df = Dates.from_df(
+        spark.createDataFrame(
+            [(datetime.date(2025, 4, 1),)], schema=Dates.generate_schema()
+        )
+    )
     result = df.select(tsf.next_day(df.d, "Monday").alias("v"))
     assert collect_column(result, "v") == [datetime.date(2025, 4, 7)]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_now(spark: SparkSession):
@@ -261,7 +315,9 @@ def test_now(spark: SparkSession):
     vals = collect_column(result, "v")
     after = datetime.datetime.now()
     assert before <= vals[0] <= after
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampType
+    )
 
 
 def test_quarter(spark: SparkSession):
@@ -281,30 +337,44 @@ def test_quarter(spark: SparkSession):
     )
     result = df.select(tsf.quarter(df.d).alias("v"))
     assert collect_column(result, "v") == [1, 2, 3, 4]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.IntegerType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.IntegerType
+    )
 
 
 def test_to_timestamp(spark: SparkSession):
     class Strings(typespark.DataFrame):
         s: typespark.String
 
-    df = Strings.from_df(spark.createDataFrame([("2025-03-15 10:30:00",)], schema=Strings.generate_schema()))
+    df = Strings.from_df(
+        spark.createDataFrame(
+            [("2025-03-15 10:30:00",)], schema=Strings.generate_schema()
+        )
+    )
     result = df.select(tsf.to_timestamp(df.s, "yyyy-MM-dd HH:mm:ss").alias("v"))
     vals = collect_column(result, "v")
     assert vals[0].year == 2025
     assert vals[0].month == 3
     assert vals[0].day == 15
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampType
+    )
 
 
 def test_trunc(spark: SparkSession):
     class Dates(typespark.DataFrame):
         d: typespark.Date
 
-    df = Dates.from_df(spark.createDataFrame([(datetime.date(2025, 3, 15),)], schema=Dates.generate_schema()))
+    df = Dates.from_df(
+        spark.createDataFrame(
+            [(datetime.date(2025, 3, 15),)], schema=Dates.generate_schema()
+        )
+    )
     result = df.select(tsf.trunc(df.d, "month").alias("v"))
     assert collect_column(result, "v") == [datetime.date(2025, 3, 1)]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_unix_date(spark: SparkSession):
@@ -319,7 +389,9 @@ def test_unix_date(spark: SparkSession):
     )
     result = df.select(tsf.unix_date(df.d).alias("v"))
     assert collect_column(result, "v") == [0, 1]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.IntegerType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.IntegerType
+    )
 
 
 def test_timestamp_micros_millis_seconds(spark: SparkSession):
@@ -333,7 +405,9 @@ def test_timestamp_micros_millis_seconds(spark: SparkSession):
         tsf.timestamp_seconds(df.x).alias("seconds"),
     )
     for col in ["micros", "millis", "seconds"]:
-        assert isinstance(result.to_spark().schema[col].dataType, pyspark.sql.types.TimestampType)
+        assert isinstance(
+            result.to_spark().schema[col].dataType, pyspark.sql.types.TimestampType
+        )
 
 
 def test_unix_micros_millis_seconds(spark: SparkSession):
@@ -352,17 +426,25 @@ def test_unix_micros_millis_seconds(spark: SparkSession):
         tsf.unix_seconds(df.ts).alias("seconds"),
     )
     for col in ["micros", "millis", "seconds"]:
-        assert isinstance(result.to_spark().schema[col].dataType, pyspark.sql.types.LongType)
+        assert isinstance(
+            result.to_spark().schema[col].dataType, pyspark.sql.types.LongType
+        )
 
 
 def test_weekofyear(spark: SparkSession):
     class Dates(typespark.DataFrame):
         d: typespark.Date
 
-    df = Dates.from_df(spark.createDataFrame([(datetime.date(2025, 1, 6),)], schema=Dates.generate_schema()))
+    df = Dates.from_df(
+        spark.createDataFrame(
+            [(datetime.date(2025, 1, 6),)], schema=Dates.generate_schema()
+        )
+    )
     result = df.select(tsf.weekofyear(df.d).alias("v"))
     assert collect_column(result, "v") == [2]
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.IntegerType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.IntegerType
+    )
 
 
 def test_timestamp_add(spark: SparkSession):
@@ -375,10 +457,14 @@ def test_timestamp_add(spark: SparkSession):
             schema=Timestamps.generate_schema(),
         )
     )
-    result = df.select(tsf.timestamp_add("DAY", typespark.Integer(10), df.ts).alias("v"))
+    result = df.select(
+        tsf.timestamp_add("DAY", typespark.Integer(10), df.ts).alias("v")
+    )
     vals = collect_column(result, "v")
     assert vals[0].day == 11
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampType
+    )
 
 
 def test_to_date_default_format(spark: SparkSession):
@@ -389,7 +475,9 @@ def test_to_date_default_format(spark: SparkSession):
         ("2025-01-01",),
     ]
 
-    df = DateString.from_df(spark.createDataFrame(data, schema=DateString.generate_schema()))
+    df = DateString.from_df(
+        spark.createDataFrame(data, schema=DateString.generate_schema())
+    )
 
     result = df.select(
         tsf.to_date(df.date_str).alias("parsed"),
@@ -398,7 +486,9 @@ def test_to_date_default_format(spark: SparkSession):
     parsed = collect_column(result, "parsed")
     assert parsed == [datetime.date(2025, 1, 1)]
 
-    assert isinstance(result.to_spark().schema["parsed"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        result.to_spark().schema["parsed"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_to_date_custom_format(spark: SparkSession):
@@ -409,7 +499,9 @@ def test_to_date_custom_format(spark: SparkSession):
         ("2025:01:01",),
     ]
 
-    df = DateString.from_df(spark.createDataFrame(data, schema=DateString.generate_schema()))
+    df = DateString.from_df(
+        spark.createDataFrame(data, schema=DateString.generate_schema())
+    )
 
     result = df.select(
         tsf.to_date(df.date_str, "yyyy:MM:dd").alias("parsed"),
@@ -418,7 +510,9 @@ def test_to_date_custom_format(spark: SparkSession):
     parsed = collect_column(result, "parsed")
     assert parsed == [datetime.date(2025, 1, 1)]
 
-    assert isinstance(result.to_spark().schema["parsed"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        result.to_spark().schema["parsed"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_to_date_error(spark: SparkSession):
@@ -429,7 +523,9 @@ def test_to_date_error(spark: SparkSession):
         ("2025-01-01",),
     ]
 
-    df = DateString.from_df(spark.createDataFrame(data, schema=DateString.generate_schema()))
+    df = DateString.from_df(
+        spark.createDataFrame(data, schema=DateString.generate_schema())
+    )
 
     result = df.select(
         tsf.to_date(df.date_str, "yyyy:MM:dd").alias("parsed"),
@@ -459,7 +555,9 @@ def test_year_dates(spark: SparkSession):
     values = collect_column(result, "year")
     assert values == [2025, 2026, 2028]
 
-    assert isinstance(result.to_spark().schema["year"].dataType, pyspark.sql.types.IntegerType)
+    assert isinstance(
+        result.to_spark().schema["year"].dataType, pyspark.sql.types.IntegerType
+    )
 
 
 def test_year_timestamps(spark: SparkSession):
@@ -481,7 +579,9 @@ def test_year_timestamps(spark: SparkSession):
     values = collect_column(result, "year")
     assert values == [2025, 2026, 2028]
 
-    assert isinstance(result.to_spark().schema["year"].dataType, pyspark.sql.types.IntegerType)
+    assert isinstance(
+        result.to_spark().schema["year"].dataType, pyspark.sql.types.IntegerType
+    )
 
 
 def test_month_dates(spark: SparkSession):
@@ -503,7 +603,9 @@ def test_month_dates(spark: SparkSession):
     values = collect_column(result, "month")
     assert values == [1, 4, 4]
 
-    assert isinstance(result.to_spark().schema["month"].dataType, pyspark.sql.types.IntegerType)
+    assert isinstance(
+        result.to_spark().schema["month"].dataType, pyspark.sql.types.IntegerType
+    )
 
 
 def test_month_timestamps(spark: SparkSession):
@@ -525,7 +627,9 @@ def test_month_timestamps(spark: SparkSession):
     values = collect_column(result, "month")
     assert values == [1, 4, 4]
 
-    assert isinstance(result.to_spark().schema["month"].dataType, pyspark.sql.types.IntegerType)
+    assert isinstance(
+        result.to_spark().schema["month"].dataType, pyspark.sql.types.IntegerType
+    )
 
 
 def test_date_add(spark: SparkSession):
@@ -551,7 +655,9 @@ def test_date_add(spark: SparkSession):
         datetime.date(2028, 4, 4),
     ]
 
-    assert isinstance(result.to_spark().schema["added"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        result.to_spark().schema["added"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_current_date(spark: SparkSession):
@@ -567,7 +673,9 @@ def test_current_date(spark: SparkSession):
 
     assert values[0] == datetime.date.today()
 
-    assert isinstance(results.to_spark().schema["date"].dataType, pyspark.sql.types.DateType)
+    assert isinstance(
+        results.to_spark().schema["date"].dataType, pyspark.sql.types.DateType
+    )
 
 
 def test_current_timestamp(spark: SparkSession):
@@ -587,7 +695,9 @@ def test_current_timestamp(spark: SparkSession):
 
     assert timestamp_before <= values[0] <= timestamp_after
 
-    assert isinstance(results.to_spark().schema["date"].dataType, pyspark.sql.types.TimestampType)
+    assert isinstance(
+        results.to_spark().schema["date"].dataType, pyspark.sql.types.TimestampType
+    )
 
 
 def test_timestamp_ntz_functions(spark: SparkSession):
@@ -617,7 +727,9 @@ def test_to_timestamp_ntz(spark: SparkSession):
     class Strings(typespark.DataFrame):
         s: typespark.String
 
-    df = Strings.from_df(spark.createDataFrame([("15/03/2025 10:30",)], schema=Strings.generate_schema()))
+    df = Strings.from_df(
+        spark.createDataFrame([("15/03/2025 10:30",)], schema=Strings.generate_schema())
+    )
     result = df.select(
         tsf.to_timestamp_ntz(df.s, "dd/MM/yyyy HH:mm").alias("v"),
         tsf.to_timestamp_ntz(typespark.String("2025-03-15 10:30:00")).alias("w"),
@@ -625,4 +737,6 @@ def test_to_timestamp_ntz(spark: SparkSession):
     vals = collect_values(result)[0]
     assert vals["v"] == datetime.datetime(2025, 3, 15, 10, 30)
     assert vals["w"] == datetime.datetime(2025, 3, 15, 10, 30)
-    assert isinstance(result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampNTZType)
+    assert isinstance(
+        result.to_spark().schema["v"].dataType, pyspark.sql.types.TimestampNTZType
+    )

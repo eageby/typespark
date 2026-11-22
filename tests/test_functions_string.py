@@ -58,7 +58,6 @@ def test_concat_arrays(spark: SparkSession):
     assert col._elem_type is typespark.Int
 
 
-
 def test_contains_string_column(spark: SparkSession):
     class Data(typespark.DataFrame):
         s: typespark.String
@@ -78,6 +77,7 @@ def test_contains_string_column(spark: SparkSession):
     )
 
     from tests.utils import collect_values
+
     rows = collect_values(result)
     assert rows[0]["has"] is True
     assert rows[1]["has"] is False
@@ -95,7 +95,9 @@ def test_contains_binary_column(spark: SparkSession):
         (bytearray(b"1234"), bytearray(b"zz")),
     ]
 
-    binaries = BinaryTestData.from_df(spark.createDataFrame(data, schema=BinaryTestData.generate_schema()))
+    binaries = BinaryTestData.from_df(
+        spark.createDataFrame(data, schema=BinaryTestData.generate_schema())
+    )
 
     result = binaries.select(tsf.contains(binaries.b, binaries.needle).alias("has"))
 
@@ -619,7 +621,9 @@ def test_regexp_extract_all_str_pattern(spark: SparkSession):
     class Data(typespark.DataFrame):
         s: typespark.String
 
-    df = Data.from_df(spark.createDataFrame([("hello world",)], schema=Data.generate_schema()))
+    df = Data.from_df(
+        spark.createDataFrame([("hello world",)], schema=Data.generate_schema())
+    )
 
     result = df.select(tsf.regexp_extract_all(df.s, r"(\w+)", 1).alias("v"))
     assert collect_column(result, "v") == [["hello", "world"]]

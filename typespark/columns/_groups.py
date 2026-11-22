@@ -34,13 +34,25 @@ def _make_forbidden(op: str):
             f"`{op}` not allowed on _GroupColumn; "
             "value materializes as the field type after DataFrame init."
         )
+
     return _forbidden
 
 
 _FORBIDDEN_OPS = [
-    "__add__", "__radd__", "__sub__", "__rsub__",
-    "__mul__", "__rmul__", "__truediv__", "__rtruediv__",
-    "__lt__", "__le__", "__gt__", "__ge__", "__eq__", "__ne__",
+    "__add__",
+    "__radd__",
+    "__sub__",
+    "__rsub__",
+    "__mul__",
+    "__rmul__",
+    "__truediv__",
+    "__rtruediv__",
+    "__lt__",
+    "__le__",
+    "__gt__",
+    "__ge__",
+    "__eq__",
+    "__ne__",
 ]
 
 

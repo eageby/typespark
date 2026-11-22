@@ -221,7 +221,11 @@ class TypedColumn[T: DataType]:
         An aggregate (``tsf.sum(col).over(w)``) becomes a plain column of the same
         type, so the DataFrame constructor projects it instead of grouping.
         """
-        spec = window if isinstance(window, pyspark.sql.window.WindowSpec) else window.to_spark()
+        spec = (
+            window
+            if isinstance(window, pyspark.sql.window.WindowSpec)
+            else window.to_spark()
+        )
         cls = getattr(type(self), "_agg_base", type(self))
         return cls.wrap(self._col.over(spec))
 

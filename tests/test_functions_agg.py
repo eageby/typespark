@@ -1,4 +1,5 @@
 """Return-type and value tests for typespark.functions.aggregates."""
+
 import pytest
 from pyspark.sql import Row, SparkSession
 from pyspark.sql.types import ArrayType, DecimalType, DoubleType, LongType
@@ -45,7 +46,10 @@ class NumFrame(BaseDataFrame):
 @pytest.fixture(scope="module")
 def spark():
     session = (
-        SparkSession.Builder().master("local").appName("pytest-pyspark-agg").getOrCreate()
+        SparkSession.Builder()
+        .master("local")
+        .appName("pytest-pyspark-agg")
+        .getOrCreate()
     )
     yield session
     session.stop()
@@ -85,7 +89,9 @@ def test_count_value(num_frame: NumFrame) -> None:
 
 def test_count_spark_type(num_frame: NumFrame) -> None:
     col = count(num_frame.age)
-    actual = type(num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType)
+    actual = type(
+        num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType
+    )
     assert actual is LongType
 
 
@@ -156,7 +162,9 @@ def test_sum_double_preserves_type(num_frame: NumFrame) -> None:
 
 def test_sum_integer_spark_type(num_frame: NumFrame) -> None:
     col = sum(num_frame.age)
-    actual = type(num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType)
+    actual = type(
+        num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType
+    )
     assert actual is LongType
 
 
@@ -172,7 +180,9 @@ def test_sum_integer_spark_type(num_frame: NumFrame) -> None:
         ("dec", ts.Decimal, DecimalType),
     ],
 )
-def test_sum_return_types(spark: SparkSession, func, field, expected, spark_type) -> None:
+def test_sum_return_types(
+    spark: SparkSession, func, field, expected, spark_type
+) -> None:
     class AllNums(BaseDataFrame):
         s: ts.Short
         i: ts.Integer
@@ -222,7 +232,9 @@ def test_sum_distinct_double_preserves_type(num_frame: NumFrame) -> None:
 
 def test_sum_distinct_integer_spark_type(num_frame: NumFrame) -> None:
     col = sum_distinct(num_frame.age)
-    actual = type(num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType)
+    actual = type(
+        num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType
+    )
     assert actual is LongType
 
 
@@ -265,7 +277,9 @@ def test_avg_returns_double(num_frame: NumFrame) -> None:
 
 def test_avg_spark_type(num_frame: NumFrame) -> None:
     col = avg(num_frame.age)
-    actual = type(num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType)
+    actual = type(
+        num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType
+    )
     assert actual is DoubleType
 
 
@@ -321,7 +335,9 @@ def test_collect_list_elem_type(num_frame: NumFrame) -> None:
 
 def test_collect_list_spark_type(num_frame: NumFrame) -> None:
     col = collect_list(num_frame.age)
-    field_type = num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType
+    field_type = (
+        num_frame.to_df().select(col.to_spark().alias("v")).schema["v"].dataType
+    )
     assert isinstance(field_type, ArrayType)
 
 

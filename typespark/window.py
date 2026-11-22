@@ -7,7 +7,6 @@ typed columns::
     orders.qualify(tsf.row_number().over(w) == 1)
 """
 
-
 import pyspark.sql
 from pyspark.sql import Window as _SparkWindow
 from pyspark.sql.window import WindowSpec as _SparkWindowSpec

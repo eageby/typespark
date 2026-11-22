@@ -57,7 +57,9 @@ def _reference(ref: str):
 
 
 def _field_metadata_ast(field: Field):
-    if field.primaryKey and (field.type == "decimal" and field.precision and field.scale):
+    if field.primaryKey and (
+        field.type == "decimal" and field.precision and field.scale
+    ):
         return ast.Call(
             func=ast.Name(metadata.field.__name__),
             args=[],
@@ -67,7 +69,9 @@ def _field_metadata_ast(field: Field):
                 ast.keyword(arg="scale", value=ast.Constant(field.scale)),
             ],
         )
-    if field.references and (field.type == "decimal" and field.precision and field.scale):
+    if field.references and (
+        field.type == "decimal" and field.precision and field.scale
+    ):
         return ast.Call(
             func=ast.Name(metadata.field.__name__),
             args=[],
@@ -88,7 +92,9 @@ def _field_metadata_ast(field: Field):
         )
 
     if field.primaryKey:
-        return ast.Call(func=ast.Name(metadata.primary_key.__name__), args=[], keywords=[])
+        return ast.Call(
+            func=ast.Name(metadata.primary_key.__name__), args=[], keywords=[]
+        )
 
     if field.references:
         return ast.Call(
@@ -181,7 +187,9 @@ def _module_imports(tree: ast.Module, import_module: ModuleType):
 
     # Insert one import line per module
     for module, symbols in pending.items():
-        import_node = ast.ImportFrom(module=module, names=[ast.alias(name=s) for s in sorted(symbols)], level=0)
+        import_node = ast.ImportFrom(
+            module=module, names=[ast.alias(name=s) for s in sorted(symbols)], level=0
+        )
         tree.body.insert(0, import_node)
 
 
@@ -248,7 +256,12 @@ def replace_single_with_triple_quotes(code: str) -> str:
             paren_level -= 1
 
         # If it's a single-quoted string outside parentheses
-        if toknum == tokenize.STRING and paren_level == 0 and tokval.startswith("'") and not tokval.startswith("'''"):
+        if (
+            toknum == tokenize.STRING
+            and paren_level == 0
+            and tokval.startswith("'")
+            and not tokval.startswith("'''")
+        ):
             # Replace '... with '''...'''
             unquoted = tokval[1:-1]  # strip outer quotes
             new_token = f"'''{unquoted}'''"
@@ -261,11 +274,15 @@ def replace_single_with_triple_quotes(code: str) -> str:
 
 def generate_types(contract: DataContractSpecification):
     module = ast.Module(
-        body=[generate_class_ast(name, model) for name, model in contract.models.items()],
+        body=[
+            generate_class_ast(name, model) for name, model in contract.models.items()
+        ],
         type_ignores=[],
     )
     _module_imports(module, metadata)
     _module_imports(module, typespark)
     _reorder_classes_in_module(module)
 
-    return black.format_str(replace_single_with_triple_quotes(ast.unparse(module)), mode=black.FileMode())
+    return black.format_str(
+        replace_single_with_triple_quotes(ast.unparse(module)), mode=black.FileMode()
+    )

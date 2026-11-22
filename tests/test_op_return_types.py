@@ -118,12 +118,16 @@ def longs(spark):
 
 @pytest.fixture
 def floats(spark):
-    return FloatFrame.from_df(spark.createDataFrame([(1.0, 2.0)], schema="a FLOAT, b FLOAT"))
+    return FloatFrame.from_df(
+        spark.createDataFrame([(1.0, 2.0)], schema="a FLOAT, b FLOAT")
+    )
 
 
 @pytest.fixture
 def doubles(spark):
-    return DoubleFrame.from_df(spark.createDataFrame([(1.0, 2.0)], schema="a DOUBLE, b DOUBLE"))
+    return DoubleFrame.from_df(
+        spark.createDataFrame([(1.0, 2.0)], schema="a DOUBLE, b DOUBLE")
+    )
 
 
 @pytest.fixture
@@ -138,7 +142,9 @@ def decimals(spark):
 @pytest.fixture
 def bools(spark):
     return BoolFrame.from_df(
-        spark.createDataFrame([(True, False), (False, True)], schema="a BOOLEAN, b BOOLEAN")
+        spark.createDataFrame(
+            [(True, False), (False, True)], schema="a BOOLEAN, b BOOLEAN"
+        )
     )
 
 
@@ -172,7 +178,9 @@ def timestamps(spark):
 @pytest.fixture
 def binaries(spark):
     return BinaryFrame.from_df(
-        spark.createDataFrame([(bytearray(b"x"), bytearray(b"y"))], schema="a BINARY, b BINARY")
+        spark.createDataFrame(
+            [(bytearray(b"x"), bytearray(b"y"))], schema="a BINARY, b BINARY"
+        )
     )
 
 
@@ -206,7 +214,7 @@ def test_integer_truediv(ints):
 
 
 def test_integer_pow(ints):
-    check_op_types(ints, ints.a ** ints.b)
+    check_op_types(ints, ints.a**ints.b)
 
 
 # ---------------------------------------------------------------------------
@@ -239,7 +247,7 @@ def test_long_truediv(longs):
 
 
 def test_long_pow(longs):
-    check_op_types(longs, longs.a ** longs.b)
+    check_op_types(longs, longs.a**longs.b)
 
 
 # ---------------------------------------------------------------------------
@@ -272,7 +280,7 @@ def test_float_truediv(floats):
 
 
 def test_float_pow(floats):
-    check_op_types(floats, floats.a ** floats.b)
+    check_op_types(floats, floats.a**floats.b)
 
 
 # ---------------------------------------------------------------------------
@@ -305,7 +313,7 @@ def test_double_truediv(doubles):
 
 
 def test_double_pow(doubles):
-    check_op_types(doubles, doubles.a ** doubles.b)
+    check_op_types(doubles, doubles.a**doubles.b)
 
 
 # ---------------------------------------------------------------------------
@@ -338,7 +346,7 @@ def test_decimal_neg(decimals):
 
 
 def test_decimal_pow(decimals):
-    check_op_types(decimals, decimals.a ** decimals.b)
+    check_op_types(decimals, decimals.a**decimals.b)
 
 
 # ---------------------------------------------------------------------------

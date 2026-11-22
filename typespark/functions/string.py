@@ -280,7 +280,9 @@ def regexp_extract(string: String, pattern: str, idx: int) -> String:
     )
 
 
-def regexp_extract_all(string: String, pattern: str | String, idx: int | None = None) -> Array[String]:
+def regexp_extract_all(
+    string: String, pattern: str | String, idx: int | None = None
+) -> Array[String]:
     """Extracts all substrings of `string` matching the regex group at `idx`.
 
     Wrapper for :func:`pyspark.sql.functions.regexp_extract_all`.

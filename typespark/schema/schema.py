@@ -55,7 +55,9 @@ def _schema_for_elem(elem: type, m: MetaData) -> DataType:
         if issubclass(elem, TypedArrayType):
             inner = elem._elem_type
             if inner is None:
-                raise ValueError(f"Nested array type {elem.__name__} has no element type")
+                raise ValueError(
+                    f"Nested array type {elem.__name__} has no element type"
+                )
             return ArrayType(_schema_for_elem(inner, m))
     except TypeError:
         pass

@@ -411,7 +411,10 @@ class BaseDataFrame(_DataFrameFields, _Base):
 
     def filter(
         self,
-        condition: str | pyspark.sql.Column | TypedColumn[BooleanType] | Callable[[Self], TypedColumn[BooleanType]],
+        condition: str
+        | pyspark.sql.Column
+        | TypedColumn[BooleanType]
+        | Callable[[Self], TypedColumn[BooleanType]],
     ) -> Self:
         if callable(condition):
             c = condition(self).to_spark()

@@ -65,6 +65,7 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
     _elem_type: ClassVar[type[T] | None] = None
 
     if not TYPE_CHECKING:
+
         def __class_getitem__(cls, item):
             return ArrayOf(item)
 
@@ -91,7 +92,9 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
             raise TypeError(
                 f"precision/scale only apply to Decimal elements, not {self.__class__.__name__}"
             )
-        decimal = DecimalType(10 if precision is None else precision, 0 if scale is None else scale)
+        decimal = DecimalType(
+            10 if precision is None else precision, 0 if scale is None else scale
+        )
         col = c.to_spark() if isinstance(c, TypedColumn) else c
         self._col = col.cast(ArrayType(_elem_data_type(elem, decimal)))
         if isinstance(c, TypedColumn):
@@ -100,9 +103,7 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
     @classmethod
     def _require_elem_type(cls) -> type[T]:
         if cls._elem_type is None:
-            raise TypeError(
-                f"{cls.__name__} has no element type — use Array[ElemType]"
-            )
+            raise TypeError(f"{cls.__name__} has no element type — use Array[ElemType]")
         return cls._elem_type
 
     @classmethod
@@ -127,15 +128,22 @@ class TypedArrayType[T: TypedColumn](TypedColumn[ArrayType]):
         return cls.wrap(F.lit(None).cast(cls.generate_schema()))
 
     @classmethod
-    def from_json(cls, json: "TypedColumn[StringType]", options: dict[str, str] | None = None) -> "Self":
+    def from_json(
+        cls, json: "TypedColumn[StringType]", options: dict[str, str] | None = None
+    ) -> "Self":
         if json._name is None:
             raise UnnamedColumnError(column_type=json.__class__, operation="from_json")
-        return cls._set_column(_spark_from_json(json.to_spark(), cls.generate_schema(), options), json._name)
+        return cls._set_column(
+            _spark_from_json(json.to_spark(), cls.generate_schema(), options),
+            json._name,
+        )
 
     @classmethod
     def generate_schema(cls) -> ArrayType:
         if cls._elem_type is None:
-            raise TypeError(f"Cannot generate schema for unparameterized {cls.__name__}")
+            raise TypeError(
+                f"Cannot generate schema for unparameterized {cls.__name__}"
+            )
         return ArrayType(_elem_data_type(cls._elem_type))
 
     def getItem(self, key: int) -> T:

@@ -1,4 +1,5 @@
 """Tests for primitive TypedColumn construction from Python literals and columns."""
+
 import datetime
 import decimal
 
@@ -36,12 +37,21 @@ from typespark.columns.primitives import (
 
 def schema_type(spark, col):
     """Return the Spark DataType of a column expression in a single-row DataFrame."""
-    return spark.createDataFrame([Row(x=1)]).select(col.to_spark().alias("v")).schema["v"].dataType
+    return (
+        spark.createDataFrame([Row(x=1)])
+        .select(col.to_spark().alias("v"))
+        .schema["v"]
+        .dataType
+    )
 
 
 def collect_one(spark, col):
     """Evaluate a column expression against a single dummy row."""
-    return spark.createDataFrame([Row(x=1)]).select(col.to_spark().alias("v")).collect()[0]["v"]
+    return (
+        spark.createDataFrame([Row(x=1)])
+        .select(col.to_spark().alias("v"))
+        .collect()[0]["v"]
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -238,7 +248,9 @@ def test_decimal_from_float_literal(spark):
 
 
 def test_decimal_from_decimal_literal(spark):
-    assert schema_type(spark, Decimal(decimal.Decimal("1.5"), 10, 2)) == DecimalType(10, 2)
+    assert schema_type(spark, Decimal(decimal.Decimal("1.5"), 10, 2)) == DecimalType(
+        10, 2
+    )
 
 
 def test_decimal_from_none(spark):
