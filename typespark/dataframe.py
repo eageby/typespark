@@ -12,6 +12,7 @@ from collections.abc import Callable, Iterable, Mapping
 from typing import (
     Any,
     Self,
+    cast,
     dataclass_transform,
     overload,
 )
@@ -89,7 +90,11 @@ def _lazy_class[T](cls: type[T]) -> type[T]:
     def _no_data(self):
         raise LazyDataFrameError(model=cls, alias=self._alias)
 
-    lazy_cls = type(f"Lazy[{cls.__name__}]", (cls,), {"_dataframe": property(_no_data)})
+    # type() builds an anonymous class; pyright can't relate it to type[T].
+    lazy_cls = cast(
+        "type[T]",
+        type(f"Lazy[{cls.__name__}]", (cls,), {"_dataframe": property(_no_data)}),
+    )
     _LAZY_CLASS_CACHE[cls] = lazy_cls
     return lazy_cls
 
