@@ -331,7 +331,7 @@ def test_factory_default_needs_no_spark_session_at_definition():
         "    surname: String = field(factory=lambda: String('Doe'))\n"
     )
     result = subprocess.run(
-        [sys.executable, "-c", code], capture_output=True, text=True
+        [sys.executable, "-c", code], capture_output=True, text=True, check=False
     )
     assert result.returncode == 0, result.stderr
 

@@ -1,4 +1,4 @@
-__all__ = [
+__all__ = [  # noqa: RUF022 — grouped by kind, see the comments
     # Core types
     "TypedColumn",
     "TypedArrayType",

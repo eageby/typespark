@@ -189,11 +189,16 @@ def _get_class_dependencies(class_node: ast.ClassDef) -> set[str]:
     deps = set()
 
     for stmt in class_node.body:
-        if isinstance(stmt, ast.AnnAssign) and isinstance(stmt.value, ast.Call):
-            if isinstance(stmt.value.func, ast.Name) and stmt.value.func.id == "foreign_key" and stmt.value.args:
-                arg = stmt.value.args[0]
-                if isinstance(arg, ast.Name):
-                    deps.add(arg.id)
+        if (
+            isinstance(stmt, ast.AnnAssign)
+            and isinstance(stmt.value, ast.Call)
+            and isinstance(stmt.value.func, ast.Name)
+            and stmt.value.func.id == "foreign_key"
+            and stmt.value.args
+        ):
+            arg = stmt.value.args[0]
+            if isinstance(arg, ast.Name):
+                deps.add(arg.id)
     return deps
 
 

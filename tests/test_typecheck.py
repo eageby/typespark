@@ -20,6 +20,7 @@ def test_readme_examples_typecheck() -> None:
             *(str(p) for p in TYPECHECK_DIR.glob("*.py")),
         ],
         capture_output=True,
+        check=False,  # the assert below reports pyright's output
         text=True,
     )
     assert result.returncode == 0, result.stdout

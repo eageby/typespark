@@ -205,7 +205,7 @@ def test_generator_with_unaliased_calculated_column(id_array_struct_dataframe):
     values = collect_values(result)
 
     assert [v["elements.age"] for v in values] == [30, 25]
-    calc_name = [c for c in result.to_spark().columns if c != "elements.age"][0]
+    calc_name = next(c for c in result.to_spark().columns if c != "elements.age")
     assert [v[calc_name] for v in values] == [2, 2]
 
 

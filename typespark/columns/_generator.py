@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from typespark.columns import TypedColumn
 
 
-LiteralType = Union[str, int, float, bool]
+LiteralType = str | int | float | bool
 
 # What an operator on a deferred column accepts on the right-hand side.
 OperandType = Union["DeferredColumn", Column, "TypedColumn[Any]", LiteralType]

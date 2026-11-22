@@ -11,6 +11,4 @@ def is_typed_column_type(tp) -> bool:
     origin = get_origin(tp)
     if origin and (origin is TypedColumn or issubclass(origin, TypedColumn)):
         return True
-    if isinstance(tp, type) and issubclass(tp, TypedColumn):
-        return True
-    return False
+    return isinstance(tp, type) and issubclass(tp, TypedColumn)

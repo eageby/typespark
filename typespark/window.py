@@ -7,7 +7,6 @@ typed columns::
     orders.qualify(tsf.row_number().over(w) == 1)
 """
 
-from typing import TypeAlias
 
 import pyspark.sql
 from pyspark.sql import Window as _SparkWindow
@@ -17,7 +16,7 @@ from typespark.columns.columns import TypedColumn
 
 __all__ = ["Window", "WindowSpec"]
 
-WindowColumn: TypeAlias = TypedColumn | pyspark.sql.Column | str
+type WindowColumn = TypedColumn | pyspark.sql.Column | str
 
 
 def _unwrap(cols: tuple[WindowColumn, ...]) -> list[pyspark.sql.Column | str]:

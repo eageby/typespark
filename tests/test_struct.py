@@ -232,7 +232,6 @@ def test_struct_wrap_sets_sub_columns(spark: SparkSession):
         street: String
         city: String
 
-    raw = spark.createDataFrame([Row(street="Elm St", city="Shelbyville")])
     col = F.struct(F.col("street"), F.col("city"))
     wrapped = Address.wrap(col)
 

@@ -1,7 +1,7 @@
 __all__ = ["generate_types", "serialize_product"]
 
 try:
-    import datacontract_specification
+    import datacontract_specification  # noqa: F401 — availability check
 except ImportError as e:
     raise ImportError(
         "The typespark[datacontract] package is required for this feature. "

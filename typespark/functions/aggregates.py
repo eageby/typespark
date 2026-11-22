@@ -24,7 +24,7 @@ bit_and / bit_or / bit_xor     — C → C  (integer columns)
 nth_value                      — (C, offset) → C
 any_value                      — C → C
 """
-from typing import TypeVar, overload
+from typing import overload
 
 from pyspark.sql import functions as F
 
@@ -34,35 +34,32 @@ from typespark.columns.array import ArrayOf, TypedArrayType
 from typespark.columns.columns import Bool
 from typespark.columns.primitives import Double, Float, Integer, Long, Short
 
-C = TypeVar("C", bound=TypedColumn)
-
-
 # ---------------------------------------------------------------------------
 # Type-preserving  (C → C)
 # ---------------------------------------------------------------------------
 
 
-def min(col: C) -> C:
+def min[C: TypedColumn](col: C) -> C:
     return _make_aggregate(type(col), F.min(col.to_spark()))  # type: ignore[return-value]
 
 
-def max(col: C) -> C:
+def max[C: TypedColumn](col: C) -> C:
     return _make_aggregate(type(col), F.max(col.to_spark()))  # type: ignore[return-value]
 
 
-def first(col: C, ignorenulls: bool = False) -> C:
+def first[C: TypedColumn](col: C, ignorenulls: bool = False) -> C:
     return _make_aggregate(type(col), F.first(col.to_spark(), ignorenulls))  # type: ignore[return-value]
 
 
-def last(col: C, ignorenulls: bool = False) -> C:
+def last[C: TypedColumn](col: C, ignorenulls: bool = False) -> C:
     return _make_aggregate(type(col), F.last(col.to_spark(), ignorenulls))  # type: ignore[return-value]
 
 
-def min_by(col: C, ord: TypedColumn) -> C:
+def min_by[C: TypedColumn](col: C, ord: TypedColumn) -> C:
     return _make_aggregate(type(col), F.min_by(col.to_spark(), ord.to_spark()))  # type: ignore[return-value]
 
 
-def max_by(col: C, ord: TypedColumn) -> C:
+def max_by[C: TypedColumn](col: C, ord: TypedColumn) -> C:
     return _make_aggregate(type(col), F.max_by(col.to_spark(), ord.to_spark()))  # type: ignore[return-value]
 
 
@@ -113,7 +110,7 @@ def sum(col: Float | Double) -> Double: ...
 
 
 @overload
-def sum(col: C) -> C: ...
+def sum[C: TypedColumn](col: C) -> C: ...
 
 
 def sum(col: TypedColumn) -> TypedColumn:
@@ -130,7 +127,7 @@ def sum_distinct(col: Float | Double) -> Double: ...
 
 
 @overload
-def sum_distinct(col: C) -> C: ...
+def sum_distinct[C: TypedColumn](col: C) -> C: ...
 
 
 def sum_distinct(col: TypedColumn) -> TypedColumn:
@@ -182,7 +179,7 @@ def covar_samp(col1: TypedColumn, col2: TypedColumn) -> Double:
 # ---------------------------------------------------------------------------
 
 
-def collect_list(col: C) -> "TypedArrayType[C]":
+def collect_list[C: TypedColumn](col: C) -> "TypedArrayType[C]":
     """Aggregates values of `col` into an array, preserving duplicates and order.
 
     Wrapper for :func:`pyspark.sql.functions.collect_list`.
@@ -190,7 +187,7 @@ def collect_list(col: C) -> "TypedArrayType[C]":
     return _make_aggregate(ArrayOf(type(col)), F.collect_list(col.to_spark()))  # type: ignore[return-value]
 
 
-def collect_set(col: C) -> "TypedArrayType[C]":
+def collect_set[C: TypedColumn](col: C) -> "TypedArrayType[C]":
     """Aggregates unique values of `col` into an array.
 
     Wrapper for :func:`pyspark.sql.functions.collect_set`.
