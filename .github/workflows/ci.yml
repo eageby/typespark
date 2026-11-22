@@ -39,8 +39,6 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    # Pre-existing ruff/mypy errors; make blocking once cleaned up.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
