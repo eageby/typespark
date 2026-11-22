@@ -89,12 +89,12 @@ def test_count_spark_type(num_frame: NumFrame) -> None:
     assert actual is LongType
 
 
-def test_count_distinct_returns_long(num_frame: NumFrame) -> None:
+def test_count_distinct_camel_case_returns_long(num_frame: NumFrame) -> None:
     result = countDistinct(num_frame.age)
     assert isinstance(result, Long)
 
 
-def test_count_distinct_value(num_frame: NumFrame) -> None:
+def test_count_distinct_camel_case_value(num_frame: NumFrame) -> None:
     col = countDistinct(num_frame.age)
     row = num_frame.to_df().agg(col.to_spark().alias("v")).collect()[0]
     assert row["v"] == 3
@@ -411,3 +411,27 @@ def test_min_by_value(num_frame: NumFrame) -> None:
     col = min_by(num_frame.name, num_frame.age)
     row = num_frame.to_df().agg(col.to_spark().alias("v")).collect()[0]
     assert row["v"] == "Bob"
+
+
+def test_collect_list_in_grouped_constructor(spark: SparkSession) -> None:
+    """Regression: tsf.collect_list resolved to a non-aggregate duplicate."""
+    import typespark.functions as tsf
+
+    class Src(ts.DataFrame):
+        key: ts.String
+        v: ts.Int
+
+    class Out(ts.DataFrame):
+        key: ts.String
+        vs: ts.Array[ts.Int]
+        uniq: ts.Array[ts.Int]
+
+    src = Src.create([("a", 1), ("a", 1), ("b", 3)])
+    out = Out(
+        src,
+        key=src.key.group(),
+        vs=tsf.collect_list(src.v),
+        uniq=tsf.collect_set(src.v),
+    )
+    rows = {r["key"]: (sorted(r["vs"]), r["uniq"]) for r in out.to_df().collect()}
+    assert rows == {"a": ([1, 1], [1]), "b": ([3], [3])}

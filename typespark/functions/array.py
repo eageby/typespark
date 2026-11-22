@@ -214,22 +214,6 @@ def cardinality(col: typespark.Array) -> typespark.Int:
     return typespark.Int.wrap(F.cardinality(col.to_spark()))
 
 
-def collect_list[T: typespark.TypedColumn](col: T) -> typespark.Array[T]:
-    """Aggregates values of `col` into an array, preserving duplicates and order.
-
-    Wrapper for :func:`pyspark.sql.functions.collect_list`.
-    """
-    return ArrayOf(col.__class__).wrap(F.collect_list(col.to_spark()))
-
-
-def collect_set[T: typespark.TypedColumn](col: T) -> typespark.Array[T]:
-    """Aggregates unique values of `col` into an array.
-
-    Wrapper for :func:`pyspark.sql.functions.collect_set`.
-    """
-    return ArrayOf(col.__class__).wrap(F.collect_set(col.to_spark()))
-
-
 def element_at[T: typespark.TypedColumn](
     col: typespark.Array[T], extraction: typespark.Integer | int
 ) -> T:

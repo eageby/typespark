@@ -279,8 +279,6 @@ from .array import (
     arrays_overlap,
     broadcast,
     cardinality,
-    collect_list,
-    collect_set,
     element_at,
     explode,
     explode_outer,

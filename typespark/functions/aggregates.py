@@ -183,8 +183,16 @@ def covar_samp(col1: TypedColumn, col2: TypedColumn) -> Double:
 
 
 def collect_list(col: C) -> "TypedArrayType[C]":
+    """Aggregates values of `col` into an array, preserving duplicates and order.
+
+    Wrapper for :func:`pyspark.sql.functions.collect_list`.
+    """
     return _make_aggregate(ArrayOf(type(col)), F.collect_list(col.to_spark()))  # type: ignore[return-value]
 
 
 def collect_set(col: C) -> "TypedArrayType[C]":
+    """Aggregates unique values of `col` into an array.
+
+    Wrapper for :func:`pyspark.sql.functions.collect_set`.
+    """
     return _make_aggregate(ArrayOf(type(col)), F.collect_set(col.to_spark()))  # type: ignore[return-value]
