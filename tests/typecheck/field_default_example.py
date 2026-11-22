@@ -1,4 +1,5 @@
 # pyright: reportUnnecessaryTypeIgnoreComment=true
+# mypy: warn-unused-ignores
 """ts.field defaults: valid ones must type check, invalid ones must error.
 
 Each invalid default carries a ``# type: ignore``. With unnecessary
@@ -102,4 +103,4 @@ class InvalidDefaults(ts.DataFrame):
     # Pyright copies `default="property"` into Props.__init__ as the parameter
     # default, and checks it against `String` when the class is used as a
     # `() -> Props` callable. Use `factory=lambda: Props()` instead.
-    props_cls: Props = ts.field(factory=Props)  # type: ignore
+    props_cls: Props = ts.field(factory=Props)  # pyright: ignore[reportCallIssue,reportArgumentType]

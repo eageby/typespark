@@ -1,4 +1,5 @@
 # pyright: reportUnnecessaryTypeIgnoreComment=true
+# mypy: warn-unused-ignores
 
 """Array[Decimal] precision/scale usage, checked with pyright by tests/test_typecheck.py.
 
@@ -34,4 +35,4 @@ def plain(raw: Raw) -> ts.Array[ts.Decimal]:
 
 
 def non_decimal(raw: Raw) -> None:
-    ts.Array[ts.String](raw.flat, precision=18, scale=4)  # type: ignore
+    ts.Array[ts.String](raw.flat, precision=18, scale=4)  # pyright: ignore[reportCallIssue]

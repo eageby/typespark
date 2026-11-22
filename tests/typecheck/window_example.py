@@ -1,4 +1,5 @@
 # pyright: reportUnnecessaryTypeIgnoreComment=true
+# mypy: warn-unused-ignores
 
 """Typed window usage, checked with pyright by tests/test_typecheck.py.
 

@@ -1,4 +1,5 @@
 # pyright: reportUnnecessaryTypeIgnoreComment=true
+# mypy: warn-unused-ignores
 
 """Array[T] keeps its element type through annotations and generic functions,
 checked with pyright by tests/test_typecheck.py.
